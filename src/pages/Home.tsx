@@ -84,7 +84,7 @@ function HomePage() {
         <h2 className="font-semibold text-brand2 text-sm mt-5 mb-5">
           Revenue Breakdown Per Route
         </h2>
-        <div className="border-1 border-neutral-200 rounded-xl flex justify-between p-3">
+        <div className="border-1 border-neutral-200 rounded-xl flex max-w-2xl mx-auto  justify-between p-3">
           <DonutChart values={data} currency="RWF" />
           <TableOne data={data2} />
         </div>

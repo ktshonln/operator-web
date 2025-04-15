@@ -22,7 +22,7 @@ const TableTwo = ({ tableData }: Props) => {
       <table className="text-xs gap-x-2 w-full">
         <tr className="gap-2">
           {tableHeaders.map((header) => (
-            <th className="bg-gray-100 text-[10px] text-start p-1 pb-4 pr-3 pl-3">
+            <th className="bg-gray-100 text-[10px]  text-start p-1 pb-4 pr-3 pl-3">
               {camelCaseToTitle(header).toLocaleUpperCase()}
             </th>
           ))}

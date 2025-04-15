@@ -6,6 +6,7 @@ import HomePage from "./pages/Home";
 import LoginPage from "./pages/Login";
 import NotFound from "./pages/NotFound";
 import RegisterPage from "./pages/Register";
+import Ticketing from "./pages/Ticketing";
 
 function App() {
   return (
@@ -21,6 +22,7 @@ function App() {
                 <Route index path="buses" element={<Buses/>} />
                 <Route path="drivers" element={<Drivers/>} />
               </Route>
+              <Route path="/ticketing" element={<Ticketing />} />
             </Route>
           </Route>
           <Route path="*" element={<NotFound/>}/>
