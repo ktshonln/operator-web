@@ -1,12 +1,11 @@
 import { BrowserRouter, Route, Routes } from "react-router-dom";
+import Layout from "./layouts/LayoutOne";
+import Buses from "./pages/Buses";
+import Drivers from "./pages/Drivers";
 import HomePage from "./pages/Home";
 import LoginPage from "./pages/Login";
-import RegisterPage from "./pages/Register";
-import Fleets from "./pages/Fleets";
-import Buses from "./pages/Buses";
-import Layout from "./layouts/LayoutOne";
 import NotFound from "./pages/NotFound";
-import Drivers from "./pages/Drivers";
+import RegisterPage from "./pages/Register";
 
 function App() {
   return (

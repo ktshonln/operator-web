@@ -17,8 +17,10 @@ const Sidebar = () => {
         { link: "/settings", icon: FiSettings },
       ];
     return (
-        <div className="w-1/5 p-3 h-screen flex flex-col justify-between shadow-lg rounded-r-md shadow-black/15">
-            <div>
+        <div className="relative w-1/5">
+
+        <div className="fixed top-0 w-52 p-3 h-screen flex flex-col justify-between shadow-lg rounded-r-md shadow-black/15">
+            <div className="">
 
             <div className="w-fit mx-auto">
             <img
@@ -49,6 +51,7 @@ const Sidebar = () => {
                     </div>
 
             </div>
+        </div>
         </div>
     )
 }

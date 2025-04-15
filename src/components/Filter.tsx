@@ -12,7 +12,7 @@ const Filter = () => {
       const [brandChoice, setBranchChoice] = useState(branches[0]);
       const [showChoice, setShowChoice] = useState(false);
     return (
-        <div className="flex items-center space-x-6 border rounded-xl border-neutral-200 font-medium text-xs text-brand2 p-1 mt-2 w-fit">
+        <div className="flex items-center justify-between border rounded-xl border-neutral-200 font-medium text-xs text-brand2 p-1 mt-2 ">
         {filterOptions.map((option) => (
           <div
             className={`${
@@ -30,7 +30,7 @@ const Filter = () => {
         <div className="relative w-fit">
           <div
             onClick={() => setShowChoice(!showChoice)}
-            className="relative flex items-center cursor-pointer"
+            className="relative flex items-center cursor-pointer "
           >
             <p className="text-brand">{brandChoice}</p>
             <BiChevronDown size={15} />
