@@ -1,6 +1,5 @@
 import { IconType } from "react-icons";
 import { FiArrowDownLeft, FiArrowUpRight } from "react-icons/fi";
-import { Link } from "react-router-dom";
 
 interface Props {
   metric: number;
@@ -8,6 +7,7 @@ interface Props {
   title: string;
   subtitle?: string;
   action?: string;
+  effect?: () => void;
   variation: { type: string; value: number };
   options?: string[]
 }
@@ -17,15 +17,16 @@ const InsightCard = ({
   title,
   subtitle,
   action,
+  effect,
   variation,
   options
 }: Props) => {
   return (
       <div className="relative self-stretch  items-end w-full border rounded-xl border-neutral-200 mt-1 p-1 pl-4 pr-4">
-        <Link className=" flex justify-self-end text-brand text-xs mr-6" to="">
+        <p onClick={effect} className=" flex justify-self-end text-brand text-xs mr-6 cursor-pointer">
           {action??""}
           {!action&&<br/>}
-        </Link>
+        </p>
         <div className="flex items-center space-x-2">
             {options?.includes('money') && <p className="font-bold text-xs text-neutral-500">RWF</p>}
         <span className="font-bold text-2xl">{`${metric}${options?.includes('money') ? 'K' :''}`}</span>

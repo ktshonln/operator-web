@@ -42,7 +42,7 @@ const SidebarItem = ({ link, Icon, subLinks }: Props) => {
         <div className="text-[#6A717D] font-medium border-l border-gray-300 pt-5 pb-5 space-y-2 text-sm ml-9">
           {subLinks.map((sub, i) => (
             <div key={sub} className="flex items-center">
-              {(hoveredIndex === i || path === link + sub) && (
+              {(hoveredIndex === i || path.includes(sub)) && (
                 <div className="w-2 border-2 -ml-1 rounded-full border-white h-5 bg-brand" />
               )}
               <Link
@@ -50,7 +50,7 @@ const SidebarItem = ({ link, Icon, subLinks }: Props) => {
                 onMouseEnter={() => setHoveredIndex(i)}
                 onMouseLeave={() => setHoveredIndex(null)}
                 className={`ml-1 hover:text-brand ${
-                  path === link + sub && "text-brand"
+                  path.includes(sub) && "text-brand"
                 }`}
               >
                 {" "}

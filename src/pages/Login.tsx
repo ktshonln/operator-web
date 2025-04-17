@@ -56,7 +56,7 @@ const LoginPage = () => {
                     className=" outline-none w-full"
                   />
                 </div>
-                <button className="bg-[#0A4370] p-2 w-full text-white mt-10 rounded-xs">
+                <button className="bg-[#0A4370] p-2 w-full text-white mt-10 rounded-sm cursor-pointer hover:text-[#0A4370] hover:bg-white hover:ring hover:ring-[#0A4370] active:scale-95">
                   LOGIN
                 </button>
               </form>

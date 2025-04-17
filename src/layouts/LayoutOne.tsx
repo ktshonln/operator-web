@@ -7,14 +7,12 @@ import Sidebar from "../components/Sidebar"
 } 
 const Layout = ({children}:Props) => {
     return (
-        <div className="font-heebo mb-5">
-          <div className="flex">
+        <div className="font-heebo flex mb-5">
       <Sidebar/>
-      <div className="w-full">
+      <main className="w-full">
         {children}
         <Outlet/>
-      </div>
-    </div>
+      </main>
         </div>
     )
 }

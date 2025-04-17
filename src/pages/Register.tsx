@@ -27,7 +27,9 @@ const RegisterPage = () => {
             <form className="text-xs justify-self-center w-full px-32">
               <div className="flex gap-48 ">
                 <div className="w-full">
-                  <h2 className="font-bold text-base mb-8">Company information</h2>
+                  <h2 className="font-bold text-base mb-8">
+                    Company information
+                  </h2>
                   <label
                     htmlFor="companyName"
                     className="text-[#6A717D] block mb-0.5 text-xs"
@@ -145,13 +147,16 @@ const RegisterPage = () => {
                   </div>
                 </div>
               </div>
-              <button className="bg-[#0A4370] p-2 block pl-20 pr-20 w-fit mx-auto text-white mt-10 rounded-sm">
+              <button className="bg-[#0A4370] p-2 block pl-20 pr-20 w-fit mx-auto text-white mt-10 rounded-sm cursor-pointer hover:text-[#0A4370] hover:bg-white hover:ring hover:ring-[#0A4370] active:scale-95">
                 REGISTER
               </button>
             </form>
             <p className="text-xs w-fit pb-3 mt-10 mx-auto sm:ml-12">
               Already have an account?
-              <Link to={'/'} className="text-brand cursor-pointer"> Login</Link>
+              <Link to={"/"} className="text-brand cursor-pointer">
+                {" "}
+                Login
+              </Link>
             </p>
           </div>
         </div>

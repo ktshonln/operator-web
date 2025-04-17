@@ -13,7 +13,7 @@ interface DonutProps {
     totalValue?: string;        // optional override for displayed total
 }
 
-const Donut: React.FC<DonutProps> = ({
+const DonutChart: React.FC<DonutProps> = ({
     values,
     size = 150,
     thickness = 20,
@@ -158,4 +158,4 @@ const Donut: React.FC<DonutProps> = ({
     );
 };
 
-export default Donut
+export default DonutChart

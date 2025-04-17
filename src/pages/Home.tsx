@@ -1,10 +1,12 @@
+import { useState } from "react";
 import { BsTicket } from "react-icons/bs";
+import { MdRoute } from "react-icons/md";
+import DonutChart from "../components/DonutChart";
 import Filter from "../components/Filter";
 import InsightCard from "../components/InsightCard";
-import DonutChart from "../components/DonutChart";
+import SellTicket from "../components/SellTicket";
 import TableOne from "../components/TableOne";
 import TableTwo from "../components/TableTwo";
-import { MdRoute } from "react-icons/md";
 
 export interface Route {
   origin: string;
@@ -12,6 +14,7 @@ export interface Route {
 }
 
 function HomePage() {
+  const [sellTicket, setSellTicket] = useState(false)
   const data = [100000, 100000, 100000, 100000, 100000];
   const data2 = [
     { route: { origin: "Kigali", destination: "Huye" }, revenue: 100000 },
@@ -52,6 +55,7 @@ function HomePage() {
       <div className=" ml-3 mt-5 grow">
         <p className="font-bold text-2xl">
           Good morning, <span className="text-brand">Alicia!</span>
+        
         </p>
         <p className="text-sm text-brand2">
           Checkout real-time analytics and insights
@@ -78,6 +82,7 @@ function HomePage() {
             title="Total Tickets"
             subtitle="500 available"
             action="- Sell ticket"
+            effect={()=>setSellTicket(true)}
             variation={{ type: "up", value: 8 }}
           />
         </div>
@@ -89,14 +94,14 @@ function HomePage() {
           <TableOne data={data2} />
         </div>
         <h2 className="font-semibold text-brand2 text-sm mt-5 mb-5">
-          Revenue Breakdown Per Route
+        Pending and Completed transactions
         </h2>
         <div className="border-1 border-neutral-200 rounded-xl flex justify-between p-3">
           <TableTwo tableData={data3} />
         </div>
       </div>
       {/* Widgets */}
-      <div className="w-1/5">
+      <div className="w-1/5 justify-self-end">
 
       <div className="w-1/5 justify-self-end h-screen fixed top-0  p-3 shadow-lg rounded-r-md shadow-black/15">
       {/* Top destinations */}
@@ -121,6 +126,9 @@ function HomePage() {
         </h2>
       </div>
       </div>
+      { sellTicket &&
+        <SellTicket effectTwo={()=>setSellTicket(false)}/>
+      }
     </div>
   );
 }

@@ -1,5 +1,11 @@
+import { useNavigate } from "react-router-dom";
 import { Route } from "../pages/Home";
 import { camelCaseToTitle, toTitleCase } from "../utils/helpers";
+
+/* interface TableProps<T> {
+  data: T[];
+  keyExtractor?:(item: T, index: number)=>string | number;
+} */
 
 interface TicketState {
   ticketId: string;
@@ -10,18 +16,20 @@ interface TicketState {
 }
 interface Props {
   tableData: TicketState[];
+  click?: boolean
 }
 
-const TableTwo = ({ tableData }: Props) => {
+const TableTwo = ({ tableData, click }: Props) => {
   // Get keys from the first object
   const tableHeaders = Object.keys(tableData[0]);
   console.log(tableHeaders);
+  const navigate = useNavigate()
 
   return (
     <div className=" max-h-36 w-full overflow-x-hidden">
       <table className="text-xs gap-x-2 w-full">
         <tr className="gap-2">
-          {tableHeaders.map((header) => (
+          {tableHeaders.map((header) => (// if some unnecessary headers are present, we can filter them out, e.g: with [includes]
             <th className="bg-gray-100 text-[10px]  text-start p-1 pb-4 pr-3 pl-3">
               {camelCaseToTitle(header).toLocaleUpperCase()}
             </th>
@@ -29,7 +37,7 @@ const TableTwo = ({ tableData }: Props) => {
         </tr>
         {tableData.map(
           ({ ticketId, passengerName, route, paymentStatus, date }) => (
-            <tr className="odd:bg-gray-100 text-neutral-600 hover:bg-gray-200">
+            <tr onClick={()=>{click && navigate(`/ticketing/${ticketId}`)}} className={`odd:bg-gray-100 text-neutral-600 hover:bg-gray-200 ${click && 'cursor-pointer'}`}>
               <td className="p-3">{ticketId}</td>
               <td className="p-3">{passengerName}</td>
               <td className="p-3">

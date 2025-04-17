@@ -10,16 +10,16 @@ const DropDown = ({options, style}:Props) => {
           const [branchChoice, setBranchChoice] = useState(options[0]);
           const [showChoice, setShowChoice] = useState(false);
     return (
-        <div className="relative w-fit">
+        <div className="relative ">
                   <div
                     onClick={() => setShowChoice(!showChoice)}
-                    className={`flex items-center cursor-pointer ${style==='v1'?'justify-between w-full bg-red-400':''}`}
+                    className={`flex items-center cursor-pointer ${(style==='v1' || style==='v2')?'space-x-10  w-full justify-between':''}`}
                   >
-                    <p className="text-brand">{branchChoice}</p>
+                    <p className={`${style && ['v1' , 'v2'].includes(style) ?'text-black': 'text-brand'}`}>{branchChoice}</p>
                     <BiChevronDown size={15} />
                   </div>
                   {showChoice && (
-                    <div className="absolute top-5 border-1 border-neutral-200 shadow-md rounded-md p-1 bg-white z-10">
+                    <div className={`absolute top-5 right-0 border-1 bg-white border-neutral-200 shadow-md rounded-md p-1bg-white z-10 ${style==='v1'&& 'w-full mt-1'}`}>
                      {options.map(branch=>
                      <p key={branch} onClick={()=>{
                         setBranchChoice(branch)
