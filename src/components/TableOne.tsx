@@ -10,7 +10,7 @@ interface Props {
 }
 const TableOne = ({data}:Props) => {
   return (
-        <div className=" max-h-36 overflow-x-hidden">
+        <div className=" max-h-36 overflow-y-auto">
 
 <table className="text-xs ">
     {data.map(({route, revenue})=>

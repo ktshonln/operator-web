@@ -1,6 +1,6 @@
 import { BiCalendarAlt, BiCheck } from "react-icons/bi";
 import DropDown from "../components/DropDown";
-import WidgetLayout from "../layouts/WidgetLayout";
+import WidgetLayout from "../components/layouts/WidgetLayout";
 import {
   AiOutlineClose,
   AiOutlineDelete,
@@ -35,13 +35,13 @@ function Trips() {
           </label>
 
           <div className="ring ring-gray-200 mb-5 p-1 rounded-xs bg-white">
-            <DropDown options={["seat1", "seat2"]} style="v1" />
+            <DropDown options={["Huye", "Nyanza"]} style="v1" />
           </div>
           <label htmlFor="bus" className="block mb-0.5 font-medium">
             Bus <span className="text-red-500 text-base">*</span>
           </label>
           <div className="ring ring-gray-200 mb-5 p-1 rounded-xs bg-white">
-            <DropDown options={["seat1", "seat2"]} style="v1" />
+            <DropDown options={["RAC121B", "RAD776F"]} style="v1" />
           </div>
           <label htmlFor="departureTime" className="block mb-0.5 font-medium">
             Departure time <span className="text-red-500 text-base">*</span>
@@ -85,38 +85,40 @@ function Trips() {
               {data.map(({ destination, price }, i) => (
                 <tr className="text-brand2">
                   <div className="relative flex items-center gap-2 w-full">
-                    {deleteRow === i && <hr className="absolute top-2.5 w-md"/>}
-                      <td className="pb-3">
-                        {editRow === i ? (
-                          <div className="text-black ">
-                            {i + 1}.{" "}
-                            <input
-                              onChange={(e) => {
-                                setDval(e.target.value);
-                              }}
-                              type="text"
-                              value={dVal || dVal === "" ? dVal : destination}
-                              className="border border-neutral-400  rounded-sm pl-0.5  outline-none"
-                            />
-                          </div>
-                        ) : (
-                          `${i + 1}. ${destination}`
-                        )}
-                      </td>
-                          </div>
-
-                      <td className="pb-3">
-                        {editRow === i ? (
+                    {deleteRow === i && (
+                      <hr className="absolute top-2.5 w-md" />
+                    )}
+                    <td className="pb-3">
+                      {editRow === i ? (
+                        <div className="text-black ">
+                          {i + 1}.{" "}
                           <input
-                            onChange={(e) => setPval(e.target.value)}
-                            type="number"
-                            value={pVal || pVal === "" ? pVal : price}
-                            className="border border-neutral-400 w-16  rounded-sm pl-0.5 text-black outline-none"
+                            onChange={(e) => {
+                              setDval(e.target.value);
+                            }}
+                            type="text"
+                            value={dVal || dVal === "" ? dVal : destination}
+                            className="border border-neutral-400  rounded-sm pl-0.5  outline-none"
                           />
-                        ) : (
-                          formatMoney(price)
-                        )}
-                      </td>
+                        </div>
+                      ) : (
+                        `${i + 1}. ${destination}`
+                      )}
+                    </td>
+                  </div>
+
+                  <td className="pb-3">
+                    {editRow === i ? (
+                      <input
+                        onChange={(e) => setPval(e.target.value)}
+                        type="number"
+                        value={pVal || pVal === "" ? pVal : price}
+                        className="border border-neutral-400 w-16  rounded-sm pl-0.5 text-black outline-none"
+                      />
+                    ) : (
+                      formatMoney(price)
+                    )}
+                  </td>
                   <td className="pb-3">
                     <div className="flex items-center space-x-2">
                       {editRow !== i && deleteRow !== i && (
@@ -137,20 +139,24 @@ function Trips() {
                           className="text-[#FF6666] hover:scale-110 cursor-pointer"
                         />
                       )}
-                      {(editRow === i || deleteRow === i) &&<BiCheck
-                        size={20}
-                        className="text-[#32CD32] hover:scale-110 cursor-pointer"
-                      />}
-                      {(editRow === i || deleteRow === i) &&<AiOutlineClose
-                        onClick={() => {
-                          setEditRow(null);
-                          setDeleteRow(null);
-                          setDval(null);
-                          setPval(null);
-                        }}
-                        size={15}
-                        className="text-[#FF6666] hover:scale-110 cursor-pointer"
-                      />}
+                      {(editRow === i || deleteRow === i) && (
+                        <BiCheck
+                          size={20}
+                          className="text-[#32CD32] hover:scale-110 cursor-pointer"
+                        />
+                      )}
+                      {(editRow === i || deleteRow === i) && (
+                        <AiOutlineClose
+                          onClick={() => {
+                            setEditRow(null);
+                            setDeleteRow(null);
+                            setDval(null);
+                            setPval(null);
+                          }}
+                          size={15}
+                          className="text-[#FF6666] hover:scale-110 cursor-pointer"
+                        />
+                      )}
                     </div>
                   </td>
                 </tr>
@@ -158,20 +164,18 @@ function Trips() {
               <tr>
                 <td className="pl-4">
                   <input
-                  
                     type="text"
                     className="border border-neutral-400  rounded-sm pl-0.5  outline-none"
                   />
                 </td>
                 <td>
                   <input
-                   
                     type="number"
                     className="border border-neutral-400 w-16  rounded-sm pl-0.5 text-black outline-none"
                   />
                 </td>
                 <td className="text-brand cursor-pointer active:scale-95">
-                    Add new
+                  Add new
                 </td>
               </tr>
             </table>

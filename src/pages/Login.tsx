@@ -1,7 +1,36 @@
 import { BsTicketFill } from "react-icons/bs";
 import Footer from "../components/Footer";
 import { Link } from "react-router-dom";
+
+import { zodResolver } from "@hookform/resolvers/zod";
+import { useForm } from "react-hook-form";
+import { z } from "zod";
+import useLogin, { LoginDetails } from "../hooks/useLogin";
+
+const schema = z.object({
+  email: z.string().email({ message: "Please enter a valid email." }),
+  password: z
+    .string()
+    .min(8, { message: "Password must be at least 8 characters." }),
+});
+type FormData = z.infer<typeof schema>;
+
 const LoginPage = () => {
+  const {
+    register,
+    handleSubmit,
+    resetField,
+    formState: { errors },
+  } = useForm<FormData>({ resolver: zodResolver(schema) });
+
+  const loginUser = useLogin();
+
+  const onSubmit = async (data: LoginDetails) => {
+    console.log("submitting");
+    console.log(data);
+    loginUser.mutate(data);
+    resetField("password");
+  };
   return (
     <div className="relative bg-[#0A4370] font-heebo">
       <svg
@@ -27,20 +56,28 @@ const LoginPage = () => {
                 className="mt-5  mb-7 w-56 sm:w-72 -ml-11 sm:-ml-14"
                 alt="Katisha-logo"
               />
-              <form className="text-xs">
+              <form onSubmit={handleSubmit(onSubmit)} className="text-xs">
                 <label
                   htmlFor="email"
                   className="text-[#6A717D] block mb-0.5 text-xs"
                 >
                   Email
                 </label>
-                <div className="ring ring-gray-200 mb-5 p-2 rounded-xs bg-white">
-                  <input
-                    type="email"
-                    id="email"
-                    name="email"
-                    className=" outline-none w-full"
-                  />
+                <div>
+                  <div className="ring ring-gray-200 mb-5 p-2 rounded-xs bg-white">
+                    <input
+                      {...register("email")}
+                      type="email"
+                      id="email"
+                      name="email"
+                      className=" outline-none w-full"
+                    />
+                  </div>
+                  {errors.email && (
+                    <p className="text-red-500 text-xs">
+                      {errors.email.message}
+                    </p>
+                  )}
                 </div>
                 <label
                   htmlFor="password"
@@ -48,22 +85,36 @@ const LoginPage = () => {
                 >
                   Password
                 </label>
-                <div className="ring ring-gray-200 mb-5 p-2 rounded-xs bg-white">
-                  <input
-                    type="password"
-                    id="password"
-                    name="password"
-                    className=" outline-none w-full"
-                  />
+                <div>
+                  <div className="ring ring-gray-200 mb-5 p-2 rounded-xs bg-white">
+                    <input
+                      {...register("password")}
+                      type="password"
+                      id="password"
+                      name="password"
+                      className=" outline-none w-full"
+                    />
+                  </div>
+                  {errors.password && (
+                    <p className="text-red-500 text-xs">
+                      {errors.password.message}
+                    </p>
+                  )}
                 </div>
-                <button className="bg-[#0A4370] p-2 w-full text-white mt-10 rounded-sm cursor-pointer hover:text-[#0A4370] hover:bg-white hover:ring hover:ring-[#0A4370] active:scale-95">
-                  LOGIN
+                <button
+                  disabled={loginUser.isPending}
+                  className="bg-[#0A4370] p-2 w-full text-white mt-10 rounded-sm cursor-pointer hover:text-[#0A4370] hover:bg-white hover:ring hover:ring-[#0A4370] active:scale-95 disabled:active:scale-none disabled:hover:ring-0 disabled:opacity-50 disabled:hover:bg-[#0A4370] disabled:hover:text-white disabled:cursor-not-allowed"
+                >
+                  {loginUser.isPending ? "LOGING IN..." : "LOGIN"}
                 </button>
               </form>
             </div>
             <p className="text-xs w-fit pb-3 mx-auto sm:ml-12">
               No account yet?
-              <Link to={'/register'} className="text-brand cursor-pointer"> Register</Link>
+              <Link to={"/register"} className="text-brand cursor-pointer">
+                {" "}
+                Register
+              </Link>
             </p>
           </div>
           <div className=" absolute right-0">
@@ -91,7 +142,7 @@ const LoginPage = () => {
             Making travel simpler, smarter, and more convenient for everyone.{" "}
           </p>
         </div>
-       <Footer/>
+        <Footer />
       </div>
     </div>
   );

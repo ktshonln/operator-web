@@ -1,5 +1,5 @@
 import { RiBusFill } from "react-icons/ri";
-import WidgetLayout from "../layouts/WidgetLayout";
+import WidgetLayout from "../components/layouts/WidgetLayout";
 import { useNavigate } from "react-router-dom";
 import { camelCaseToTitle } from "../utils/helpers";
 
@@ -61,7 +61,9 @@ function BusDetails() {
       </div>
       <WidgetLayout>
         <div>
-          <h2 className="font-bold  text-sm mt-5 mb-5 w-fit mx-auto">Scheduled trips</h2>
+          <h2 className="font-bold  text-sm mt-5 mb-5 w-fit mx-auto">
+            Scheduled trips
+          </h2>
           <div className="w-full mt-7 overflow-x-hidden">
             <table className="text-sm w-full">
               <tr className="gap-2">

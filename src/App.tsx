@@ -1,5 +1,5 @@
 import { BrowserRouter, Navigate, Route, Routes } from "react-router-dom";
-import Layout from "./layouts/LayoutOne";
+import Layout from "./components/layouts/LayoutOne";
 import Buses from "./pages/Buses";
 import Drivers from "./pages/Drivers";
 import HomePage from "./pages/Home";
@@ -18,9 +18,12 @@ import ProfileSettings from "./pages/ProfileSettings";
 import UserDetails from "./pages/UserDetails";
 import SecuritySettings from "./pages/SecuritySettings";
 import RegisterSuccess from "./pages/RegisterSuccess";
-import LoginMfa from "./pages/loginMfa";
+import LoginMfa from "./pages/LoginMfa";
+import Toaster from "./components/Toaster";
+import { useState } from "react";
 
 function App() {
+  const [show, setShow] = useState(true);
   return (
     <div>
       <BrowserRouter>
@@ -51,6 +54,7 @@ function App() {
           </Route>
           <Route path="*" element={<NotFound />} />
         </Routes>
+        <Toaster />
       </BrowserRouter>
     </div>
   );

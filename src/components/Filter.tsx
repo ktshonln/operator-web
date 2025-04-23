@@ -16,7 +16,7 @@ const Filter = () => {
         <div
           className={`${
             option === filterOptions[0] && "bg-brand text-white"
-          } flex items-center space-x-0.5 p-1 pl-4 pr-4 rounded-lg `}
+          } flex items-center space-x-0.5 p-1 pl-4 pr-4 rounded-lg cursor-pointer`}
         >
           {option === filterOptions[4] && (
             <BiCalendarAlt size={14} className="mb-0.5" />

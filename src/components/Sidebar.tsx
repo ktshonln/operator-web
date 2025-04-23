@@ -6,8 +6,14 @@ import { FaChartLine } from "react-icons/fa6";
 import { FiSettings } from "react-icons/fi";
 import { IconType } from "react-icons";
 import { HiOutlineLogout } from "react-icons/hi";
+import useUser from "../hooks/useUser";
+import { camelCaseToTitle } from "../utils/helpers";
+import useLogout from "../hooks/useLogout";
 
 const Sidebar = () => {
+    const {user} = useUser()
+    const logout = useLogout()
+    console.log("Role", user)
     const pages: { link: string; icon: IconType; subLinks?:string[] }[] = [
         { link: "/home", icon: BiHomeAlt },
         { link: "/ticketing", icon: BsTicket },
@@ -41,12 +47,12 @@ const Sidebar = () => {
                         <BiSolidUserCircle size={40} className="text-neutral-400"/>
                     </div>
                     <div>
-                        <p className="text-sm">Alicia Kunda</p>
-                        <p className="text-xs text-[#6A717D]">Agent</p>
+                        <p className="text-sm">{user.firstName + " " + user.lastName}</p>
+                        <p className="text-xs text-[#6A717D]">{camelCaseToTitle(user.userType)}</p>
                     </div>
                 </div>
-                    <div className="flex items-center gap-3 ml-3 text-neutral-500 mt-3">
-                        <HiOutlineLogout size={18}/>
+                    <div onClick={()=>logout()} className="flex items-center group gap-3 ml-3 text-neutral-500 mt-3 hover:text-black cursor-pointer active:scale-95">
+                        <HiOutlineLogout className="group-active:translate-x-2" size={18}/>
                         <p className="font-semibold text-sm">Logout</p>
                     </div>
 

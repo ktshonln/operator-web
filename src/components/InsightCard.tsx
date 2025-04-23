@@ -4,6 +4,7 @@ import { FiArrowDownLeft, FiArrowUpRight } from "react-icons/fi";
 interface Props {
   metric: number;
   Icon: IconType;
+  custIcon?:string;
   title: string;
   subtitle?: string;
   action?: string;
@@ -14,6 +15,7 @@ interface Props {
 const InsightCard = ({
   metric,
   Icon,
+  custIcon,
   title,
   subtitle,
   action,
@@ -33,7 +35,7 @@ const InsightCard = ({
         </div>
         <div className="flex items-center space-x-2 ml-2">
           <div className="bg-brand rounded-full text-white w-fit p-2">
-            <Icon size={12} className="stroke-[.7px]" />
+            {custIcon? <img src={custIcon} className="w-3 h-3" alt="RWFIcon" />:<Icon size={12} className="stroke-[.7px]" />}
           </div>
           <p className="font-semibold text-brand2 text-sm">
           <span className="text-xs block font-bold text-brand">{subtitle}</span>

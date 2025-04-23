@@ -1,6 +1,6 @@
 import { BiSolidUserCircle } from "react-icons/bi";
 import { useNavigate } from "react-router-dom";
-import WidgetLayout from "../layouts/WidgetLayout";
+import WidgetLayout from "../components/layouts/WidgetLayout";
 import { camelCaseToTitle } from "../utils/helpers";
 
 const tableData = [
@@ -36,18 +36,19 @@ function DriverDetails() {
         <h2 className="font-bold  text-sm mt-5 mb-5">Vehicle Details</h2>
         <div className="text-sm">
           <p className="text-neutral-400 font-semibold flex justify-between">
-            Name: <span className="text-black font-normal">Gasana Innocent</span>
+            Name:{" "}
+            <span className="text-black font-normal">Gasana Innocent</span>
           </p>
           <p className="text-neutral-400 font-semibold flex justify-between">
-            Phone Number: <span className="text-black font-normal">073123456</span>
+            Phone Number:{" "}
+            <span className="text-black font-normal">073123456</span>
           </p>
           <p className="text-neutral-400 font-semibold flex justify-between">
-          License Number:{" "}
+            License Number:{" "}
             <span className="text-black font-normal">1111AAABB</span>
           </p>
           <p className="text-neutral-400 font-semibold flex justify-between">
-            Bus:{" "}
-            <span className="text-black font-normal">RAC 229 A</span>
+            Bus: <span className="text-black font-normal">RAC 229 A</span>
           </p>
           <p className="text-neutral-400 font-semibold flex justify-between">
             Status: <span className="text-black font-normal">Active</span>
@@ -56,7 +57,9 @@ function DriverDetails() {
       </div>
       <WidgetLayout>
         <div>
-          <h2 className="font-bold  text-sm mt-5 mb-5 w-fit mx-auto">Scheduled trips</h2>
+          <h2 className="font-bold  text-sm mt-5 mb-5 w-fit mx-auto">
+            Scheduled trips
+          </h2>
           <div className="w-full mt-7 overflow-x-hidden">
             <table className="text-sm w-full">
               <tr className="gap-2">
