@@ -5,19 +5,27 @@ import { MdOutlineDarkMode } from "react-icons/md";
 import { useNavigate } from "react-router-dom";
 import DropDown from "../components/DropDown";
 import SettingsNav from "../components/SettingsNav";
-import { camelCaseToTitle } from "../utils/helpers";
 import useAgents from "../hooks/useAgents";
+import { camelCaseToTitle } from "../utils/helpers";
 import { AgentQuery } from "./ProfileSettings";
+import ThemeToggle from "../components/ThemeToggle";
 
 type Theme = "system" | "light" | "dark";
 
 function Settings() {
-  const tableHeaders = ["userId", "name", "email", "phoneNumber", "role", "status"];
+  const tableHeaders = [
+    "userId",
+    "name",
+    "email",
+    "phoneNumber",
+    "role",
+    "status",
+  ];
   const navigate = useNavigate();
   const [theme, setTheme] = useState<Theme | "system">("system");
   const { data, error, isLoading } = useAgents("comp_001", {} as AgentQuery);
   return (
-    <div className="mt-10">
+    <div className="mt-10 mb-5">
       <SettingsNav />
 
       <h1 className="font-bold text-lg mb-3">Manage users</h1>
@@ -28,7 +36,11 @@ function Settings() {
             <div className="flex justify-between">
               <p className="text-sm font-semibold">Add</p>
               <div className="ring ring-gray-200 p-0.5 rounded-sm bg-white">
-                <DropDown options={["Agent", "Agent manager"]} style="v2" />
+                <DropDown
+                  onSelect={(choice) => console.log(choice)}
+                  options={["Agent", "Agent manager"]}
+                  style="v2"
+                />
               </div>
             </div>
             <label htmlFor="firstName" className="block mb-0.5 font-medium">
@@ -80,6 +92,7 @@ function Settings() {
             </label>
             <div className="ring ring-gray-200 mb-5 p-1 rounded-xs bg-white">
               <DropDown
+                onSelect={(choice) => console.log(choice)}
                 options={["Select a branch", "Branch 1", "Branch 2"]}
                 style="v1"
               />
@@ -95,59 +108,7 @@ function Settings() {
           </form>
           <div className="mt-5">
             <h1 className="font-bold text-lg mb-3">Theme</h1>
-            <div className="space-y-2">
-              <div
-                onClick={() => setTheme("system")}
-                className={`flex items-center space-x-5 text-sm cursor-pointer hover:text-black ${
-                  theme == "system" ? "text-black" : "text-neutral-500"
-                }`}
-              >
-                <div
-                  className={`border rounded-full w-fit p-1.5 flex items-center justify-center ${
-                    theme == "system" ? "border-brand" : "border-white"
-                  }`}
-                >
-                  <div>
-                    <HiOutlineDesktopComputer size={15} />
-                  </div>
-                </div>
-                <p>System</p>
-              </div>
-              <div
-                onClick={() => setTheme("light")}
-                className={`flex items-center space-x-5 text-sm cursor-pointer hover:text-black  ${
-                  theme == "light" ? "text-black" : "text-neutral-500"
-                }`}
-              >
-                <div
-                  className={`border rounded-full w-fit p-1.5 flex items-center justify-center ${
-                    theme == "light" ? "border-brand" : "border-white"
-                  }`}
-                >
-                  <div>
-                    <AiOutlineSun size={15} />
-                  </div>
-                </div>
-                <p>Light</p>
-              </div>
-              <div
-                onClick={() => setTheme("dark")}
-                className={`flex items-center space-x-5 text-sm cursor-pointer hover:text-black  ${
-                  theme == "dark" ? "text-black" : "text-neutral-500"
-                }`}
-              >
-                <div
-                  className={`border rounded-full w-fit p-1.5 flex items-center justify-center ${
-                    theme == "dark" ? "border-brand" : "border-white"
-                  }`}
-                >
-                  <div>
-                    <MdOutlineDarkMode size={15} />
-                  </div>
-                </div>
-                <p>Dark</p>
-              </div>
-            </div>
+           <ThemeToggle/>
           </div>
         </div>
         <div className="relative  min-w-1/5 max-w-4xl justify-self-end w-full flex">

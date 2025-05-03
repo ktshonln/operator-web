@@ -14,7 +14,6 @@ interface logoutResponse {
 
 const apiClient = new APIClient<logoutResponse>("/users/auth/logout");
 const useLogout = () => {
-  console.log("clickeddd");
   const showToast = useToastStore((state) => state.showToast);
   const navigate = useNavigate();
   const { mutate } = useMutation<logoutResponse, Error>({

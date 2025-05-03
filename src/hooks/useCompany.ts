@@ -9,10 +9,11 @@ export interface Company {
   contactEmail: string;
   contactPhone: string;
   registrationDate: string;
+  branches: string[];
   about: string;
 }
 
-const apiClient = new APIClient<Company>("/company");
+const apiClient = new APIClient<Company>("/companies");
 const useCompany = (companyId:string) =>
   useQuery<Company, Error>({
     queryKey: ["company", companyId],

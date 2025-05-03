@@ -4,7 +4,7 @@ import { Branch } from "../pages/ProfileSettings";
 
 const apiClient = new APIClient<TicketResponse>("/tickets");
 
-interface TicketQuery {
+export interface TicketQuery {
   branch?: Branch;
   startDate?: string;
   endDate?: string;
@@ -13,10 +13,10 @@ interface TicketQuery {
   status?: string;
 }
 
-interface Ticket {
-  ticketId: string;
+export interface Ticket {
+  ticketId?: string; // We only know it on response not on request
   passenger: {
-    passengerId: string;
+    passengerId?: string; // this is possible on the passenger client because they are logged in
     firstName: string;
     LastName: string;
   };
@@ -24,6 +24,7 @@ interface Ticket {
   origin: string;
   destination: string;
   status: string;
+  date: string; // what is this date? is it the time to leave or the time taken? - time to leave
 }
 
 interface TicketResponse {

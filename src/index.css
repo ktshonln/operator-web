@@ -6,3 +6,5 @@
     --color-brand: #2E82C8;
     --color-brand2: #6A717D;
   }
+
+@custom-variant dark (&:where(.dark, .dark *));

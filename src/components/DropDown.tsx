@@ -4,8 +4,9 @@ import { BiChevronDown } from "react-icons/bi";
 interface Props {
     options: string[];
     style?: 'v1' | 'v2';
+    onSelect: (choice: string)=>void
 }
-const DropDown = ({options, style}:Props) => {
+const DropDown = ({options, style, onSelect}:Props) => {
     // const options = ['All branches','branch 1', 'branch 2', 'branch 3']
           const [branchChoice, setBranchChoice] = useState(options[0]);
           const [showChoice, setShowChoice] = useState(false);
@@ -23,6 +24,7 @@ const DropDown = ({options, style}:Props) => {
                      {options.map(branch=>
                      <p key={branch} onClick={()=>{
                         setBranchChoice(branch)
+                        onSelect(branch)
                         setShowChoice(false)}} 
                         className="hover:bg-brand hover:text-white p-1 rounded-md cursor-pointer text-nowrap">{branch}</p>
                      )}

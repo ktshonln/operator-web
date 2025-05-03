@@ -1,6 +1,7 @@
 import { useNavigate } from "react-router-dom";
 import { Route } from "../pages/Home";
 import { camelCaseToTitle, toTitleCase } from "../utils/helpers";
+import { Ticket } from "../hooks/useTickets";
 
 /* interface TableProps<T> {
   data: T[];
@@ -15,13 +16,13 @@ interface TicketState {
   date: string;
 }
 interface Props {
-  tableData: TicketState[];
+  tableData: Ticket[];
   click?: boolean
 }
 
 const TableTwo = ({ tableData, click }: Props) => {
   // Get keys from the first object
-  const tableHeaders = Object.keys(tableData[0]);
+  const tableHeaders = ['ticketId', 'passengerName', 'route', 'paymentStatus', 'date']
   console.log(tableHeaders);
   const navigate = useNavigate()
 
@@ -36,24 +37,24 @@ const TableTwo = ({ tableData, click }: Props) => {
           ))}
         </tr>
         {tableData.map(
-          ({ ticketId, passengerName, route, paymentStatus, date }) => (
+          ({ ticketId, passenger, origin, destination, status, date }) => (
             <tr onClick={()=>{click && navigate(`/ticketing/${ticketId}`)}} className={`odd:bg-gray-100 text-neutral-600 hover:bg-gray-200 ${click && 'cursor-pointer'}`}>
               <td className="p-3">{ticketId}</td>
-              <td className="p-3">{passengerName}</td>
+              <td className="p-3">{passenger.firstName + " " + passenger.LastName}</td>
               <td className="p-3">
-                {route.origin} - {route.destination}
+                {origin} - {destination}
               </td>
               <td
-                className={`p-3 text-center 
+                className={`p-3 
                 }`}
               >
                 <span className={`p-1 pl-6 pr-6 rounded-full text-[10px] text-center ${
-                  paymentStatus === "received"
+                  camelCaseToTitle(status,true) === "paid"
                     ? "text-green-500 bg-[#23F43C]/15"
                     : "text-brand bg-brand/15"
                 }`}>
 
-                {toTitleCase(paymentStatus)}
+                {toTitleCase(status)}
                 </span>
               </td>
               <td className="p-3">{date}</td>

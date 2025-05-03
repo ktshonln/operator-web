@@ -1,5 +1,6 @@
 import { IconType } from "react-icons";
 import { FiArrowDownLeft, FiArrowUpRight } from "react-icons/fi";
+import { letterFormatTotal } from "../utils/helpers";
 
 interface Props {
   metric: number;
@@ -31,7 +32,7 @@ const InsightCard = ({
         </p>
         <div className="flex items-center space-x-2">
             {options?.includes('money') && <p className="font-bold text-xs text-neutral-500">RWF</p>}
-        <span className="font-bold text-2xl">{`${metric}${options?.includes('money') ? 'K' :''}`}</span>
+        <span className="font-bold text-2xl">{`${options?.includes('money') ? letterFormatTotal(metric) :metric}`}</span>
         </div>
         <div className="flex items-center space-x-2 ml-2">
           <div className="bg-brand rounded-full text-white w-fit p-2">

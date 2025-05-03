@@ -33,7 +33,7 @@ function Reports() {
   return (
     <div className="flex space-x-3">
       <div className=" ml-3 mr-10 mt-5 grow">
-        <Filter />
+        <Filter onSelectFilter={()=>console.log('object')} />
         <div className="text-xs flex items-baseline space-x-5 mt-3">
           <h2 className="font-bold  text-sm mt-5 mb-3">Ticket Sale Logs</h2>
           <p className="font-medium text-brand2">

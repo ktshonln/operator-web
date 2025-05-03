@@ -3,12 +3,14 @@ import { useNavigate } from "react-router-dom";
 import APIClient from "../services/apiClient";
 import { useToastStore } from "../stores/toastStore";
 
-export interface User {
+export interface User { // A general Admin, on branch main
   firstName: string;
   lastName: string;
   email: string;
   password: string;
   userType: string;
+  role: string; // admin/agent or even agentManager
+  branch: string;
   companyName: string;
   companyRegNo: string;
   companyAddress: string;

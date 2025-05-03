@@ -7,12 +7,16 @@ import InsightCard from "../components/InsightCard";
 import SellTicket from "../components/SellTicket";
 import TableOne from "../components/TableOne";
 import TableTwo from "../components/TableTwo";
-import useAnalytics from "../hooks/useAnalytics";
+import useAnalytics, { AnalyticsQuery } from "../hooks/useAnalytics";
 import usePeakTimes from "../hooks/usePeakTimes";
 import usePopularRoutes from "../hooks/usePopularRoutes";
 import useRevenueAnalytics from "../hooks/useRevenueAnalytics";
-import useTickets from "../hooks/useTickets";
+import useTickets, { TicketQuery } from "../hooks/useTickets";
 import useUser from "../hooks/useUser";
+import { camelCaseToTitle } from "../utils/helpers";
+import PeakTrafficChart from "../components/PeakTrafficChart";
+import useCompany from "../hooks/useCompany";
+import { useNavigate } from "react-router-dom";
 
 export interface Route {
   origin: string;
@@ -20,97 +24,77 @@ export interface Route {
 }
 
 function HomePage() {
+  const { user } = useUser();
+  const { data: company } = useCompany(user.companyId);
+  console.log("COMPANY", company);
+  const [analyticsQuery, setAnalyticsQuery] = useState<AnalyticsQuery>(
+    {} as AnalyticsQuery
+  );
+  const [ticketQuery, setTicketQuery] = useState<TicketQuery>(
+    {} as TicketQuery
+  );
+
   const {
     data: analytics,
     error,
     isLoading,
-  } = useAnalytics("comp_001", {
-    endDate: "23/4/22",
-    startDate: "23/4/22",
-    branch: null,
-  });
-  const { data: revAnalytics } = useRevenueAnalytics("comp_001", {
-    endDate: "23/4/22",
-    startDate: "23/4/22",
-    branch: null,
-  });
-  const { data: popularRoutes } = usePopularRoutes("comp_001", {
-    endDate: "23/4/22",
-    startDate: "23/4/22",
-    branch: null,
-  });
-  const { data: peakTimes } = usePeakTimes("comp_001", {
-    endDate: "23/4/22",
-    startDate: "23/4/22",
-    branch: null,
-  });
-  const { data: tickets } = useTickets({
-    endDate: "23/4/22",
-    startDate: "23/4/22",
-  });
-  console.log("Tickets:", tickets);
-  console.log("Peak Times:", peakTimes);
-  console.log("Popular Routes:", popularRoutes);
-  console.log("Revenue Analytics:", revAnalytics);
-  console.log("Analytics:", analytics);
+  } = useAnalytics(user.companyId, analyticsQuery);
+  const { data: revAnalytics } = useRevenueAnalytics(
+    user.companyId,
+    analyticsQuery
+  );
+  const { data: popularRoutes } = usePopularRoutes(
+    user.companyId,
+    analyticsQuery
+  );
+  const { data: peakTimes } = usePeakTimes(user.companyId, analyticsQuery);
+  const { data: tickets } = useTickets(ticketQuery);
 
-  const { user } = useUser();
   const [sellTicket, setSellTicket] = useState(false);
-  const fakedata = [100000, 100000, 100000, 100000, 100000];
-  const data2 = [
-    { route: { origin: "Kigali", destination: "Huye" }, revenue: 100000 },
-    { route: { origin: "Kigali", destination: "Huye" }, revenue: 100000 },
-    { route: { origin: "Kigali", destination: "Huye" }, revenue: 100000 },
-    { route: { origin: "Kigali", destination: "Muhanga" }, revenue: 100000 },
-    { route: { origin: "Kigali", destination: "Muhanga" }, revenue: 100000 },
-    { route: { origin: "Kigali", destination: "Rubavu" }, revenue: 100000 },
-    { route: { origin: "Kigali", destination: "Rubavu" }, revenue: 100000 },
-  ];
-  const data3 = [
-    {
-      ticketId: "678cc836ddc071f4e3ef9399",
-      passengerName: "Jeanne Dowe",
-      route: { origin: "Kigali", destination: "Huye" },
-      paymentStatus: "pending",
-      date: "12/09/2025 17:23",
-    },
-    {
-      ticketId: "678cc836ddc071f4e3ef9399",
-      passengerName: "Jeanne Dowe",
-      route: { origin: "Kigali", destination: "Huye" },
-      paymentStatus: "pending",
-      date: "12/09/2025 17:23",
-    },
-    {
-      ticketId: "678cc836ddc071f4e3ef9399",
-      passengerName: "Jeanne Dowe",
-      route: { origin: "Kigali", destination: "Huye" },
-      paymentStatus: "received",
-      date: "12/09/2025 17:23",
-    },
-  ];
+  const [dest, setDest] = useState<number | null>(null);
+  const navigate = useNavigate()
+  console.log("THE QUERYY", analyticsQuery);
 
   return (
-    <div className="flex  space-x-3">
+    <div className="flex space-x-3">
       {/* Dashboard */}
-      <div className=" ml-3 mt-5 grow">
+      <div className=" ml-3 mt-5 mb-5 grow">
         <p className="font-bold text-2xl">
-          Good morning, <span className="text-brand">{user.firstName}!</span>
+          Good morning,{" "}
+          <span className="text-brand">
+            {camelCaseToTitle(user.firstName)}!
+          </span>
         </p>
         <p className="text-sm text-brand2">
           Checkout real-time analytics and insights
         </p>
-        <Filter />
+        <Filter
+          branches={company?.branches}
+          onSelectFilter={(filter) => {
+            setAnalyticsQuery({
+              ...analyticsQuery,
+              startDate: filter.startDate,
+              endDate: filter.endDate,
+              branch: filter.branch?.name,
+            });
+            setTicketQuery({
+              ...ticketQuery,
+              startDate: filter.startDate,
+              endDate: filter.endDate,
+              branch: filter.branch,
+            });
+          }}
+        />
         <div className="flex items-baseline justify-between gap-1">
           <InsightCard
-            metric={345}
+            metric={analytics?.totalTicketsSold ?? 0}
             Icon={BsTicket}
             title="Sold Tickets"
             action="View"
             variation={{ type: "up", value: 12 }}
           />
           <InsightCard
-            metric={500}
+            metric={analytics?.totalRevenue.amount ?? 0}
             custIcon="/RWFIcon.svg"
             Icon={BsTicket}
             title="Total Revenue"
@@ -123,7 +107,7 @@ function HomePage() {
             title="Total Tickets"
             subtitle="500 available"
             action="- Sell ticket"
-            effect={() => setSellTicket(true)}
+            effect={() => navigate('/ticketing')}
             variation={{ type: "up", value: 8 }}
           />
         </div>
@@ -131,42 +115,47 @@ function HomePage() {
           Revenue Breakdown Per Route
         </h2>
         <div className="border-1 border-neutral-200 rounded-xl flex max-w-2xl mx-auto  justify-between p-3">
-          <DonutChart values={fakedata} currency="RWF" />
-          <TableOne data={data2} />
+          <DonutChart values={revAnalytics ?? []} currency="RWF" />
+          <TableOne data={revAnalytics ?? []} />
         </div>
         <h2 className="font-semibold text-brand2 text-sm mt-5 mb-5">
           Pending and Completed transactions
         </h2>
         <div className="border-1 border-neutral-200 rounded-xl flex justify-between p-3">
-          <TableTwo tableData={data3} />
+          <TableTwo tableData={tickets?.tickets ?? []} />
         </div>
       </div>
       {/* Widgets */}
-      <div className="w-1/5 justify-self-end">
-        <div className="w-1/5 justify-self-end h-screen fixed top-0  p-3 shadow-lg rounded-r-md shadow-black/15">
+      <div className=" justify-self-end w-sm">
+        <div className=" justify-self-end fixed right-0 min-w-sm w-full h-full mb-5 overflow-y-auto max-w-sm  p-3 shadow-lg rounded-r-md shadow-black/15">
           {/* Top destinations */}
           <h2 className="font-semibold text-brand2 text-sm mt-5 mb-5">
             Top destinations
           </h2>
-          <div className="border-1 border-neutral-200 rounded-xl p-3 space-y-2">
-            {data2.slice(0, 5).map(({ route }, i) => (
+          <div className="border-1 border-neutral-200 rounded-xl p-3 space-y-2 h-fit">
+            {popularRoutes?.slice(0, 5).map(({ routeName, rank }, i) => (
               <div
                 key={i}
-                className="flex items-center  space-x-4 p-3 bg-neutral-100 rounded-lg w-full text-xs "
+                onMouseEnter={() => setDest(i)}
+                onMouseLeave={() => setDest(null)}
+                className="flex items-center h-10 space-x-4 p-3 hover:bg-neutral-100 cursor-pointer rounded-lg w-full text-xs "
               >
-                <MdRoute className="text-brand size-4" />
-                <p className="text-brand2">
-                  {route.origin} - {route.destination}
-                </p>
+                {dest === i ? (
+                  <p className="font-bold text-brand text-sm">{rank}</p>
+                ) : (
+                  <MdRoute className="text-brand size-4" />
+                )}
+                <p className="text-brand2">{routeName}</p>
               </div>
             ))}
           </div>
           <h2 className="font-semibold text-brand2 text-sm mt-5 mb-5">
-            Peak Hours
+            Peak Times
           </h2>
+          {peakTimes && <PeakTrafficChart peakTimes={peakTimes} />}
         </div>
       </div>
-      {sellTicket && <SellTicket effectTwo={() => setSellTicket(false)} />}
+      {/* {sellTicket && <SellTicket  effectTwo={() => setSellTicket(false)} />} */}
     </div>
   );
 }

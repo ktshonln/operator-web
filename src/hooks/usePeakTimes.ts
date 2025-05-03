@@ -4,7 +4,7 @@ import { AnalyticsQuery } from "./useAnalytics";
 
 const apiClient = new APIClient<PeakTimes>("/companies");
 
-interface PeakTimes {
+export interface PeakTimes {
     peakHours: [
         { hour: number, averageTickets: number },
         { hour: number, averageTickets: number },

@@ -1,7 +1,9 @@
  import React, { useEffect, useState } from 'react';
+import { getDonutShades, letterFormatTotal } from '../utils/helpers';
+import { RevenueAnalytics } from '../hooks/useRevenueAnalytics';
 
 interface DonutProps {
-    values: number[];           // your data
+    values: RevenueAnalytics[] ;           // your data
     size?: number;              // diameter in px (default: 200)
     thickness?: number;         // colored stroke width in px (default: 20)
     borderWidth?: number;       // white border width in px (default: 5)
@@ -26,42 +28,26 @@ const DonutChart: React.FC<DonutProps> = ({
     totalValue,
 }) => {
     const [isMounted, setIsMounted] = useState(false);
+    const [hoveredIndex, setHoveredIndex] = useState<number | null>(null);
+    const [mousePos, setMousePos] = useState<{ x: number; y: number }>({ x: 0, y: 0 });
     
-    useEffect(() => {
-        setIsMounted(true);
-    }, []);
-
-    // Helpers to interpolate hex colors
-    const hexToRgb = (hex: string) => {
-        const m = hex.replace('#', '').match(/.{1,2}/g)!;
-        return { r: parseInt(m[0], 16), g: parseInt(m[1], 16), b: parseInt(m[2], 16) };
-    };
-    const rgbToHex = ({ r, g, b }: { r: number, g: number, b: number }) =>
-        '#' + [r, g, b].map(v => v.toString(16).padStart(2, '0')).join('');
-    const interpolate = (c1: string, c2: string, t: number) => {
-        const a = hexToRgb(c1), b = hexToRgb(c2);
-        return rgbToHex({
-            r: Math.round(a.r + (b.r - a.r) * t),
-            g: Math.round(a.g + (b.g - a.g) * t),
-            b: Math.round(a.b + (b.b - a.b) * t),
-        });
-    };
+   // Re-trigger animation when valid values arrive
+useEffect(() => {
+    if (values.length > 0) {
+        // Timeout helps trigger transitions cleanly
+        const t = setTimeout(() => setIsMounted(true), 50);
+        return () => clearTimeout(t);
+    } else {
+        setIsMounted(false); // Reset animation flag if values are empty
+    }
+}, [values]);
 
     // Compute shades
-    const shades = values.map((_, i) => {
-        if (i === 0) {
-            return darkerShade; // First slice is darker shade
-        } else if (i === Math.floor(values.length / 2)) {
-            return startColor; // Middle slice is start color
-        } else {
-            const t = i / (values.length - 1);
-            return interpolate(startColor, endColor, t);
-        }
-    });
+    const shades = getDonutShades(values.length, startColor, endColor, darkerShade)
 
 
     // Compute geometry
-    const sum = values.reduce((s, v) => s + v, 0);
+    const sum = values.reduce((s, v) => s + Number(v.revenue??0), 0);
     const total = sum || 1; // Prevent division by zero
     const fullStroke = thickness + borderWidth * 2;
     const radius = (size - fullStroke) / 2;
@@ -72,10 +58,16 @@ const DonutChart: React.FC<DonutProps> = ({
     const circles: React.ReactNode[] = [];
 
     values.forEach((v, i) => {
-        const segLen = (v / total) * circumference;
+        const revenue = Number(v.revenue);
+        const segLen = (revenue / total) * circumference;
         const dashArray = `${segLen} ${circumference - segLen}`;
         const dashOffset = -circumference * 0.25 - cumulative;
         cumulative += segLen;
+
+        const handleMouseMove = (e: React.MouseEvent) => {
+            const rect = (e.target as SVGCircleElement).getBoundingClientRect();
+            setMousePos({ x: e.clientX - rect.left, y: e.clientY - rect.top });
+        };
 
         // White border
         circles.push(
@@ -99,6 +91,9 @@ const DonutChart: React.FC<DonutProps> = ({
         // Colored slice
         circles.push(
             <circle
+            onMouseEnter={()=>setHoveredIndex(i)}
+            onMouseLeave={()=>setHoveredIndex(null)}
+            onMouseMove={handleMouseMove}
                 key={`color-${i}`}
                 cx={size / 2} cy={size / 2} r={radius}
                 fill="none"
@@ -110,38 +105,41 @@ const DonutChart: React.FC<DonutProps> = ({
                 style={{
                     transition: 'all 1s ease-out',
                     strokeDasharray: isMounted ? dashArray : `0 ${circumference}`,
-                    strokeDashoffset: isMounted ? dashOffset : circumference
+                    strokeDashoffset: isMounted ? dashOffset : circumference,
+                    cursor: 'pointer'
                 }}
             />
         );
     });
 
-    const formatTotal = (num: number): string => {
-        if (num >= 1000000000) {
-            const value = num / 1000000000;
-            return value % 1 === 0 ? `${value}B` : `${value.toFixed(2)}B`;
-        }
-        if (num >= 1000000) {
-            const value = num / 1000000;
-            return value % 1 === 0 ? `${value}M` : `${value.toFixed(2)}M`;
-        }
-        if (num >= 1000) {
-            const value = num / 1000;
-            return value % 1 === 0 ? `${value}K` : `${value.toFixed(2)}K`;
-        }
-        return num.toString();
-    };
-
-    const displayedTotalValue = totalValue || formatTotal(sum);
+    const displayedTotalValue = totalValue || letterFormatTotal(sum);
 
     return (
         <div
             className="relative bg-white rounded-full"
             style={{ width: size, height: size }}
         >
-            <svg width={size} height={size}>
+            <svg width={size} height={size} >
                 {circles}
             </svg>
+             {/* Tooltip */}
+             {hoveredIndex !== null && (
+                <div
+                    className="absolute text-xs px-2 py-1 rounded bg-black text-white shadow pointer-events-none"
+                    style={{
+                        left: mousePos.x,
+                        top: mousePos.y,
+                        transform: 'translate(-50%, -120%)',
+                        whiteSpace: 'nowrap',
+                        zIndex: 10,
+                    }}
+                >
+                    <div className="font-bold">{values[hoveredIndex].routeName}</div>
+                    <div>{currency} {letterFormatTotal(Number(values[hoveredIndex].revenue))}</div>
+                </div>
+            )}
+            
+            {/* Center Label */}
             <div className="absolute inset-0 flex flex-col items-center justify-center pointer-events-none"
             style={{
                 opacity: isMounted ? 1 : 0,

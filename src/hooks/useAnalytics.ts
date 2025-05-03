@@ -1,11 +1,10 @@
 import { useQuery } from "@tanstack/react-query";
-import { Branch } from "../pages/ProfileSettings";
 import APIClient from "../services/apiClient";
 
 const apiClient = new APIClient<GeneralAnalytics>("/companies");
 
 export interface AnalyticsQuery {
-  branch: Branch | null;
+  branch?: string ;
   startDate: string;
   endDate: string;
 }
@@ -25,7 +24,7 @@ const useAnalytics = (companyId: string, analyticsQuery: AnalyticsQuery) =>
     queryFn: () =>
       apiClient.getAnalytics(companyId, {
         params: {
-            branch: analyticsQuery.branch,
+          branch: analyticsQuery.branch,
           startDate: analyticsQuery.startDate,
           endDate: analyticsQuery.endDate,
         },

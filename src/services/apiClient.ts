@@ -1,5 +1,5 @@
 import axios, { AxiosRequestConfig } from "axios";
-import { baseUrl } from "../mocks/handlers";
+import { baseUrl } from "../mocks/handlers/utils";
 
 const axiosInstance = axios.create({
   baseURL: baseUrl, //"https://e2689ec1-a734-4f3a-80dd-77f1a45ef528.mock.pstmn.io",
@@ -28,17 +28,25 @@ class APIClient<TResponse> {
       .then((res) => res.data);
   };
 
-
   getAllAgents = (companyId: string | number, config: AxiosRequestConfig) => {
     return axiosInstance
       .get<TResponse>(`${this.endpoint}/${companyId}/agents`, config)
       .then((res) => res.data);
   };
 
-
   getAgent = (companyId: string | number, agentId: string | number) => {
     return axiosInstance
       .get<TResponse>(`${this.endpoint}/${companyId}/agents/${agentId}`)
+      .then((res) => res.data);
+  };
+  getBus = (companyId: string | number, busId: string | number) => {
+    return axiosInstance
+      .get<TResponse>(`${this.endpoint}/${companyId}/buses/${busId}`)
+      .then((res) => res.data);
+  };
+  getManifest = (companyId: string | number, tripId: string | number) => {
+    return axiosInstance
+      .get<TResponse>(`${this.endpoint}/${companyId}/trips/${tripId}/manifest`)
       .then((res) => res.data);
   };
 
@@ -47,22 +55,34 @@ class APIClient<TResponse> {
       .get<TResponse>(`${this.endpoint}/${companyId}/analytics`, config)
       .then((res) => res.data);
   };
-  getRevenueAnalytics = (companyId: string | number, config: AxiosRequestConfig) => {
+  getRevenueAnalytics = (
+    companyId: string | number,
+    config: AxiosRequestConfig
+  ) => {
     return axiosInstance
       .get<TResponse>(`${this.endpoint}/${companyId}/analytics/revenue`, config)
       .then((res) => res.data);
   };
-  getPopularRoutes = (companyId: string | number, config: AxiosRequestConfig) => {
+  getPopularRoutes = (
+    companyId: string | number,
+    config: AxiosRequestConfig
+  ) => {
     return axiosInstance
-      .get<TResponse>(`${this.endpoint}/${companyId}/analytics/popular-routes`, config)
+      .get<TResponse>(
+        `${this.endpoint}/${companyId}/analytics/popular-routes`,
+        config
+      )
       .then((res) => res.data);
   };
   getPeakTimes = (companyId: string | number, config: AxiosRequestConfig) => {
     return axiosInstance
-      .get<TResponse>(`${this.endpoint}/${companyId}/analytics/peak-times`, config)
+      .get<TResponse>(
+        `${this.endpoint}/${companyId}/analytics/peak-times`,
+        config
+      )
       .then((res) => res.data);
   };
-  
+
   registerUser = <TRequest>(userData: TRequest) => {
     return axiosInstance
       .post<TResponse>(this.endpoint, userData)
@@ -71,13 +91,17 @@ class APIClient<TResponse> {
   loginUser = async <TRequest>(userData: TRequest) => {
     return axiosInstance
       .post<TResponse>(this.endpoint, userData)
-      .then((res) => res.data).catch((error)=>{
-        if (error.response && error.response.data && error.response.data.message) {
+      .then((res) => res.data)
+      .catch((error) => {
+        if (
+          error.response &&
+          error.response.data &&
+          error.response.data.message
+        ) {
           // Server responded with a message
           throw new Error(error.response.data.message);
-        }
-        else {
-          throw new Error(error.message)
+        } else {
+          throw new Error(error.message);
         }
       });
   };

@@ -2,26 +2,34 @@ import { jwtDecode } from "jwt-decode";
 import { useEffect, useState } from "react";
 import { useToastStore } from "../stores/toastStore";
 import useLogout from "./useLogout";
+import { useNavigate } from "react-router-dom";
 
-export interface LoggedInUser {
+export interface LoggedInUser { // The JWT data
   id?: string;
   firstName: string;
   lastName: string;
   userType: string;
+  companyId: string;
+  role: string;
+  branch:string; // An agent needs one but for an admin it is not necessary this could default to 'main'
   exp?:number
 }
 
 const defaultUser: LoggedInUser = {
   id: "1",
-  firstName: "defaultFirst",
-  lastName: "defaultLast",
-  userType: "agent",
+  firstName: "agent",
+  lastName: "user",
+  userType: "operator",
+  role: 'agent',
+  branch: 'Kigali',
+  companyId: 'comp_001'
 };
 
 const useUser = () => {
   const [user, setUser] = useState<LoggedInUser>(defaultUser);
   const [loading, setLoading] = useState(false);
   const logout = useLogout();
+  const navigate = useNavigate();
   const showToast = useToastStore((state) => state.showToast);
 
   useEffect(() => {
@@ -31,6 +39,7 @@ const useUser = () => {
     console.log("TOKEN", token);
     if (!token) {
       showToast("User not logged in", "error");
+      navigate('/login')
       return;
     }
     try {

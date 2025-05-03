@@ -4,7 +4,7 @@ import { AnalyticsQuery } from "./useAnalytics";
 
 const apiClient = new APIClient<RevenueAnalytics[]>("/companies");
 
-interface RevenueAnalytics {
+export interface RevenueAnalytics {
   routeId: string;
   routeName: string;
   revenue: string;

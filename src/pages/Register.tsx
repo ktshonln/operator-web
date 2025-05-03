@@ -19,6 +19,12 @@ const schema = z.object({
   userType: z
     .string()
     .min(3, { message: "User type must be at least 3 characters." }),
+  role: z
+    .string()
+    .min(3, { message: "Role must be at least 3 characters." }),
+  branch: z
+    .string()
+    .min(3, { message: "Branch must be at least 3 characters." }),
   companyName: z
     .string()
     .min(3, { message: "Company name must be at least 3 characters." }),
@@ -264,12 +270,28 @@ const RegisterPage = () => {
                     )}
                   </div>
                   <input
-                    {...register("userType")}
+                    {...register("userType")} // Setting userType by default since this is the operator client
                     type="text"
                     id="userType"
                     name="userType"
                     value={"operator"}
                     className=" outline-none w-full hidden"
+                  />
+                  <input
+                    {...register("role")} // Setting role to admin on registration since the admin is the only one to register
+                    type="text"
+                    id="role"
+                    name="role"
+                    value={"admin"}
+                    className="outline-none w-full hidden"
+                  />
+                  <input
+                    {...register("branch")} // Setting the admin's branch to default to main 
+                    type="text"
+                    id="branch"
+                    name="branch"
+                    value={"main"}
+                    className="outline-none w-full hidden"
                   />
                 </div>
               </div>

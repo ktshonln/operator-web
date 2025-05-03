@@ -113,7 +113,11 @@ function ProfileSettings() {
             <div className="mb-3 flex items-center space-x-5">
               <h1 className="font-bold text-lg ">Branch Profile</h1>
               <div className="ring ring-gray-200 p-0.5 text-sm rounded-xs bg-white flex justify-between">
-                <DropDown options={["Kigali", "Huye", "Musanze"]} style="v2" />
+                <DropDown
+                  onSelect={(choice) => console.log(choice)}
+                  options={["Kigali", "Huye", "Musanze"]}
+                  style="v2"
+                />
               </div>
               <p className="text-sm text-brand">+ Add new</p>
             </div>
