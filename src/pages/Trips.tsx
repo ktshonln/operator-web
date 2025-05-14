@@ -35,13 +35,13 @@ function Trips() {
           </label>
 
           <div className="ring ring-gray-200 mb-5 p-1 rounded-xs bg-white">
-            <DropDown options={["Huye", "Nyanza"]} style="v1" />
+            <DropDown onSelect={()=>console.log('object')} options={["Huye", "Nyanza"]} style="v1" />
           </div>
           <label htmlFor="bus" className="block mb-0.5 font-medium">
             Bus <span className="text-red-500 text-base">*</span>
           </label>
           <div className="ring ring-gray-200 mb-5 p-1 rounded-xs bg-white">
-            <DropDown options={["RAC121B", "RAD776F"]} style="v1" />
+            <DropDown onSelect={()=>console.log('object')} options={["RAC121B", "RAD776F"]} style="v1" />
           </div>
           <label htmlFor="departureTime" className="block mb-0.5 font-medium">
             Departure time <span className="text-red-500 text-base">*</span>

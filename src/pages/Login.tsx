@@ -120,7 +120,7 @@ const LoginPage = () => {
           <div className=" absolute right-0">
             <svg
               xmlns="http://www.w3.org/2000/svg"
-              className="aspect-[838/800] -mr-1  h-[200px] md:h-[255px] lg:h-[451px] xl:h-[535px]"
+              className="aspect-[838/800] -mr-1  h-[200px] md:h-[255px] lg:h-[451px] xl:h-[547px]"
               viewBox="0 0 838 800"
               fill="none"
             >

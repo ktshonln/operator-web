@@ -4,7 +4,8 @@ import { handlers as analyticsHandlers } from "./analytics";
 import { handlers as ticketingHandlers } from "./ticketing";
 import { handlers as companyHandlers } from "./companies";
 import { handlers as tripHandlers } from "./trips";
-import {handlers as busHandlers} from './buses';
+import { handlers as busHandlers } from "./buses";
+import { handlers as driverHandlers } from "./drivers";
 import { corsHeaders } from "./utils";
 
 export const handlers = [
@@ -20,4 +21,5 @@ export const handlers = [
   ...companyHandlers,
   ...tripHandlers,
   ...busHandlers,
+  ...driverHandlers,
 ];

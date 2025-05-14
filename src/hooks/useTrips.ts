@@ -6,6 +6,8 @@ export interface TripQuery {
   searchText: string;
   branch?: string;
   status: string;
+  busId?: string;
+  driverId?: string;
 }
 
 export interface Trip {
@@ -35,6 +37,8 @@ const useTrips = (tripQuery: TripQuery) =>
           departureTime: tripQuery.departureTime,
           branch: tripQuery.branch,
           search: tripQuery.searchText,
+          busId: tripQuery.busId,
+          driverId: tripQuery.driverId,
           page: pageParam,
         },
       }),

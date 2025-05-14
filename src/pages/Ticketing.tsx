@@ -20,7 +20,7 @@ function Ticketing() {
   const { user } = useUser();
   const [tripQuery, setTripQuery] = useState<TripQuery>({} as TripQuery);
   const { data: company } = useCompany(user.companyId);
-  const { data: trips } = useTrips(tripQuery);
+  const { data: trips, isLoading:tripsLoad } = useTrips(tripQuery);
   const [viewList, setViewList] = useState(false);
   const [list, setList] = useState<Manifest>();
   const [sellTicket, setSellTicket] = useState(false);
@@ -63,6 +63,7 @@ function Ticketing() {
     if (user.role !== "admin")
       setTripQuery({ ...tripQuery, branch: user.branch }); // Only show the relevant branch for an agent
   }, [user]);
+  
   return (
     <div className="mt-5 m-5 ml-3">
       <Search
@@ -80,7 +81,7 @@ function Ticketing() {
         <button onClick={() => setCreateTrip(true)} className=" cursor-pointer">
           + Create trip
         </button>
-        <div className="flex items-center">
+        <div className="flex items-center justify-self-end">
           <AiOutlineHistory />
           <Link to="/ticketing/history" className="ml-1 cursor-pointer">
             View sold tickets
@@ -98,7 +99,7 @@ function Ticketing() {
             />
           ) : (
             <div className="border-1 border-neutral-200 rounded-sm w-fit p-1 pl-10 pr-10 text-sm text-neutral-500">
-              <p>{camelCaseToTitle(user.branch)}</p>
+              <p>{camelCaseToTitle(user.branch??"")}</p>
             </div>
           )}
           <div className="border-1 border-neutral-200 rounded-sm w-fit p-1 pl-10 pr-10 text-sm ">
@@ -139,6 +140,7 @@ function Ticketing() {
           </div>
         </div>
       </div>
+      {tripsLoad && <p>Trips are loading...</p>}
       {trips &&
         company &&
         trips.map((trip, i) => {

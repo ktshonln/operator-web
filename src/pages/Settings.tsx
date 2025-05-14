@@ -31,11 +31,11 @@ function Settings() {
       <h1 className="font-bold text-lg mb-3">Manage users</h1>
       <div className="flex  space-x-3">
         <div className=" ml-3 mt-5 grow w-80">
-          <p className="font-bold text-sm w-fit mx-auto mb-3">Add new user</p>
+          <p className="font-bold text-sm w-fit mx-auto mb-3 dark:text-white">Add new user</p>
           <form className="text-sm">
             <div className="flex justify-between">
-              <p className="text-sm font-semibold">Add</p>
-              <div className="ring ring-gray-200 p-0.5 rounded-sm bg-white">
+              <p className="text-sm font-semibold dark:text-white">Add</p>
+              <div className="ring ring-gray-200 p-0.5 rounded-sm dark:text-white">
                 <DropDown
                   onSelect={(choice) => console.log(choice)}
                   options={["Agent", "Agent manager"]}
@@ -43,10 +43,10 @@ function Settings() {
                 />
               </div>
             </div>
-            <label htmlFor="firstName" className="block mb-0.5 font-medium">
+            <label htmlFor="firstName" className="block mb-0.5 font-medium dark:text-white">
               First Name <span className="text-red-500 text-base">*</span>
             </label>
-            <div className="ring ring-gray-200 mb-5 p-1 rounded-xs bg-white">
+            <div className="ring ring-gray-200 mb-5 p-1 rounded-xs bg-white dark:text-white dark:bg-black">
               <input
                 type="text"
                 id="firstName"
@@ -54,10 +54,10 @@ function Settings() {
                 className="outline-none w-full"
               />
             </div>
-            <label htmlFor="lastName" className="block mb-0.5 font-medium">
+            <label htmlFor="lastName" className="block mb-0.5 font-medium dark:text-white">
               Last Name <span className="text-red-500 text-base">*</span>
             </label>
-            <div className="ring ring-gray-200 mb-5 p-1 rounded-xs bg-white">
+            <div className="ring ring-gray-200 mb-5 p-1 rounded-xs bg-white dark:text-white dark:bg-black">
               <input
                 type="text"
                 id="lastName"
@@ -65,10 +65,10 @@ function Settings() {
                 className="outline-none w-full"
               />
             </div>
-            <label htmlFor="email" className="block mb-0.5 font-medium">
+            <label htmlFor="email" className="block mb-0.5 font-medium dark:text-white">
               Email <span className="text-red-500 text-base">*</span>
             </label>
-            <div className="ring ring-gray-200 mb-5 p-1 rounded-xs bg-white">
+            <div className="ring ring-gray-200 mb-5 p-1 rounded-xs bg-white dark:text-white dark:bg-black">
               <input
                 type="email"
                 id="email"
@@ -76,10 +76,10 @@ function Settings() {
                 className="outline-none w-full"
               />
             </div>
-            <label htmlFor="phoneNumber" className="block mb-0.5 font-medium">
+            <label htmlFor="phoneNumber" className="block mb-0.5 font-medium dark:text-white">
               Phone Number <span className="text-red-500 text-base">*</span>
             </label>
-            <div className="ring ring-gray-200 mb-5 p-1 rounded-xs bg-white">
+            <div className="ring ring-gray-200 mb-5 p-1 rounded-xs bg-white dark:text-white dark:bg-black">
               <input
                 type="text"
                 id="phoneNumber"
@@ -87,10 +87,10 @@ function Settings() {
                 className="outline-none w-full"
               />
             </div>
-            <label htmlFor="branch" className="block mb-0.5 font-medium">
+            <label htmlFor="branch" className="block mb-0.5 font-medium dark:text-white">
               Branch <span className="text-red-500 text-base">*</span>
             </label>
-            <div className="ring ring-gray-200 mb-5 p-1 rounded-xs bg-white">
+            <div className="ring ring-gray-200 mb-5 p-1 rounded-xs bg-white dark:bg-black dark:text-white">
               <DropDown
                 onSelect={(choice) => console.log(choice)}
                 options={["Select a branch", "Branch 1", "Branch 2"]}
@@ -107,17 +107,17 @@ function Settings() {
             </div>
           </form>
           <div className="mt-5">
-            <h1 className="font-bold text-lg mb-3">Theme</h1>
+            <h1 className="font-bold text-lg mb-3 dark:text-white">Theme</h1>
            <ThemeToggle/>
           </div>
         </div>
         <div className="relative  min-w-1/5 max-w-4xl justify-self-end w-full flex">
           <div className="min-w-0 w-full max-w-[870px] overflow-y-scroll overflow-x-hidden  h-screen fixed top-0 right-0 self-stretch flex flex-col p-3 shadow-lg rounded-r-md shadow-black/15">
             <div className="mr-10 w-full self-stretch">
-              <h2 className="font-bold mt-5 mb-5 w-fit text-sm mx-auto">
+              <h2 className="font-bold mt-5 mb-5 w-fit text-sm mx-auto dark:text-white">
                 Current users
               </h2>
-              <div className="flex items-center space-x-3 p-1 mb-3 border-1 border-neutral-200 rounded-full text-sm max-w-80">
+              <div className="flex items-center space-x-3 p-1 mb-3 border-1 dark:text-white border-neutral-200 rounded-full text-sm max-w-80">
                 <AiOutlineSearch size={20} />
                 <form action="" className="w-full mr-2">
                   <input
@@ -131,7 +131,7 @@ function Settings() {
                 <table className="text-sm gap-x-2 w-full">
                   <tbody>
                     <tr className="gap-2">
-                      <th className="bg-gray-100   text-start p-1 pb-4 pr-3 pl-3">
+                      <th className="bg-gray-100 dark:bg-neutral-900 dark:text-white text-start p-1 pb-4 pr-3 pl-3">
                         #
                       </th>
                       {tableHeaders
@@ -143,7 +143,7 @@ function Settings() {
                           ) => (
                             <th
                               key={i}
-                              className="bg-gray-100 text-xs w text-start p-1 pb-4 pr-3 pl-3"
+                              className="bg-gray-100 dark:bg-neutral-900 dark:text-white text-xs w text-start p-1 pb-4 pr-3 pl-3"
                             >
                               {camelCaseToTitle(header).toLocaleUpperCase()}
                             </th>

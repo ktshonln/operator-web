@@ -4,29 +4,29 @@ import APIClient from "../services/apiClient";
 import { useToastStore } from "../stores/toastStore";
 
 export interface TicketSaleDetails {
- passengerId?:string;
+ passengerName?:string;
+ passengerPhone?:string;
  tripId: string;
  originStopId: string;
  destinationStopId: string;
  ticketQuantity: number;
  seatNumber: string | string[];
- userId: string | null; 
+ userId: string | null; // rename later to agentId or better operatorId
 }
 
-export interface TicketResponse {
-  token: string;
-  userId: string;
+ interface TicketSaleResponse {
+  ticketId: string;
 }
 
-const apiClient = new APIClient<TicketResponse>("/tickets");
+const apiClient = new APIClient<TicketSaleResponse>("/tickets");
 const useSellTicket = () => {
   const showToast = useToastStore((state) => state.showToast);
   const navigate = useNavigate();
-  return useMutation<TicketResponse, Error ,TicketSaleDetails>({
+  return useMutation<TicketSaleResponse, Error ,TicketSaleDetails>({
     mutationFn: apiClient.post<TicketSaleDetails>,
     onSuccess: (savedData) => {
       showToast("Successfully sold ticket", "success");
-      navigate("/home");
+      navigate(`/ticketing/${savedData.ticketId}`);
     },
     onError: (error) => showToast(error.message, "error"),
   });

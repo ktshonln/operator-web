@@ -1,32 +1,69 @@
-import { useState } from "react";
+import { JSX, useEffect, useState } from "react";
 import { BiChevronDown } from "react-icons/bi";
 
-interface Props {
-    options: string[];
-    style?: 'v1' | 'v2';
-    onSelect: (choice: string)=>void
+
+type Option = {
+  label: string;
+  value: string;
 }
-const DropDown = ({options, style, onSelect}:Props) => {
-    // const options = ['All branches','branch 1', 'branch 2', 'branch 3']
-          const [branchChoice, setBranchChoice] = useState(options[0]);
+type BaseProps = {
+  options: string[];
+  style?: 'v1' | 'v2';
+  value?: string | string[]; // This enables the option of choosing multiple values
+  multiValue?:number;
+};
+
+type SingleSelectProps = BaseProps & {
+  multiValue?: undefined;
+  onSelect:(choice: string)=>void
+}
+
+type MultiSelectProps = BaseProps & {
+  multiValue: number;
+  onSelect: (choice: string | string[])=>void
+}
+// type Props = SingleSelectProps | MultiSelectProps
+function DropDown(props: SingleSelectProps): JSX.Element;
+function DropDown(props: MultiSelectProps): JSX.Element;
+function DropDown (props: SingleSelectProps | MultiSelectProps ):JSX.Element  {
+  const {options, style, onSelect, value, multiValue}=props
+          const [optionChoice, setOptionChoice] = useState<string|string[]>(value?value:options[0]);
           const [showChoice, setShowChoice] = useState(false);
+          console.log('MULTI', optionChoice.length)
+          const mCondition = multiValue!==undefined && multiValue!==null && multiValue>=2 // The condition that justifies the use of multiValue
+
+          useEffect(()=>{ // Sync ticket quantity to seats
+           if(mCondition) {setOptionChoice(options.slice(0,multiValue)); onSelect(options.slice(0,multiValue)) ;}
+          },[multiValue])
     return (
-        <div className="relative ">
+        <div className="relative">
                   <div
                     onClick={() => setShowChoice(!showChoice)}
                     className={`flex items-center cursor-pointer ${(style==='v1' || style==='v2')?'space-x-10  w-full justify-between':''}`}
                   >
-                    <p className={`${style && ['v1' , 'v2'].includes(style) ?'text-black': 'text-brand'}`}>{branchChoice}</p>
+                    <p className={`${style && ['v1', 'v2'].includes(style) ?'text-blac dark:text-white': 'text-brand'}`}>{Array.isArray(optionChoice) ?optionChoice.map((choice, id)=><span key={id} className="after:content-[','] last-of-type:after:content-none"> {choice}</span>):optionChoice }</p>
+                    <div className="flex space-x-2 items-center">
+                    {multiValue!==undefined && multiValue!==null && multiValue>=2 && 
+                    <span onClick={()=>setOptionChoice(multiValue>=2?[]:(value?value:options[0]))} className="text-xs text-red-500 hover:text-red-800">Clear</span>
+                    } 
                     <BiChevronDown size={15} />
+
+                    </div>
                   </div>
+                  
                   {showChoice && (
-                    <div className={`absolute top-5 right-0 border-1 bg-white border-neutral-200 shadow-md rounded-md p-1bg-white z-10 ${style==='v1'&& 'w-full mt-1'}`}>
-                     {options.map(branch=>
-                     <p key={branch} onClick={()=>{
-                        setBranchChoice(branch)
-                        onSelect(branch)
+                    <div className={`absolute top-5 right-0 border-1 bg-white dark:bg-black border-neutral-200 shadow-md rounded-md p-1bg-white z-10 ${style==='v1'&& 'w-full mt-1'}`}>
+                     {options.filter((val)=> !optionChoice.includes(val)).map(option=>
+                     <p key={option} onClick={()=>{
+                      console.log('OPusiyo', option)
+                        setOptionChoice((prev)=>{
+                          const newValue = (multiValue && prev && multiValue>prev.length)?[...prev, option]:multiValue?[option]: option;
+                          multiValue && onSelect(newValue)
+                        return newValue
+                        });
+                        !multiValue && onSelect(option)
                         setShowChoice(false)}} 
-                        className="hover:bg-brand hover:text-white p-1 rounded-md cursor-pointer text-nowrap">{branch}</p>
+                        className="hover:bg-brand hover:text-white p-1 rounded-md cursor-pointer text-nowrap">{option}</p>
                      )}
                     </div>
                   )}

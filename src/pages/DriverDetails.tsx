@@ -34,7 +34,7 @@ function DriverDetails() {
           </button>
         </div>
         <h2 className="font-bold  text-sm mt-5 mb-5">Vehicle Details</h2>
-        <div className="text-sm">
+        <div className="text-sm space-y-2">
           <p className="text-neutral-400 font-semibold flex justify-between">
             Name:{" "}
             <span className="text-black font-normal">Gasana Innocent</span>

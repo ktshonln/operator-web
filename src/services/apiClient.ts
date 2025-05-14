@@ -44,6 +44,36 @@ class APIClient<TResponse> {
       .get<TResponse>(`${this.endpoint}/${companyId}/buses/${busId}`)
       .then((res) => res.data);
   };
+  getAllBuses = (companyId: string | number, config: AxiosRequestConfig) => {
+    return axiosInstance
+      .get<TResponse>(`${this.endpoint}/${companyId}/buses`, config)
+      .then((res) => res.data);
+  };
+  addBus = <TRequest>(input: TRequest,companyId: string | number) => {
+    return axiosInstance
+      .post<TResponse>(`${this.endpoint}/${companyId}/buses`, input)
+      .then((res) => res.data);
+  };
+  editBus = <TRequest>(input: TRequest,companyId: string | number, busId: string | number) => {
+    return axiosInstance
+      .put<TResponse>(`${this.endpoint}/${companyId}/buses/${busId}`, input)
+      .then((res) => res.data);
+  };
+  deleteBus = (companyId: string | number, busId: string | number) => {
+    return axiosInstance
+      .delete<TResponse>(`${this.endpoint}/${companyId}/buses/${busId}`)
+      .then((res) => res.data);
+  };
+  getDriver = (companyId: string | number, driverId: string | number) => {
+    return axiosInstance
+      .get<TResponse>(`${this.endpoint}/${companyId}/drivers/${driverId}`)
+      .then((res) => res.data);
+  };
+  getAllDrivers = (companyId: string | number, config: AxiosRequestConfig) => {
+    return axiosInstance
+      .get<TResponse>(`${this.endpoint}/${companyId}/drivers`, config)
+      .then((res) => res.data);
+  };
   getManifest = (companyId: string | number, tripId: string | number) => {
     return axiosInstance
       .get<TResponse>(`${this.endpoint}/${companyId}/trips/${tripId}/manifest`)

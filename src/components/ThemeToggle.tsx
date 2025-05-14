@@ -9,8 +9,8 @@ const ThemeToggle = () => {
          <div className="space-y-2">
                       <div
                         onClick={() => setTheme("system")}
-                        className={`flex items-center space-x-5 text-sm cursor-pointer hover:text-black ${
-                          theme == "system" ? "text-black" : "text-neutral-500"
+                        className={`flex items-center space-x-5 text-sm cursor-pointer hover:text-black dark:hover:text-white ${
+                          theme == "system" ? "text-black dark:text-white" : "text-neutral-500"
                         }`}
                       >
                         <div
@@ -26,8 +26,8 @@ const ThemeToggle = () => {
                       </div>
                       <div
                         onClick={() => setTheme("light")}
-                        className={`flex items-center space-x-5 text-sm cursor-pointer hover:text-black  ${
-                          theme == "light" ? "text-black" : "text-neutral-500"
+                        className={`flex items-center space-x-5 text-sm cursor-pointer hover:text-black dark:hover:text-white ${
+                          theme == "light" ? "text-black dark:text-white" : "text-neutral-500"
                         }`}
                       >
                         <div
@@ -43,8 +43,8 @@ const ThemeToggle = () => {
                       </div>
                       <div
                         onClick={() => setTheme("dark")}
-                        className={`flex items-center space-x-5 text-sm cursor-pointer hover:text-black  ${
-                          theme == "dark" ? "text-black" : "text-neutral-500"
+                        className={`flex items-center space-x-5 text-sm cursor-pointer hover:text-black dark:hover:text-white ${
+                          theme == "dark" ? "text-black dark:text-white" : "text-neutral-500"
                         }`}
                       >
                         <div

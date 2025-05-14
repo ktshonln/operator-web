@@ -1,13 +1,14 @@
-import { TicketSaleDetails } from "../hooks/useSellTicket";
-import { Ticket } from "../hooks/useTickets";
-import useTrip from "../hooks/useTrip"
-import useUser from "../hooks/useUser";
-import { formatMoney } from "../utils/helpers";
-import DropDown from "./DropDown"
-import Modal from "./Modal"
 import { zodResolver } from "@hookform/resolvers/zod";
 import { Controller, useForm } from "react-hook-form";
 import { z } from "zod";
+import useSellTicket, { TicketSaleDetails } from "../hooks/useSellTicket";
+import useTrip from "../hooks/useTrip";
+import useUser from "../hooks/useUser";
+import { formatMoney } from "../utils/helpers";
+import DropDown from "./DropDown";
+import Modal from "./Modal";
+import { ChangeEvent, useEffect, useState } from "react";
+import { useToastStore } from "../stores/toastStore";
 
 const schema = z.object({
     name: z
@@ -18,9 +19,8 @@ const schema = z.object({
     .min(10, { message: "Enter a valid phone number." }),
     ticketQuantity: z
     .number()
-    .min(1, { message: "Ticket quantity must be greater than 1." }),
+    .min(1, { message: "Ticket quantity must be at least 1." }),
     seatNumber: z.union([
-
       z
      .string()
      .min(1, { message: "Please enter a valid seat." }),
@@ -43,24 +43,42 @@ const schema = z.object({
 type FormData = z.infer<typeof schema>;
 
 const SellTicket = ({effectTwo,  tripId}:{effectTwo:()=>void, tripId: string}) => {
+  const [tNumber,setTnumber] = useState(0)
+  const {data: trip} = useTrip(tripId)
+  const {user:{id:userId}} = useUser()
+  
+  const showToast = useToastStore((state) => state.showToast);
   const {
       register,
       handleSubmit,
-      resetField,
       control,
+      setValue,
       formState: { errors },
-    } = useForm<FormData>({ resolver: zodResolver(schema) });
-  const onSubmit = async (data: TicketSaleDetails) => {
-      alert("submitting");
-      console.log('SOLDDD!',data);
+    } = useForm<FormData>({ resolver: zodResolver(schema), defaultValues: {tripId: tripId,originStopId:trip?.route.startId, destinationStopId:trip?.route.endId} });
+    const startId = trip?.route.startId
+    const endId = trip?.route.endId
+    const sellTicket = useSellTicket()
+     useEffect(() => {
       
+       userId && setValue("userId", userId);
+       tripId && setValue('tripId', tripId)
+      startId && setValue('originStopId', startId)
+      endId && setValue('destinationStopId', endId)
+    }, [userId, tripId, startId, endId, setValue]); 
+  const onSubmit = async (data: TicketSaleDetails) => {
+      if(data.tripId===""||data.destinationStopId ===""|| data.originStopId==="") {
+        showToast('Something went wrong.', 'error')
+      return
+      }
+      console.log('SOLDDD!',data);
+      sellTicket.mutate(data)
     };
 
-  const {data: trip, isLoading} = useTrip(tripId)
-  const {user:{id:userId}} = useUser()
   
-  console.log('Ticket',trip)
+  
+  console.log('TicketNOW',trip)
   console.log('TicketID',tripId)
+  // console.log('TESTBABY', Array(4).fill([1, 2]))
     return (
         <Modal title="Sell ticket" actionOne="Sell" actionTwo="Cancel" effectOne={handleSubmit(onSubmit)} effectTwo={effectTwo} form >
          <>
@@ -72,7 +90,7 @@ const SellTicket = ({effectTwo,  tripId}:{effectTwo:()=>void, tripId: string}) =
                 </label>
                 <div className="mb-5">
 
-                <div className="ring ring-gray-200 mb-5 p-1 rounded-xs bg-white">
+                <div className="ring ring-gray-200 mb-1 p-1 rounded-xs bg-white">
                   <input
                   {...register("name")}
                     type="text"
@@ -95,7 +113,7 @@ const SellTicket = ({effectTwo,  tripId}:{effectTwo:()=>void, tripId: string}) =
                   Phone Number <span className="text-red-500 text-base">*</span>
                 </label>
                 <div className="mb-5">
-                <div className="ring ring-gray-200 mb-5 p-1 rounded-xs bg-white">
+                <div className="ring ring-gray-200 mb-1 p-1 rounded-xs bg-white">
                   <input
                   {...register("phoneNumber")}
                     type="text"
@@ -119,11 +137,14 @@ const SellTicket = ({effectTwo,  tripId}:{effectTwo:()=>void, tripId: string}) =
                 </label>
                 <div className="mb-5">
 
-                <div className="ring ring-gray-200 mb-5 p-1 rounded-xs bg-white">
+                <div className="ring ring-gray-200 mb-1 p-1 rounded-xs bg-white">
                   <input
-                  {...register("ticketQuantity")}
+                  {...register("ticketQuantity", {valueAsNumber:true})}
+                  onChange={(e:ChangeEvent<HTMLInputElement>)=>setTnumber(parseInt(e.target.value))}
                     type="number"
                     min={1}
+                    max={trip?.seats.length}
+                    defaultValue={1}
                     id="ticketQuantity"
                     name="ticketQuantity"
                     className="outline-none w-full"
@@ -144,13 +165,13 @@ const SellTicket = ({effectTwo,  tripId}:{effectTwo:()=>void, tripId: string}) =
                   Seat
                 </label>
                 <div className="mb-5">
-                <div className="ring ring-gray-200 mb-5 p-1 rounded-xs bg-white">
-                  <Controller 
+                <div className="ring ring-gray-200 mb-1 p-1 rounded-xs bg-white ">
+                <Controller 
                   name='seatNumber'
+                  defaultValue={trip?.seats[0]} // Initializing value to first item, this is requered as value is undefined when no selection is yet made
                   control={control}
-                  render={({field})=><DropDown {...field} onSelect={()=>console.log('selected')} options={trip?.seats} style="v1"/>}
+                  render={({field})=><DropDown value={field.value} multiValue={tNumber} onSelect={field.onChange} options={trip?.seats} style="v1"/>}
                   />
-                    
                 </div>
                  {errors.seatNumber && (
                       <p className="text-red-500 text-xs">
@@ -168,8 +189,13 @@ const SellTicket = ({effectTwo,  tripId}:{effectTwo:()=>void, tripId: string}) =
                   Intermediate stop
                 </label>
                 <div className="mb-5">
-                <div className="ring ring-gray-200 mb-5 p-1 rounded-xs bg-white">
-                    <DropDown {...register("intermediateStop")} onSelect={()=>console.log('selected')} options={['None',...trip?.intermediateStops]} style="v1"/>
+                <div className="ring ring-gray-200 mb-1 p-1 rounded-xs bg-white">
+                <Controller 
+                  name='intermediateStop'
+                  control={control}
+                  render={({field})=><DropDown {...field}  onSelect={()=>console.log('selected')} options={['None',...trip?.intermediateStops]} style="v1"/>}
+                  />
+                    
                 </div>
                 {errors.intermediateStop && (
                       <p className="text-red-500 text-xs">
@@ -179,38 +205,6 @@ const SellTicket = ({effectTwo,  tripId}:{effectTwo:()=>void, tripId: string}) =
                 </div>
                 <p>Price: <span className="text-brand font-bold">{formatMoney(1345)}</span> <span className="text-neutral-500 font-semibold">RWF</span></p>
                </>}
-               <input
-                    {...register("tripId")} 
-                    type="text"
-                    id="tripId"
-                    name="tripId"
-                    value={trip?.tripId}
-                    className="outline-none w-full hidden"
-                  />
-               <input
-                    {...register("originStopId")} 
-                    type="text"
-                    id="originStopId"
-                    name="originStopId"
-                    value={trip?.route.startId}
-                    className="outline-none w-full hidden"
-                  />
-               <input
-                    {...register("destinationStopId")} 
-                    type="text"
-                    id="destinationStopId"
-                    name="destinationStopId"
-                    value={trip?.route.endId}
-                    className="outline-none w-full hidden"
-                  />
-               <input
-                    {...register("userId")} 
-                    type="text"
-                    id="userId"
-                    name="userId"
-                    value={userId}
-                    className="outline-none w-full hidden"
-                  />
          </>
         </Modal>
     )

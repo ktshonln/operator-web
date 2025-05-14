@@ -26,7 +26,7 @@ const defaultUser: LoggedInUser = {
 };
 
 const useUser = () => {
-  const [user, setUser] = useState<LoggedInUser>(defaultUser);
+  const [user, setUser] = useState<LoggedInUser>({} as LoggedInUser);
   const [loading, setLoading] = useState(false);
   const logout = useLogout();
   const navigate = useNavigate();

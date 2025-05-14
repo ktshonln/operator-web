@@ -62,7 +62,7 @@ function HomePage() {
         <p className="font-bold text-2xl">
           Good morning,{" "}
           <span className="text-brand">
-            {camelCaseToTitle(user.firstName)}!
+            {camelCaseToTitle(user.firstName??"")}!
           </span>
         </p>
         <p className="text-sm text-brand2">

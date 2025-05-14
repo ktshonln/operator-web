@@ -24,13 +24,13 @@ const Sidebar = () => {
     return (
         <div className="relative w-1/5">
 
-        <div className="fixed top-0 w-52 p-3 h-screen flex flex-col justify-between shadow-lg rounded-r-md shadow-black/15">
+        <div className="fixed top-0 w-52 p-3 h-screen flex flex-col justify-between shadow-lg rounded-r-md dark:bg-neutral-900 shadow-black/15">
             <div className="">
 
             <div className="w-fit mx-auto">
             <img
               src="/logoOne.svg"
-              className="w-16"
+              className="w-16 dark:invert"
               alt="Katisha-logo"
             />
             </div>
@@ -46,11 +46,11 @@ const Sidebar = () => {
                         <BiSolidUserCircle size={40} className="text-neutral-400"/>
                     </div>
                     <div>
-                        <p className="text-sm">{user.firstName + " " + user.lastName}</p>
-                        <p className="text-xs text-[#6A717D]">{camelCaseToTitle(user.role)}</p>
+                        <p className="text-sm dark:text-white">{user.firstName + " " + user.lastName}</p>
+                        <p className="text-xs text-[#6A717D]">{camelCaseToTitle(user.role??"")}</p>
                     </div>
                 </div>
-                    <div onClick={()=>logout()} className="flex items-center group gap-3 ml-3 text-neutral-500 mt-3 hover:text-black cursor-pointer active:scale-95">
+                    <div onClick={()=>logout()} className="flex items-center group gap-3 ml-3 text-neutral-500 mt-3 hover:text-black dark:hover:text-white cursor-pointer active:scale-95">
                         <HiOutlineLogout className="group-active:translate-x-2" size={18}/>
                         <p className="font-semibold text-sm">Logout</p>
                     </div>
