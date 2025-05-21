@@ -3,22 +3,22 @@ import { useNavigate } from "react-router-dom";
 import APIClient from "../services/apiClient";
 import { useToastStore } from "../stores/toastStore";
 
-interface DeleteBusResponse {
+interface DeleteDriverResponse {
   busId: string;
 }
 
-const apiClient = new APIClient<DeleteBusResponse>("/companies");
-const useDeleteBus = (companyId: string, busId: string) => {
+const apiClient = new APIClient<DeleteDriverResponse>("/companies");
+const useDeleteDriver = (companyId: string, driverId: string) => {
   const showToast = useToastStore((state) => state.showToast);
   const navigate = useNavigate();
-  return useMutation<DeleteBusResponse, Error>({
-    mutationFn: () => apiClient.deleteBus(companyId, busId),
+  return useMutation<DeleteDriverResponse, Error>({
+    mutationFn: () => apiClient.deleteBus(companyId, driverId),
     onSuccess: () => {
-      showToast("Bus deleted successfully!", "success");
-      navigate(`/fleets/buses`);
+      showToast("Driver deleted successfully!", "success");
+      navigate(`/fleets/drivers`);
     },
     onError: (error) => showToast(error.message, "error"),
   });
 };
 
-export default useDeleteBus;
+export default useDeleteDriver;

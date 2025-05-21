@@ -164,8 +164,8 @@ function CustomDatePicker({
     <div ref={containerRef} className="bg-white p-5 rounded-xl shadow-xl w-80 space-y-4">
       {mode === 'mixed' && (
         <div className="flex justify-center gap-2">
-          <button className={`${mixedTab === 'single' ? 'bg-blue-500 text-white' : 'bg-gray-200'} px-3 py-1 rounded`} onClick={() => setMixedTab('single')}>Single</button>
-          <button className={`${mixedTab === 'range' ? 'bg-blue-500 text-white' : 'bg-gray-200'} px-3 py-1 rounded`} onClick={() => setMixedTab('range')}>Range</button>
+          <button type='button' className={`${mixedTab === 'single' ? 'bg-brand text-white' : 'bg-gray-200'} px-3 py-1 rounded`} onClick={() => setMixedTab('single')}>Single</button>
+          <button type='button' className={`${mixedTab === 'range' ? 'bg-brand text-white' : 'bg-gray-200'} px-3 py-1 rounded`} onClick={() => setMixedTab('range')}>Range</button>
         </div>
       )}
 
@@ -174,9 +174,9 @@ function CustomDatePicker({
       {showCalendar && (
         <>
           <div className="flex justify-between items-center">
-            <button onClick={() => setCurrentDate(subMonths(currentDate, 1))}>←</button>
+            <button type='button' onClick={() => setCurrentDate(subMonths(currentDate, 1))}>←</button>
             <div className="font-semibold">{format(currentDate, 'MMMM yyyy')}</div>
-            <button onClick={() => setCurrentDate(addMonths(currentDate, 1))}>→</button>
+            <button type='button' onClick={() => setCurrentDate(addMonths(currentDate, 1))}>→</button>
           </div>
 
           <div className="grid grid-cols-7 text-xs text-center mt-2 text-gray-500">
@@ -194,10 +194,11 @@ function CustomDatePicker({
 
               return (
                 <button
+                type='button'
                   key={dt.toISOString()}
                   onClick={() => handleDateClick(dt)}
                   disabled={!inMonth}
-                  className={`p-2 text-xs rounded ${inMonth ? 'hover:bg-blue-100' : 'text-gray-300'} ${isStart || isEnd ? 'bg-blue-500 text-white' : ''} ${inRange ? 'bg-blue-100' : ''}`}
+                  className={`p-2 text-xs rounded ${inMonth ? 'hover:bg-blue-100' : 'text-gray-300'} ${isStart || isEnd ? 'bg-brand text-white' : ''} ${inRange ? 'bg-blue-100' : ''}`}
                 >
                   {format(dt, 'd')}
                 </button>
@@ -230,8 +231,8 @@ function CustomDatePicker({
       )}
 
       <div className="flex justify-between items-center pt-4 border-t">
-        <button onClick={handleClear} className="text-red-500 text-sm hover:underline">Clear</button>
-        <button onClick={handleConfirm} className="bg-blue-500 text-white text-sm px-4 py-2 rounded hover:bg-blue-600">Confirm</button>
+        <button type='button' onClick={handleClear} className="text-red-500 text-sm hover:underline">Clear</button>
+        <button type='button' onClick={handleConfirm} className="bg-brand text-white text-sm px-4 py-2 rounded hover:brightness-80">Confirm</button>
       </div>
     </div>
   );
@@ -239,39 +240,3 @@ function CustomDatePicker({
 
 export default CustomDatePicker;
 
-// DEMO USAGE
-export function DatePickerDemo() {
-  const [open, setOpen] = useState(false);
-  const [val, setVal] = useState<Date | [Date, Date] | null>(null);
-
-  const displayValue = () => {
-    if (!val) return 'Nothing selected';
-    if (val instanceof Date) return format(val, 'PPpp');
-    return `${format(val[0], 'PPpp')} → ${format(val[1], 'PPpp')}`;
-  };
-
-  return (
-    <div className="p-6">
-      <button
-        onClick={() => setOpen(true)}
-        className="px-4 py-2 bg-green-600 text-white rounded"
-      >
-        Open Picker
-      </button>
-
-      {open && (
-        <CustomDatePicker
-          mode="mixed"
-          withTime={true}
-          isOpen={open}
-          onClose={() => setOpen(false)}
-          onChange={setVal}
-        />
-      )}
-
-      <div className="mt-4 text-sm text-gray-700">
-        <strong>Current Selection:</strong> {displayValue()}
-      </div>
-    </div>
-  );
-}

@@ -1,20 +1,30 @@
-import { BiCalendarAlt, BiTime } from "react-icons/bi"
-import DropDown from "./DropDown"
-import Modal from "./Modal"
-import { RiFlashlightLine } from "react-icons/ri"
-import { useEffect, useRef, useState } from "react"
-import { format } from "date-fns"
-import { TripQuery } from "../hooks/useTrips"
-import CustomDatePicker from "./CustomDatePicker"
-import useUser from "../hooks/useUser"
-import { camelCaseToTitle } from "../utils/helpers"
-import useCompany from "../hooks/useCompany"
 import { zodResolver } from "@hookform/resolvers/zod";
 import { Controller, useForm } from "react-hook-form";
 import { z } from "zod";
-import useAddTrip, { TripDetails } from "../hooks/useAddTrip"
-import useBuses, { BusQuery } from "../hooks/useBuses"
-import useRoutes, { RouteQuery } from "../hooks/useRoutes"
+import { Bus } from "../hooks/useBus";
+import useDrivers, { DriverQuery } from "../hooks/useDrivers";
+import useEditBus from "../hooks/useEditBus";
+import DropDown from "./DropDown";
+import Modal from "./Modal";
+import { Trip, TripQuery } from "../hooks/useTrips";
+import useEditTrip from "../hooks/useEditTrip";
+import { TripDetails } from "../hooks/useAddTrip";
+import { useEffect, useState } from "react";
+import { format } from "date-fns";
+import useUser from "../hooks/useUser";
+import useCompany from "../hooks/useCompany";
+import useBuses, { BusQuery } from "../hooks/useBuses";
+import useRoutes, { RouteQuery } from "../hooks/useRoutes";
+import { RiFlashlightLine } from "react-icons/ri";
+import { BiCalendarAlt, BiTime } from "react-icons/bi";
+import CustomDatePicker from "./CustomDatePicker";
+import { camelCaseToTitle } from "../utils/helpers";
+
+interface Props {
+  effectTwo: () => void;
+  companyId: string;
+  trip: Trip;
+}
 
 const schema = z.object({
   route: z.object({
@@ -107,75 +117,74 @@ const schema = z.object({
 });
 type FormData = z.infer<typeof schema>;
 
-const CreateTrip = ({effectTwo}:{effectTwo:()=>void}) => {
-  const { user } = useUser();
-  const { data: company } = useCompany(user?.companyId);
-  const { data: buses, isLoading:busesLoading } = useBuses(user?.companyId, {} as BusQuery);
-  const [currentOrigin,setCurrentOrigin] = useState('')
-  const {data: routes, isLoading: routesLoading} = useRoutes(user?.companyId,{} as RouteQuery)
- const [matchingEnds, setMatchingEnds] = useState<string[]>([])
-  useEffect(()=>{
-     setMatchingEnds([]);
-    setMatchingEnds(routes?.pages.map(page=>page.filter(r=>r.route.start.toLowerCase()===currentOrigin.toLowerCase()).map(o=>o.route.end)).flat(1)??[]) // Matching destinations. Later, filter by id.
-  },[currentOrigin])
-  console.log("rOUTES",routes)
-  console.log("Justify the means",matchingEnds)
-  if(!company) return;
-    const [autoschedule, setAutoSchedule] = useState(false);
-      const [tripQuery, setTripQuery] = useState<TripQuery>({} as TripQuery);
-    
-    const [open, setOpen] = useState(false);
-        const [val, setVal] = useState<Date | [Date, Date] | null>(null);
-        const handleSelectDate = (val: Date | [Date, Date] | null) => {
-            if (!val) return;
-            if (!Array.isArray(val))
-              setTripQuery({
-                ...tripQuery,
-                departureTime: `${format(val, "d/M/yyyy HH'H'00")}`,
-              });
-          };
-    const [openTime, setOpenTime] = useState(false);
-        const [valTime, setValTime] = useState<Date | [Date, Date] | null>(null);
-        const handleSelectTime = (val: Date | [Date, Date] | null) => {
-            if (!val) return;
-            if (!Array.isArray(val))
-              setTripQuery({
-                ...tripQuery,
-                departureTime: `${format(val, "HH'H'00")}`,
-              });
-              console.log('ABrA',tripQuery)
-            };
-            const [minuteInterval, setminuteInterval] = useState(false)
-            const [minuteVal, setminuteVal] = useState<number|null>(null)
-             useEffect(() => {
-               if (user.role !== "admin")
-                 setTripQuery({ ...tripQuery, branch: user.branch }); // Only show the relevant branch for an agent
-             }, [user]);
+const EditTrip = ({ effectTwo, companyId, trip }: Props) => {
 
-             const {
-                 register,
-                 unregister,
-                 resetField,
-                 handleSubmit,
-                 control,
-                 formState: { errors },
-               } = useForm<FormData>({ resolver: zodResolver(schema)});
-               const createTrip = useAddTrip(company.companyId);
-                 const onSubmit = async (data: TripDetails) => {
-                   console.log("Added!", data);
-                   createTrip.mutate(data);
-                 };
-          
-    return (
-        <Modal
-          title="Create trip"
-          actionOne="Create"
-          actionTwo="Cancel"
-          effectOne={handleSubmit(onSubmit)}
-          effectTwo={effectTwo}
-          form
-        >
-          <>
+    const { user } = useUser();
+      const { data: company } = useCompany(user.companyId);
+      const { data: buses, isLoading:busesLoading } = useBuses(user.companyId, {} as BusQuery);
+      const [currentOrigin,setCurrentOrigin] = useState('')
+      const {data: routes, isLoading: routesLoading} = useRoutes(user.companyId,{} as RouteQuery)
+      const matchingEnds = routes?.pages.map(page=>page.filter(r=>r.route.start.toLowerCase()===currentOrigin.toLowerCase()).map(o=>o.route.end)).flat(1) // Matching destinations. Later, filter by id.
+      console.log("Justify the means",matchingEnds)
+      if(!company) return;
+        const [autoschedule, setAutoSchedule] = useState(false);
+          const [tripQuery, setTripQuery] = useState<TripQuery>({} as TripQuery);
+        
+        const [open, setOpen] = useState(false);
+            const [val, setVal] = useState<Date | [Date, Date] | null>(null);
+            const handleSelectDate = (val: Date | [Date, Date] | null) => {
+                if (!val) return;
+                if (!Array.isArray(val))
+                  setTripQuery({
+                    ...tripQuery,
+                    departureTime: `${format(val, "d/M/yyyy HH'H'00")}`,
+                  });
+              };
+        const [openTime, setOpenTime] = useState(false);
+            const [valTime, setValTime] = useState<Date | [Date, Date] | null>(null);
+            const handleSelectTime = (val: Date | [Date, Date] | null) => {
+                if (!val) return;
+                if (!Array.isArray(val))
+                  setTripQuery({
+                    ...tripQuery,
+                    departureTime: `${format(val, "HH'H'00")}`,
+                  });
+                  console.log('ABrA',tripQuery)
+                };
+                const [minuteInterval, setminuteInterval] = useState(false)
+                const [minuteVal, setminuteVal] = useState<number|null>(null)
+                 useEffect(() => {
+                   if (user.role !== "admin")
+                     setTripQuery({ ...tripQuery, branch: user.branch }); // Only show the relevant branch for an agent
+                 }, [user]);
+    
+ 
+
+  const {
+    register,
+    unregister,
+    handleSubmit,
+    control,
+    formState: { errors },
+  } = useForm<FormData>({ resolver: zodResolver(schema) });
+  const editTrip = useEditTrip(trip.tripId);
+
+  const onSubmit = async (data: TripDetails) => {
+    console.log("Edited!", data);
+    editTrip.mutate(data);
+    effectTwo();
+  };
+
+  return (
+    <Modal
+      title="Edit trip"
+      actionOne="Edit"
+      actionTwo="Cancel"
+      effectOne={handleSubmit(onSubmit)}
+      effectTwo={effectTwo}
+      form
+    >
+     <>
           <p className="block mb-0.5 font-medium">Origin</p>
           <div className="mb-5">
             <div className="ring ring-gray-200 p-1 rounded-xs bg-white">
@@ -186,7 +195,7 @@ const CreateTrip = ({effectTwo}:{effectTwo:()=>void}) => {
                  render={({ field }) => (
                    <DropDown
                      value={field.value}
-                     onSelect={(choice)=>{field.onChange(choice);resetField('route.end'); unregister('route.end'); setCurrentOrigin(choice)}}
+                     onSelect={(choice)=>{field.onChange; setCurrentOrigin(choice)}}
                      options={["",...(company?.branches ?? [])]}
                      style="v1"
                    />
@@ -206,18 +215,18 @@ const CreateTrip = ({effectTwo}:{effectTwo:()=>void}) => {
           </label>
           <div className="mb-5">
           <div className="ring ring-gray-200 p-1 rounded-xs bg-white">
-            {currentOrigin ?<Controller
+            <Controller
                  name="route.end"
                  control={control}
                  render={({ field }) => (
                    <DropDown
                      value={field.value}
                      onSelect={field.onChange}
-                     options={["",...(matchingEnds ?? ['None yet'])]}
+                     options={["",...(matchingEnds ?? [])]}
                      style="v1"
                    />
                  )}
-               />: 'Waiting origin choice...'}
+               />
           </div>
           {errors.route?.end && (
                   <p className="text-red-500 text-xs">{errors.route.end.message}</p>
@@ -505,8 +514,8 @@ const CreateTrip = ({effectTwo}:{effectTwo:()=>void}) => {
                   </>
                   }
           </>
-        </Modal>
-    )
-}
+    </Modal>
+  );
+};
 
-export default CreateTrip
+export default EditTrip;

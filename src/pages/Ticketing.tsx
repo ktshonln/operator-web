@@ -25,7 +25,6 @@ function Ticketing() {
   const [list, setList] = useState<Manifest>();
   const [sellTicket, setSellTicket] = useState(false);
   const [ticket, setTicket] = useState('')
-  const [createTrip, setCreateTrip] = useState(false);
   const [open, setOpen] = useState(false);
   const [val, setVal] = useState<Date | [Date, Date] | null>(null);
 
@@ -67,6 +66,7 @@ function Ticketing() {
   return (
     <div className="mt-5 m-5 ml-3">
       <Search
+      label="Enter  destination..."
         onSearch={(searchText) =>
           setTripQuery({ ...tripQuery, searchText: searchText })
         }
@@ -77,17 +77,14 @@ function Ticketing() {
           stop found...
         </p>
       )}
-      <div className="mt-3 text-sm text-brand flex justify-between">
-        <button onClick={() => setCreateTrip(true)} className=" cursor-pointer">
-          + Create trip
-        </button>
-        <div className="flex items-center justify-self-end">
+       
+        <div className="mt-3 text-sm text-brand  flex items-center justify-self-end">
           <AiOutlineHistory />
           <Link to="/ticketing/history" className="ml-1 cursor-pointer">
             View sold tickets
           </Link>
         </div>
-      </div>
+     
 
       <div className="mt-3 mb-10 flex items-center justify-between">
         <div className="flex items-center gap-2">
@@ -127,12 +124,10 @@ function Ticketing() {
             <div className="absolute right-0 z-20 top-5">
               <CustomDatePicker
                 mode="single"
-                withTime
                 isOpen={open}
                 onClose={() => setOpen(false)}
                 onChange={(selectedVal) => {
                   handleSelectDate(selectedVal);
-
                   setVal(selectedVal);
                 }}
               />
@@ -157,7 +152,6 @@ function Ticketing() {
         })}
 
       {sellTicket && <SellTicket tripId={ticket} effectTwo={() => setSellTicket(false)} />}
-      {createTrip && <CreateTrip effectTwo={() => setCreateTrip(false)} />}
       {viewList && list && (
         <Modal
           title="Passenger list"

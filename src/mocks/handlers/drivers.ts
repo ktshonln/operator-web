@@ -1,5 +1,6 @@
 import { http, HttpResponse } from "msw";
 import { baseUrl } from "./utils";
+import { Driver } from "../../hooks/useDrivers";
 
 let drivers = [
     {
@@ -8,7 +9,7 @@ let drivers = [
       firstName: "Gasana",
       lastName: "Innocent",
       licenseNumber: "DL123456",
-      contactPhone: "+250788886662",
+      phoneNumber: "+250788886662",
       status: "available",
       assignedBusId: "bus_001",
     },
@@ -18,17 +19,17 @@ let drivers = [
       firstName: "John",
       lastName: "Driver",
       licenseNumber: "DL123456",
-      contactPhone: "+250788886662",
+      phoneNumber: "+250788886662",
       status: "available",
       assignedBusId: "bus_001",
     },
     {
       driverId: "driver_003",
-      userId: "user_op_201",
+      userId: "user_op_203",
       firstName: "John",
-      lastName: "Driver",
+      lastName: "Driver again",
       licenseNumber: "DL123456",
-      contactPhone: "+250788886662",
+      phoneNumber: "+250788886662",
       status: "available",
       assignedBusId: "bus_001",
     },
@@ -50,28 +51,22 @@ export const handlers = [
       // ...and respond to them using this JSON response.
       if (params.driverId && params.companyId)
         return HttpResponse.json(
-          {
-            driverId: "driver_001",
-            userId: "user_op_201",
-            firstName: "Gasana",
-            lastName: "Innocent",
-            licenseNumber: "DL123456",
-            contactPhone: "+250788886662",
-            status: "available",
-            assignedBusId: "bus_001",
-          },
+            drivers.find((driver)=> driver.driverId === params.driverId),
           { status: 200 }
         );
     }
   ),
   // Intercept "POST /companies/{companyId}/drivers" requests...
-  http.post(`${baseUrl}/companies/:companyId/drivers`, () => {
+ http.post<never,Driver>(`${baseUrl}/companies/:companyId/drivers`, async ({request}) => {
     // ...and respond to them using this JSON response.
-    return HttpResponse.json(
-      {
-        driverId: "driver_001",
-      },
-      { status: 201 }
-    );
+    const newDriver = await request.json()
+    const newId = crypto.randomUUID();
+    newDriver.driverId = newId
+    newDriver.status = 'Available'
+    drivers.push(newDriver)
+      return HttpResponse.json(
+       newDriver,
+        { status: 201 }
+      );
   }),
 ];

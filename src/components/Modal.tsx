@@ -26,7 +26,7 @@ const Modal = ({
     }
   return (
     <div className="fixed inset-0 bg-black/50 flex  items-center justify-center">
-      <div className="bg-white sm:min-w-80 lg:min-w-sm p-5 rounded-lg">
+      <div className="bg-white sm:min-w-80 lg:min-w-sm p-5 rounded-lg max-h-lvh overflow-y-auto">
         {message ?
         <p className=" w-fit mx-auto mb-3 mt-6 text-brand2">{title}</p>:
         <p className="font-bold text-lg w-fit mx-auto mb-3">{title}</p>
@@ -49,7 +49,6 @@ const Modal = ({
         </form>: 
         <div className="text-sm">
             {children}
-
             <div className="text-sm font-medium flex items-center gap-14 mx-60">
           <button
           type="submit"

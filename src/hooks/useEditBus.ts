@@ -1,23 +1,50 @@
-import { useMutation } from "@tanstack/react-query";
-import { useNavigate } from "react-router-dom";
+import { useMutation, useQueryClient } from "@tanstack/react-query";
 import APIClient from "../services/apiClient";
 import { useToastStore } from "../stores/toastStore";
+import { CACHE_KEY_BUSES } from "../utils/constants";
 import { BusDetails } from "./useAddBus";
+import { Bus } from "./useBus";
 
-interface EditBusResponse {
-  busId: string;
+interface EditBusContext {
+  previousBuses: Bus[];
 }
 
-const apiClient = new APIClient<EditBusResponse>("/companies");
+const apiClient = new APIClient<Bus>("/companies");
 const useEditBus = (companyId: string, busId: string) => {
+  const queryClient = useQueryClient();
   const showToast = useToastStore((state) => state.showToast);
-  return useMutation<EditBusResponse, Error, BusDetails>({
+  return useMutation<Bus, Error, BusDetails, EditBusContext>({
     mutationFn: (busDetails: BusDetails) =>
       apiClient.editBus<BusDetails>(busDetails, companyId, busId),
-    onSuccess: () => {
+    onMutate: (newData) => {
+      // Optimistic updates
+      const previousBuses =
+        queryClient.getQueryData<Bus[]>(CACHE_KEY_BUSES) || [];
+      queryClient.setQueryData<Bus[]>(CACHE_KEY_BUSES, (buses) =>
+        buses?.map((bus) =>
+          bus.busId === busId ? { ...bus, ...newData } : bus
+        )
+      );
+      return { previousBuses };
+    },
+    onSuccess: (savedData, newData) => {
+      // Invalidating cache for freshness
+      queryClient.setQueryData<Bus[]>(CACHE_KEY_BUSES, (buses) =>
+        buses?.map((bus) => (bus.busId === busId ? savedData : bus))
+      );
+      queryClient.invalidateQueries({
+        queryKey: ["company", companyId, "bus", busId],
+      }); // Invalidate single bus to get fresh data
       showToast("Bus successfully updated!", "success");
     },
-    onError: (error) => showToast(error.message, "error"),
+    onError: (error, newData, context) => {
+      if (!context) return;
+      queryClient.setQueryData<BusDetails[]>(
+        CACHE_KEY_BUSES,
+        context.previousBuses
+      );
+      showToast(error.message, "error");
+    },
   });
 };
 

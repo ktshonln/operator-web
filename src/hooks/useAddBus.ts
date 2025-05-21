@@ -1,27 +1,26 @@
-import { useMutation } from "@tanstack/react-query";
+import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { useNavigate } from "react-router-dom";
 import APIClient from "../services/apiClient";
 import { useToastStore } from "../stores/toastStore";
+import { Bus } from "./useBus";
 
 export interface BusDetails {
     plateNumber: string;
     brand: string;
     model: string;
     seatingCapacity: number;
-    driver: string;
+    assignedDriverId: string;
 }
 
-export interface AddBusResponse {
-  busId: string;
-}
-
-const apiClient = new APIClient<AddBusResponse>("/companies");
+const apiClient = new APIClient<Bus>("/companies");
 const useAddBus = (companyId: string) => {
+    // const queryClient = useQueryClient()
   const showToast = useToastStore((state) => state.showToast);
   const navigate = useNavigate();
-  return useMutation<AddBusResponse, Error ,BusDetails>({
+  return useMutation<Bus, Error ,BusDetails>({
     mutationFn: (busDetails: BusDetails)=> apiClient.addBus<BusDetails>(busDetails,companyId),
     onSuccess: (savedData) => {
+        // queryClient.setQueriesData<Bus[]>({queryKey:['buses']},buses=>[savedData, ...(buses||[])])
       showToast("Successfully added a new bus!", "success");
       navigate(`/fleets/buses/${savedData.busId}`);
     },

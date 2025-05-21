@@ -2,6 +2,7 @@ import { useQuery as useInfiniteQuery } from "@tanstack/react-query";
 import { Branch } from "../pages/ProfileSettings";
 import APIClient from "../services/apiClient";
 import { Bus } from "./useBus";
+import { CACHE_KEY_BUSES } from "../utils/constants";
 
 export interface BusQuery {
   branch: Branch | null;
@@ -13,7 +14,7 @@ const apiClient = new APIClient<Bus[]>("/companies");
 
 const useBuses = (companyId: string,busQuery: BusQuery) =>
   useInfiniteQuery<Bus[], Error>({
-    queryKey: ["buses", busQuery],
+    queryKey: [CACHE_KEY_BUSES, busQuery],
     queryFn: ({ pageParam = 1 }) =>
       apiClient.getAllBuses(companyId,{
         params: {

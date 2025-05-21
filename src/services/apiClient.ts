@@ -27,6 +27,11 @@ class APIClient<TResponse> {
       .post<TResponse>(this.endpoint, input)
       .then((res) => res.data);
   };
+  put = <TRequest>(input: TRequest,id: string | number) => {
+    return axiosInstance
+      .put<TResponse>(`${this.endpoint}/${id}`, input)
+      .then((res) => res.data);
+  };
 
   getAllAgents = (companyId: string | number, config: AxiosRequestConfig) => {
     return axiosInstance
@@ -72,6 +77,46 @@ class APIClient<TResponse> {
   getAllDrivers = (companyId: string | number, config: AxiosRequestConfig) => {
     return axiosInstance
       .get<TResponse>(`${this.endpoint}/${companyId}/drivers`, config)
+      .then((res) => res.data);
+  };
+  addDriver = <TRequest>(input: TRequest,companyId: string | number) => {
+    return axiosInstance
+      .post<TResponse>(`${this.endpoint}/${companyId}/drivers`, input)
+      .then((res) => res.data);
+  };
+  editDriver = <TRequest>(input: TRequest,companyId: string | number, driverId: string | number) => {
+    return axiosInstance
+      .put<TResponse>(`${this.endpoint}/${companyId}/drivers/${driverId}`, input)
+      .then((res) => res.data);
+  };
+  deleteDriver = (companyId: string | number, driverId: string | number) => {
+    return axiosInstance
+      .delete<TResponse>(`${this.endpoint}/${companyId}/drivers/${driverId}`)
+      .then((res) => res.data);
+  };
+   getRoute = (companyId: string | number, busId: string | number) => {
+    return axiosInstance
+      .get<TResponse>(`${this.endpoint}/${companyId}/routes/${busId}`)
+      .then((res) => res.data);
+  };
+  getAllRoutes = (companyId: string | number, config: AxiosRequestConfig) => {
+    return axiosInstance
+      .get<TResponse>(`${this.endpoint}/${companyId}/routes`, config)
+      .then((res) => res.data);
+  };
+    addRoute = <TRequest>(input: TRequest,companyId: string | number) => {
+    return axiosInstance
+      .post<TResponse>(`${this.endpoint}/${companyId}/routes`, input)
+      .then((res) => res.data);
+  };
+  editRoute = <TRequest>(input: TRequest,companyId: string | number, routeId: string | number) => {
+    return axiosInstance
+      .put<TResponse>(`${this.endpoint}/${companyId}/routes/${routeId}`, input)
+      .then((res) => res.data);
+  };
+  deleteRoute = (companyId: string | number, routeId: string | number) => {
+    return axiosInstance
+      .delete<TResponse>(`${this.endpoint}/${companyId}/routes/${routeId}`)
       .then((res) => res.data);
   };
   getManifest = (companyId: string | number, tripId: string | number) => {

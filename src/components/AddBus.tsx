@@ -2,10 +2,9 @@ import { zodResolver } from "@hookform/resolvers/zod";
 import { Controller, useForm } from "react-hook-form";
 import { z } from "zod";
 import useAddBus, { BusDetails } from "../hooks/useAddBus";
+import useDrivers, { DriverQuery } from "../hooks/useDrivers";
 import DropDown from "./DropDown";
 import Modal from "./Modal";
-import useDrivers from "../hooks/useDrivers";
-import { BusQuery } from "../hooks/useBuses";
 
 const schema = z.object({
   brand: z
@@ -25,7 +24,7 @@ const schema = z.object({
   plateNumber: z
     .string()
     .min(4, { message: "Please enter a valid plate number." }),
-  driver: z.string().min(1, { message: "Please enter a valid driver." }),
+  assignedDriverId: z.string().min(1, { message: "Please enter a valid driver." }),
 });
 type FormData = z.infer<typeof schema>;
 
@@ -36,21 +35,15 @@ const AddBus = ({
   effectTwo: () => void;
   companyId: string;
 }) => {
-  const { data: drivers } = useDrivers(companyId, {} as BusQuery);
+  const { data: drivers, isLoading:driversLoading } = useDrivers(companyId, {} as DriverQuery);
+  const driverOptions = [
+    { id: "None", name: "None" },
+    ...(drivers?.map((d) => ({
+      id: d.driverId,
+      name: `${d.firstName} ${d.lastName}`,
+    })) || [])
+  ];
 
-  // Prepare mapping from name to ID
-  const nameToIdMap = new Map(
-    drivers?.map((d) => [`${d.firstName} ${d.lastName}`, d.driverId])
-  );
-  const options = drivers
-    ? ["None", ...drivers.map((dri) => dri.firstName + " " + dri.lastName)]
-    : ["None"];
-  // Get current selected name from stored ID
-  const getNameFromId = (id: string | undefined) => {
-    if (!id) return "None";
-    const entry = [...nameToIdMap.entries()].find(([, val]) => val === id);
-    return entry ? entry[0] : "None";
-  };
   const {
     register,
     handleSubmit,
@@ -148,7 +141,7 @@ const AddBus = ({
             <p className="text-red-500 text-xs">{errors.vin.message}</p>
           )}
         </div>
-        <label htmlFor="phoneNumber" className="block mb-0.5 font-medium">
+        <label htmlFor="plateNumber" className="block mb-0.5 font-medium">
           Plate number <span className="text-red-500 text-base">*</span>
         </label>
         <div className="mb-5">
@@ -166,32 +159,33 @@ const AddBus = ({
           )}
         </div>
 
-        {
+        {drivers &&
           <>
-            <label htmlFor="driver" className="block mb-0.5 font-medium">
+            <label htmlFor="assignedDriverId" className="block mb-0.5 font-medium">
               Driver
             </label>
             <div className="mb-5">
               <div className="ring ring-gray-200 mb-1 p-1 rounded-xs bg-white">
                 <Controller
-                  name="driver"
+                  name="assignedDriverId"
                   control={control}
                   render={({ field }) => (
                     <DropDown
-                      value={getNameFromId(field.value)}
-                      onSelect={(selectedName) => {
-                        // convert selected name back to ID before updating form state
-                        const id = nameToIdMap.get(selectedName) || "";
-                        field.onChange(id);
-                      }}
-                      options={options}
+                      value={field.value}
+                      onSelect={field.onChange}
+                      options={driverOptions.map((d) => d.id)}
+                      label={((driverId)=>{
+                        const match = driverOptions.find((d) => d.id === driverId);
+                        return match ? match.name : "Unknown";
+                    })
+                    }
                       style="v1"
                     />
                   )}
                 />
               </div>
-              {errors.driver && (
-                <p className="text-red-500 text-xs">{errors.driver.message}</p>
+              {errors.assignedDriverId && (
+                <p className="text-red-500 text-xs">{errors.assignedDriverId.message}</p>
               )}
             </div>
           </>

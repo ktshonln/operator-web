@@ -5,100 +5,120 @@ import { useNavigate, useParams } from "react-router-dom";
 import EditBus from "../components/EditBus";
 import WidgetLayout from "../components/layouts/WidgetLayout";
 import Modal from "../components/Modal";
-import useBus from "../hooks/useBus";
 import useDeleteBus from "../hooks/useDeleteBus";
 import useDriver from "../hooks/useDriver";
 import useTrips, { TripQuery } from "../hooks/useTrips";
 import useUser from "../hooks/useUser";
 import { camelCaseToTitle } from "../utils/helpers";
+import useTrip from "../hooks/useTrip";
+import { BiTrip } from "react-icons/bi";
+import useBus from "../hooks/useBus";
+import EditTrip from "./EditTrip";
 
-function BusDetails() {
-  const [editBus, setEditBus] = useState(false);
-  const [deleteBus, setDeleteBus] = useState(false);
+function TripDetails() {
+  const [editTrip, setEditTrip] = useState(false);
+  const [deleteTrip, setDeleteTrip] = useState(false);
   const { user } = useUser();
   const companyId = user.companyId;
-  const { busId } = useParams<string>();
-  if (!busId) return <p>No busId found</p>;
-  const { data: bus } = useBus(companyId, busId);
-  const { data: driver } = useDriver(companyId, bus?.assignedDriverId ?? "");
+  const { tripId } = useParams<string>();
+  if (!tripId) return <p>No routeId found</p>;
+  const { data: trip } = useTrip(tripId);
+  const {data: bus} = useBus(companyId,trip?.busId??'')
+  const {data: driver} = useDriver(companyId,bus?.assignedDriverId??'')
+
   const { data: trips, isLoading: tripsLoad } = useTrips({
-    busId: busId,
+    busId: tripId,
   } as TripQuery);
+
   const tableHeaders = ["route", "departureTime"];
   const navigate = useNavigate();
-  const deleteB = useDeleteBus(companyId, bus?.busId ?? "");
+  const deleteT = useDeleteBus(companyId, trip?.busId ?? "");
   return (
     <div className="flex  space-x-3">
       <div className=" ml-3 mr-10 mt-5 grow">
         <div className="flex items-center space-x-2  ml-5">
-          <div className="p-5 rounded-md bg-neutral-200 text-brand2">
-            <RiBusFill size={24} />
+          <div className="p-2 rounded-md bg-neutral-200 text-brand2">
+            <BiTrip size={35} />
           </div>
           <div className="text-sm">
             <p className="font-bold text-lg">
-              {bus?.year} {bus?.brand}
+              {trip?.route.start + "->" + trip?.route.end}
             </p>
-            <p className="text-xs">
-              {bus?.model} • {bus?.vin}
-            </p>
+           
           </div>
         </div>
         <div className="text-sm font-medium flex items-center space-x-3">
           <button
-            onClick={() => setEditBus(true)}
+            onClick={() => setEditTrip(true)}
             className="bg-brand p-1.5 w-20 text-white mt-10 rounded-sm cursor-pointer active:scale-95 hover:brightness-95"
           >
             Edit
           </button>
           <button
-            onClick={() => setDeleteBus(true)}
+            onClick={() => setDeleteTrip(true)}
             className="bg-[#FF6666] text-white p-1.5 w-20 mt-10 rounded-sm cursor-pointer active:scale-95 hover:brightness-95"
           >
             Delete
           </button>
         </div>
-        <h2 className="font-bold  text-sm mt-5 mb-5">Vehicle Details</h2>
+        <h2 className="font-bold  text-sm mt-5 mb-5">Trip Details</h2>
         <div className="text-sm space-y-2">
           <p className="text-neutral-400 font-semibold flex justify-between">
-            Name:{" "}
+            Origin:{" "}
             <span className="text-black font-normal">
-              {bus?.year} {bus?.brand}
+              {trip?.route.start}
             </span>
           </p>
           <p className="text-neutral-400 font-semibold flex justify-between">
-            Model: <span className="text-black font-normal">{bus?.model}</span>
+            Destination: <span className="text-black font-normal">{trip?.route.end}</span>
           </p>
           <p className="text-neutral-400 font-semibold flex justify-between">
-            Seating Capacity: <span className="text-black font-normal">{bus?.seatingCapacity}</span>
+            Express: <span className="text-black font-normal">{trip?.express}</span>
           </p>
           <p className="text-neutral-400 font-semibold flex justify-between">
-            Plate Number:{" "}
-            <span className="text-black font-normal">{bus?.plateNumber}</span>
+            Intermediate stops:{" "}
+            <span className="text-black font-normal">{trip?.intermediateStops? trip.intermediateStops.map(stop=>`${stop},`) :'None'}</span>
           </p>
           <p className="text-neutral-400 font-semibold flex justify-between">
-            Driver:{" "}
+            Bus:{" "}
             <span className="text-black font-normal">
-              {driver?.firstName} {driver?.lastName}
-              {!driver && (
-                <span className="italic font-extralight">
-                  No driver assigned
-                </span>
-              )}
+              {bus?.plateNumber}
             </span>
           </p>
           <p className="text-neutral-400 font-semibold flex justify-between">
-            VIN: <span className="text-black font-normal">{bus?.vin}</span>
+            Driver: <span className="text-black font-normal">{driver?.firstName} {driver?.lastName}</span>
+          </p>
+          <p className="text-neutral-400 font-semibold flex justify-between">
+            Departure time: <span className="text-black font-normal">{trip?.departureTime}</span>
+          </p>
+          <p className="text-neutral-400 font-semibold flex justify-between">
+            Departure date: <span className="text-black font-normal">{trip?.departureDateAndTime}</span>
+          </p>
+          <p className="text-neutral-400 font-semibold flex justify-between">
+            Auto-scheduling: <span className="text-black font-normal">{trip?.autoScheduling?'Enabled': 'Not enabled'}</span>
+          </p>
+          <p className="text-neutral-400 font-semibold flex justify-between">
+            Schedule: <span className="text-black font-normal">{trip?.scheduleBlock}</span>
+          </p>
+          <p className="text-neutral-400 font-semibold flex justify-between">
+            Day range: <span className="text-black font-normal">{trip?.dayRange?.from + '-' + trip?.dayRange?.to}</span>
+          </p>
+          <p className="text-neutral-400 font-semibold flex justify-between">
+            Set minutes: <span className="text-black font-normal">{trip?.minuteInterval}</span>
+          </p>
+          <p className="text-neutral-400 font-semibold flex justify-between">
+            Time range: <span className="text-black font-normal">{trip?.timeRange?.from + '-' + trip?.timeRange?.to}</span>
           </p>
           <p className="text-neutral-400 font-semibold flex justify-between">
             Status:{" "}
-            <span className="text-black font-normal">{bus?.status}</span>
+            <span className="text-black font-normal">{trip?.status}</span>
           </p>
         </div>
       </div>
       <WidgetLayout>
         <div>
           <h2 className="font-bold  text-sm mt-5 mb-5 w-fit mx-auto">
-            Scheduled trips
+            Auto-schedules
           </h2>
           <div className="w-full mt-7 overflow-x-hidden">
             <table className="text-sm w-full">
@@ -116,11 +136,11 @@ function BusDetails() {
                 </tr>
               </thead>
               <tbody>
-                {trips?.map(({ tripId,route, departureDateAndTime }, i) => (
+                {trips?.map(({ route, departureDateAndTime }, i) => (
                   <tr
-                    key={tripId + i}
+                    key={i}
                     onClick={() => {
-                      navigate(`/trips/${tripId}`);
+                      navigate(`/fleets/buses/`);
                     }}
                     className={`even:bg-gray-100 text-neutral-600 hover:bg-gray-200 cursor-pointer`}
                   >
@@ -136,30 +156,30 @@ function BusDetails() {
           {tripsLoad && <p>Trips Loading...</p>}
 
           <h2 className="font-bold  text-sm mt-35 mb-5 w-fit mx-auto">
-            Bus maintenance records
+            Tickets sold
           </h2>
         </div>
       </WidgetLayout>
-      {editBus && bus && (
-        <EditBus
+      {editTrip && trip && (
+        <EditTrip
           companyId={companyId}
-          bus={bus}
-          effectTwo={() => setEditBus(false)}
+          trip={trip}
+          effectTwo={() => setEditTrip(false)}
         />
       )}
-      {deleteBus && bus && (
+      {deleteTrip && trip && (
         <Modal
           form
-          title="Are you sure you want to delete this bus?"
+          title="Are you sure you want to delete this trip?"
           message
           actionOne="Confirm"
           actionTwo="Cancel"
-          effectOne={() => deleteB.mutate()}
-          effectTwo={() => setDeleteBus(false)}
+          effectOne={() => deleteT.mutate()}
+          effectTwo={() => setDeleteTrip(false)}
         />
       )}
     </div>
   );
 }
 
-export default BusDetails;
+export default TripDetails;

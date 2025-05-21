@@ -18,10 +18,6 @@ import PeakTrafficChart from "../components/PeakTrafficChart";
 import useCompany from "../hooks/useCompany";
 import { useNavigate } from "react-router-dom";
 
-export interface Route {
-  origin: string;
-  destination: string;
-}
 
 function HomePage() {
   const { user } = useUser();
@@ -91,6 +87,7 @@ function HomePage() {
             Icon={BsTicket}
             title="Sold Tickets"
             action="View"
+            effect={() => navigate('/ticketing/history')}
             variation={{ type: "up", value: 12 }}
           />
           <InsightCard

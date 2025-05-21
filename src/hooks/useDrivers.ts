@@ -1,6 +1,7 @@
 import { useQuery as useInfiniteQuery } from "@tanstack/react-query";
 import { Branch } from "../pages/ProfileSettings";
 import APIClient from "../services/apiClient";
+import { CACHE_KEY_DRIVERS } from "../utils/constants";
 
 export interface DriverQuery {
   branch: Branch | null;
@@ -10,11 +11,12 @@ export interface DriverQuery {
 
 export interface Driver {
   userId: string; // Seriously? for what?
-  driverId: string; 
+  driverId: string;
   firstName: string;
   lastName: string;
   licenseNumber: string;
-  contactPhone: string;
+  phoneNumber: string;
+  assignedBusId: string;
   status: string;
 }
 
@@ -22,7 +24,7 @@ const apiClient = new APIClient<Driver[]>("/companies");
 
 const useDrivers = (companyId: string, busQuery: DriverQuery) =>
   useInfiniteQuery<Driver[], Error>({
-    queryKey: ["drivers", busQuery],
+    queryKey: [CACHE_KEY_DRIVERS, busQuery],
     queryFn: ({ pageParam = 1 }) =>
       apiClient.getAllDrivers(companyId, {
         params: {

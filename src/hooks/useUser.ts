@@ -10,7 +10,7 @@ export interface LoggedInUser { // The JWT data
   lastName: string;
   userType: string;
   companyId: string;
-  role: string;
+  role: 'admin' | 'agent' | "agentManager" 
   branch:string; // An agent needs one but for an admin it is not necessary this could default to 'main'
   exp?:number
 }

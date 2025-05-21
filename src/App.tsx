@@ -21,6 +21,7 @@ import RegisterSuccess from "./pages/RegisterSuccess";
 import LoginMfa from "./pages/LoginMfa";
 import Toaster from "./components/Toaster";
 import { useState } from "react";
+import TripDetails from "./components/TripDetails";
 
 function App() {
   const [show, setShow] = useState(true);
@@ -46,6 +47,7 @@ function App() {
               <Route path="drivers/:driverId" element={<DriverDetails />} />
             </Route>
             <Route path="trips" element={<Trips />} />
+            <Route path="trips/:tripId" element={<TripDetails />} />
             <Route path="reports" element={<Reports />} />
             <Route path="settings" element={<Settings />} />
             <Route path="settings/user/:userId" element={<UserDetails />} />

@@ -10,24 +10,27 @@ let buses =  [
     model: "Coaster",
     seatingCapacity: 50,
     status: "operational",
+    vin: '5Y57AF2AFIAI792F',
     assignedDriverId: "driver_001",
   },
   {
     busId: "bus_002",
-    plateNumber: "RAD345K",
+    plateNumber: "RAD245K",
     brand: "Yutong",
     model: "Large",
     seatingCapacity: 50,
     status: "operational",
+    vin: '5Y57AF2AFIAI792F',
     assignedDriverId: "driver_001",
   },
   {
     busId: "bus_003",
-    plateNumber: "RAD345K",
+    plateNumber: "RAD145K",
     brand: "Toyota",
     model: "Coaster",
     seatingCapacity: 50,
     status: "operational",
+    vin: '5Y57AF2AFIAI792F',
     assignedDriverId: "driver_001",
   },
 ]
@@ -55,15 +58,24 @@ export const handlers = [
   http.put<{busId: string;companyId: string}, Bus>(`${baseUrl}/companies/:companyId/buses/:busId`,async ({ params, request }) => {
     // ...and respond to them using this JSON response.
     if (params.busId && params.companyId){
-      let currentBus = buses.filter((bus)=> bus.busId === params.busId)[0]
       const updatedBus = await request.json()
-      currentBus = updatedBus
-      return HttpResponse.json(
-          currentBus,
-          { status: 200 }
-        );
+      const index = buses.findIndex(bus => bus.busId === params.busId);
+      if (index !== -1) {
+        buses[index] = {
+          ...buses[index],
+          ...updatedBus, // Merge old + new to be safe
+        };
+        return HttpResponse.json(
+          buses[index],
+            { status: 200 }
+          );
+      } else {
+        return HttpResponse.json(buses[index], {status: 404});
+      } 
+      
     }
-  }),
+    return HttpResponse.json({ message: "Invalid request" }, { status: 400 });
+  }), 
 
   // Intercept "DELETE /companies/{companyId}/buses/{busId}" requests...
   http.delete(`${baseUrl}/companies/:companyId/buses/:busId`, ({ params }) => {
@@ -83,11 +95,10 @@ export const handlers = [
     const newBus = await request.json()
     const newId = crypto.randomUUID();
     newBus.busId = newId
+    newBus.status = 'operational'
     buses.push(newBus)
       return HttpResponse.json(
-        {
-          busId: newBus.busId,
-        },
+       newBus,
         { status: 201 }
       );
   }),
