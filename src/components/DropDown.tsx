@@ -42,7 +42,7 @@ function DropDown(props: SingleSelectProps | MultiSelectProps): JSX.Element {
     }
   }, [multiValue]);
   return (
-    <div className="relative">
+    <div className="relative dark:text-white ">
       <div
         onClick={() => setShowChoice(!showChoice)}
         className={`flex items-center cursor-pointer ${
@@ -54,7 +54,7 @@ function DropDown(props: SingleSelectProps | MultiSelectProps): JSX.Element {
         <p
           className={`${
             style && ["v1", "v2"].includes(style)
-              ? "text-blac dark:text-white"
+              ? "text-black dark:text-white"
               : "text-brand"
           }`}
         >
@@ -91,12 +91,14 @@ function DropDown(props: SingleSelectProps | MultiSelectProps): JSX.Element {
 
       {showChoice && (
         <div
-          className={`absolute top-5 right-0 border-1 bg-white dark:bg-black border-neutral-200 shadow-md rounded-md p-1bg-white z-10 ${
+          className={`absolute top-5 right-0 border-1 bg-white dark:bg-black  border-neutral-200 dark:border-neutral-800 shadow-md rounded-md p-1bg-white z-10 ${
             style === "v1" && "w-full mt-1"
           }`}
         >
           {options
-            .filter((val) => !optionChoice.includes(val))
+            .filter((val) => {
+              const selected = Array.isArray(optionChoice)? optionChoice: [optionChoice]
+              return !selected.includes(val)})
             .map((option) => (
               <p
                 key={option}

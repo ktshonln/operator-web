@@ -5,9 +5,11 @@ import { camelCaseToTitle, getDateRange } from "../utils/helpers";
 import CustomDatePicker from "./CustomDatePicker";
 import DropDown from "./DropDown";
 import { format } from "date-fns";
+import { Role } from "../hooks/useUser";
 interface Props {
   onSelectFilter: (filter: Filter)=>void;
-  branches?:string[]
+  branches?:string[];
+  userRole?: Role;
 }
 interface Filter {
   startDate: string;
@@ -15,7 +17,7 @@ interface Filter {
   branch?: Branch;
 }
 // const fullFilter = 
-const Filter = ({onSelectFilter, branches=[]}:Props) => {
+const Filter = ({onSelectFilter, branches=[], userRole}:Props) => {
   const [clicked, setClicked] = useState(0)
   const [currentFilter, setCurrentFilter] = useState<Filter>({
     startDate: '',
@@ -61,7 +63,7 @@ const Filter = ({onSelectFilter, branches=[]}:Props) => {
 
   return (
     <>
-    <div className="flex items-center justify-between border rounded-xl border-neutral-200 font-medium text-xs text-brand2 p-1 mt-2 relative">
+    <div className="flex items-center justify-between border rounded-xl border-neutral-200 dark:border-neutral-800 font-medium text-xs text-brand2 p-1 mt-2 relative">
       {filterOptions.map((option, i) => (
         <div
         onClick={()=>{setClicked(i);option!==filterOptions[4] ? handleClick(camelCaseToTitle(option, true) as FilterOptions):setOpen(!open)}}
@@ -94,10 +96,10 @@ const Filter = ({onSelectFilter, branches=[]}:Props) => {
         </div>
   
 
-      <DropDown onSelect={(choice)=>{
+      {userRole==='admin' &&<DropDown onSelect={(choice)=>{
         setCurrentFilter({...currentFilter, branch:{name: choice}});
         onSelectFilter({...currentFilter, branch:{name: choice}});
-      }} options={['All branches',...branches]} />
+      }} options={['All branches',...branches]} />}
     </div>
     
     </>

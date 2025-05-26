@@ -97,7 +97,7 @@ const SellTicket = ({
           Name <span className="text-red-500 text-base">*</span>
         </label>
         <div className="mb-5">
-          <div className="ring ring-gray-200 mb-1 p-1 rounded-xs bg-white">
+          <div className="ring ring-gray-200 dark:ring-gray-800 mb-1 p-1 rounded-xs bg-white dark:bg-black">
             <input
               {...register("name")}
               type="text"
@@ -115,7 +115,7 @@ const SellTicket = ({
           Phone Number <span className="text-red-500 text-base">*</span>
         </label>
         <div className="mb-5">
-          <div className="ring ring-gray-200 mb-1 p-1 rounded-xs bg-white">
+          <div className="ring ring-gray-200 dark:ring-gray-800 mb-1 p-1 rounded-xs bg-white dark:bg-black">
             <input
               {...register("phoneNumber")}
               type="text"
@@ -133,7 +133,7 @@ const SellTicket = ({
           Number of tickets <span className="text-red-500 text-base">*</span>
         </label>
         <div className="mb-5">
-          <div className="ring ring-gray-200 mb-1 p-1 rounded-xs bg-white">
+          <div className="ring ring-gray-200 dark:ring-gray-800 mb-1 p-1 rounded-xs bg-white dark:bg-black">
             <input
               {...register("ticketQuantity", { valueAsNumber: true })}
               onChange={(e: ChangeEvent<HTMLInputElement>) =>
@@ -160,7 +160,7 @@ const SellTicket = ({
               Seat
             </label>
             <div className="mb-5">
-              <div className="ring ring-gray-200 mb-1 p-1 rounded-xs bg-white ">
+              <div className="ring ring-gray-200 dark:ring-gray-800 mb-1 p-1 rounded-xs bg-white dark:bg-black">
                 <Controller
                   name="seatNumber"
                   defaultValue={trip?.seats[0]} // Initializing value to first item, this is requered as value is undefined when no selection is yet made
@@ -193,7 +193,7 @@ const SellTicket = ({
               Intermediate stop
             </label>
             <div className="mb-5">
-              <div className="ring ring-gray-200 mb-1 p-1 rounded-xs bg-white">
+              <div className="ring ring-gray-200 dark:ring-gray-800 mb-1 p-1 rounded-xs bg-white dark:bg-black">
                 <Controller
                   name="intermediateStop"
                   control={control}

@@ -201,10 +201,9 @@ export const handlers = [
       // ...and respond to them using this JSON response.
       const newTrip = await request.json()
       const newId = crypto.randomUUID();
-      const fullTrip = {...newTrip, tripId: `${newId}`, scheduleId: '', price: 12, arrivalTime:'', departureTime: '',
-  busId: '',
+      const fullTrip = {...newTrip, tripId: `${newId}`, scheduleId: '', price: 12, arrivalTime:'0', // Valid time value is a must please! for format() or just '0' as default
   seats: [],
-  status: '',
+  status: 'not_booked',
   express: false,
   intermediateStops:[],
   route: {...newTrip.route, startId: '', endId: ''}
@@ -215,4 +214,40 @@ export const handlers = [
           { status: 201 }
         );
     }),
+
+      // Intercept "PUT /companies/{companyId}/trips/{tripId}" requests...
+      http.put<{tripId: string;companyId: string}, Trip>(`${baseUrl}/companies/:companyId/trips/:tripId`,async ({ params, request }) => {
+        // ...and respond to them using this JSON response.
+        if (params.tripId && params.companyId){
+          const updatedTrip = await request.json()
+          const index = trips.findIndex(trip => trip.tripId === params.tripId);
+          if (index !== -1) {
+            trips[index] = {
+              ...trips[index],
+              ...updatedTrip, // Merge old + new to be safe
+            };
+            return HttpResponse.json(
+              trips[index],
+                { status: 200 }
+              );
+          } else {
+            return HttpResponse.json(trips[index], {status: 404});
+          } 
+        }
+        return HttpResponse.json({ message: "Invalid request" }, { status: 400 });
+      }), 
+    
+
+      // Intercept "DELETE /companies/{companyId}/trips/{tripId}" requests...
+      http.delete(`${baseUrl}/companies/:companyId/trips/:tripId`, ({ params }) => {
+        // ...and respond to them using this JSON response.
+        if (params.tripId && params.companyId){
+          trips = trips.filter((trip)=> trip.tripId !== params.tripId)
+          return HttpResponse.json(
+            trips,
+            { status: 204 }
+          );
+        }
+    
+      }),
 ];

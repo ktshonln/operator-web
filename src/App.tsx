@@ -1,32 +1,30 @@
 import { BrowserRouter, Navigate, Route, Routes } from "react-router-dom";
-import Layout from "./components/layouts/LayoutOne";
+import Toaster from "./components/Toaster";
+import TripDetails from "./components/TripDetails";
+import BusDetails from "./pages/BusDetails";
 import Buses from "./pages/Buses";
+import DriverDetails from "./pages/DriverDetails";
 import Drivers from "./pages/Drivers";
 import HomePage from "./pages/Home";
 import LoginPage from "./pages/Login";
-import NotFound from "./pages/NotFound";
-import RegisterPage from "./pages/Register";
-import Ticketing from "./pages/Ticketing";
-import TicketDetails from "./pages/TicketDetails";
-import TicketSaleHistory from "./pages/TicketSaleHistory";
-import BusDetails from "./pages/BusDetails";
-import DriverDetails from "./pages/DriverDetails";
-import Trips from "./pages/Trips";
-import Reports from "./pages/Reports";
-import Settings from "./pages/Settings";
-import ProfileSettings from "./pages/ProfileSettings";
-import UserDetails from "./pages/UserDetails";
-import SecuritySettings from "./pages/SecuritySettings";
-import RegisterSuccess from "./pages/RegisterSuccess";
 import LoginMfa from "./pages/LoginMfa";
-import Toaster from "./components/Toaster";
-import { useState } from "react";
-import TripDetails from "./components/TripDetails";
+import NotFound from "./pages/NotFound";
+import ProfileSettings from "./pages/ProfileSettings";
+import RegisterPage from "./pages/Register";
+import RegisterSuccess from "./pages/RegisterSuccess";
+import Reports from "./pages/Reports";
+import SecuritySettings from "./pages/SecuritySettings";
+import Settings from "./pages/Settings";
+import TicketDetails from "./pages/TicketDetails";
+import Ticketing from "./pages/Ticketing";
+import TicketSaleHistory from "./pages/TicketSaleHistory";
+import Trips from "./pages/Trips";
+import UserDetails from "./pages/UserDetails";
+import Layout from "./components/layouts/Layout";
 
 function App() {
-  const [show, setShow] = useState(true);
   return (
-    <div>
+    <div className="dark:bg-black min-h-svh">
       <BrowserRouter>
         <Routes>
           <Route path="/" element={<Navigate to="/login" replace />} />

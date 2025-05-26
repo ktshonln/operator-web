@@ -8,7 +8,7 @@ import DropDown from "./DropDown";
 import Modal from "./Modal";
 import { Trip, TripQuery } from "../hooks/useTrips";
 import useEditTrip from "../hooks/useEditTrip";
-import { TripDetails } from "../hooks/useAddTrip";
+import { ScheduleBlock, scheduleBlocks, TripDetails } from "../hooks/useAddTrip";
 import { useEffect, useState } from "react";
 import { format } from "date-fns";
 import useUser from "../hooks/useUser";
@@ -35,7 +35,7 @@ const schema = z.object({
       .string()
       .min(2, { message: "Please enter a valid destination" }),
   }),
-  plateNumber: z
+  busId: z
     .string()
     .min(4, { message: "Please enter a valid plate number." }),
     express: z.boolean().optional(),
@@ -47,7 +47,7 @@ const schema = z.object({
       .string()
       .optional(),
       scheduleBlock: z
-      .enum(['day', 'week', 'month'], { message: "Please select a schedule block." }).optional(),
+      .enum(scheduleBlocks, { message: "Please select a schedule block." }).optional(),
       dayRange: z.object({
         from: z
         .string()
@@ -122,58 +122,66 @@ const EditTrip = ({ effectTwo, companyId, trip }: Props) => {
     const { user } = useUser();
       const { data: company } = useCompany(user.companyId);
       const { data: buses, isLoading:busesLoading } = useBuses(user.companyId, {} as BusQuery);
-      const [currentOrigin,setCurrentOrigin] = useState('')
+      const [currentOrigin,setCurrentOrigin] = useState(trip.route.start??'')
       const {data: routes, isLoading: routesLoading} = useRoutes(user.companyId,{} as RouteQuery)
-      const matchingEnds = routes?.pages.map(page=>page.filter(r=>r.route.start.toLowerCase()===currentOrigin.toLowerCase()).map(o=>o.route.end)).flat(1) // Matching destinations. Later, filter by id.
-      console.log("Justify the means",matchingEnds)
-      if(!company) return;
-        const [autoschedule, setAutoSchedule] = useState(false);
-          const [tripQuery, setTripQuery] = useState<TripQuery>({} as TripQuery);
+
+ const [matchingEnds, setMatchingEnds] = useState<string[]>(trip.route.start ?[`${trip.route.start}`]:[])
+        const [autoschedule, setAutoSchedule] = useState(trip?.autoScheduling?true: false);
+        console.log('AutoSIKEDI', autoschedule)
         
         const [open, setOpen] = useState(false);
-            const [val, setVal] = useState<Date | [Date, Date] | null>(null);
-            const handleSelectDate = (val: Date | [Date, Date] | null) => {
-                if (!val) return;
-                if (!Array.isArray(val))
-                  setTripQuery({
-                    ...tripQuery,
-                    departureTime: `${format(val, "d/M/yyyy HH'H'00")}`,
-                  });
-              };
+            const [val, setVal] = useState<Date | [Date, Date] | null>(new Date (trip.departureDateAndTime));
+            
+            
         const [openTime, setOpenTime] = useState(false);
-            const [valTime, setValTime] = useState<Date | [Date, Date] | null>(null);
-            const handleSelectTime = (val: Date | [Date, Date] | null) => {
-                if (!val) return;
-                if (!Array.isArray(val))
-                  setTripQuery({
-                    ...tripQuery,
-                    departureTime: `${format(val, "HH'H'00")}`,
-                  });
-                  console.log('ABrA',tripQuery)
-                };
-                const [minuteInterval, setminuteInterval] = useState(false)
+        const departureTimeValue = trip.departureTime ? new Date(trip?.departureTime??"") : null
+            const [valTime, setValTime] = useState<Date | [Date, Date] | null>(departureTimeValue);
+         
+            
+                const [minuteInterval, setminuteInterval] = useState(trip.minuteInterval?true:false)
                 const [minuteVal, setminuteVal] = useState<number|null>(null)
-                 useEffect(() => {
-                   if (user.role !== "admin")
-                     setTripQuery({ ...tripQuery, branch: user.branch }); // Only show the relevant branch for an agent
-                 }, [user]);
-    
- 
+             
+                
+           const busOptions = [
+    { id: "None", plateNumber: "None" },
+    ...(buses?.map((b) => ({
+      id: b.busId,
+      plateNumber: b.plateNumber,
+    })) || [])
+  ];
 
   const {
     register,
     unregister,
+    resetField,
+    getValues,
     handleSubmit,
     control,
     formState: { errors },
-  } = useForm<FormData>({ resolver: zodResolver(schema) });
-  const editTrip = useEditTrip(trip.tripId);
+  } = useForm<FormData>({ resolver: zodResolver(schema), defaultValues: {
+    route: {start: trip.route.start, end: trip.route.end},
+    autoScheduling: autoschedule,
+    scheduleBlock: trip.scheduleBlock as ScheduleBlock,
+    minuteInterval: trip.minuteInterval,
+} });
+  const editTrip = useEditTrip(company?.companyId??'',trip.tripId);
 
   const onSubmit = async (data: TripDetails) => {
     console.log("Edited!", data);
     editTrip.mutate(data);
     effectTwo();
   };
+                   useEffect(()=>{
+       const ends = routes?.pages.map(page=>page.filter(r=>r.route.start.toLowerCase()===currentOrigin.toLowerCase()).map(o=>o.route.end)).flat(1)??[]
+      setMatchingEnds(ends) // Matching destinations. Later, filter by id.
+      if(!ends.includes(getValues('route.end'))){
+        resetField('route.end')
+      }
+    },[currentOrigin])
+
+    console.log('Ze TIRIPU', trip)
+        console.log('DEYI', getValues('dayRange'))
+
 
   return (
     <Modal
@@ -191,11 +199,12 @@ const EditTrip = ({ effectTwo, companyId, trip }: Props) => {
             {user.role === "admin" ? (
                  <Controller
                  name="route.start"
+                 defaultValue={trip.route.start}
                  control={control}
                  render={({ field }) => (
                    <DropDown
                      value={field.value}
-                     onSelect={(choice)=>{field.onChange; setCurrentOrigin(choice)}}
+                     onSelect={(choice)=>{field.onChange;;resetField('route.end'); unregister('route.end'); setCurrentOrigin(choice)}}
                      options={["",...(company?.branches ?? [])]}
                      style="v1"
                    />
@@ -215,18 +224,19 @@ const EditTrip = ({ effectTwo, companyId, trip }: Props) => {
           </label>
           <div className="mb-5">
           <div className="ring ring-gray-200 p-1 rounded-xs bg-white">
-            <Controller
+           {currentOrigin ? matchingEnds.length!==0 ?<Controller
                  name="route.end"
+                 defaultValue={trip.route.end}
                  control={control}
                  render={({ field }) => (
                    <DropDown
                      value={field.value}
                      onSelect={field.onChange}
-                     options={["",...(matchingEnds ?? [])]}
+                     options={["",...(matchingEnds??['None yet'])]}
                      style="v1"
                    />
                  )}
-               />
+               />: 'No matching destination': 'Waiting origin choice...'}
           </div>
           {errors.route?.end && (
                   <p className="text-red-500 text-xs">{errors.route.end.message}</p>
@@ -238,25 +248,31 @@ const EditTrip = ({ effectTwo, companyId, trip }: Props) => {
           <div className=" mb-5">
           <div className="ring ring-gray-200 p-1 rounded-xs bg-white">
             <Controller
-                 name="plateNumber"
+                 name="busId"
+                 defaultValue={trip.busId}
                  control={control}
                  render={({ field }) => (
                    <DropDown
                      value={field.value}
                      onSelect={field.onChange}
-                     options={["",...buses?.map(bus=>bus.plateNumber)??'']}
+                      options={busOptions.map((d) => d.id)}
+                      label={((busId)=>{
+                        const match = busOptions.find((b) => b.id === busId);
+                        return match ? match.plateNumber : "Unknown";
+                    })
+                    }
                      style="v1"
                    />
                  )}
                />
           </div>
-          {errors.plateNumber && (
-                  <p className="text-red-500 text-xs">{errors.plateNumber.message}</p>
+          {errors.busId && (
+                  <p className="text-red-500 text-xs">{errors.busId.message}</p>
                 )}
           </div>
           <div className=" mb-5">
           <div className="flex items-center space-x-2 mb-5">
-            <input {...register("express")} type="checkbox" name="express" id="express" className="size-5 block"/>
+            <input {...register("express")} defaultChecked={trip.express} type="checkbox" name="express" id="express" className="size-5 block"/>
             <span className="flex items-center">
             <label htmlFor="express">Make express</label><RiFlashlightLine className="text-brand"/>
             </span>
@@ -281,6 +297,7 @@ const EditTrip = ({ effectTwo, companyId, trip }: Props) => {
                                          <div className="absolute right-0 z-20 top-5">
                                           <Controller
                                           name="departureDateAndTime"
+                                          defaultValue={trip.departureDateAndTime}
                                           control={control}
                                           render={({field})=>(
                                             <CustomDatePicker
@@ -289,7 +306,6 @@ const EditTrip = ({ effectTwo, companyId, trip }: Props) => {
                                               isOpen={open}
                                               onClose={() => setOpen(false)}
                                               onChange={(selectedVal) => {
-                                                handleSelectDate(selectedVal);
                                                 setVal(selectedVal);
                                                 field.onChange(`${selectedVal}`)
                                               }}
@@ -355,6 +371,7 @@ const EditTrip = ({ effectTwo, companyId, trip }: Props) => {
                                          <div className="absolute right-0 z-20 top-5">
                                           <Controller
                                           name="departureTime"
+                                          defaultValue={trip.departureTime}
                                           control={control}
                                           render={({field})=>(
                                             <CustomDatePicker
@@ -363,9 +380,8 @@ const EditTrip = ({ effectTwo, companyId, trip }: Props) => {
                                               isOpen={openTime}
                                               onClose={() => setOpenTime(false)}
                                               onChange={(selectedVal) => {
-                                                handleSelectTime(selectedVal);
                                                 setValTime(selectedVal);
-                                                field.onChange(`${format(selectedVal as Date, "HH'H'00")}`)
+                                                field.onChange(`${selectedVal}`)
                                               }}
                                             />
                                           )}
@@ -398,7 +414,7 @@ const EditTrip = ({ effectTwo, companyId, trip }: Props) => {
           </label>
           <div className="mb-5">
                                        <div className="flex items-center justify-between">
-                                        <select {...register("dayRange.from")} id="dayRange.from" className="border-1 border-neutral-200 rounded-sm justify-between p-1 text-sm flex items-center space-x-2 cursor-pointer outline-none">
+                                        <select {...register("dayRange.from")} defaultValue={trip?.dayRange?.from} id="dayRange.from" className="border-1 border-neutral-200 rounded-sm justify-between p-1 text-sm flex items-center space-x-2 cursor-pointer outline-none">
                                           <option value=''>From</option>
                                           <option value="mon">Monday</option>
                                           <option value="tue">Tuesday</option>
@@ -408,7 +424,7 @@ const EditTrip = ({ effectTwo, companyId, trip }: Props) => {
                                           <option value="sat">Saturday</option>
                                           <option value="sun">Sunday</option>
                                         </select>
-                                        <select {...register("dayRange.to")} id="dayRange.to" className="border-1 border-neutral-200 rounded-sm justify-between p-1 text-sm flex items-center space-x-2 cursor-pointer outline-none">
+                                        <select {...register("dayRange.to")} defaultValue={trip?.dayRange?.to} id="dayRange.to" className="border-1 border-neutral-200 rounded-sm justify-between p-1 text-sm flex items-center space-x-2 cursor-pointer outline-none">
                                           <option value=''>To</option>
                                           <option value="mon">Monday</option>
                                           <option value="tue">Tuesday</option>
@@ -430,7 +446,7 @@ const EditTrip = ({ effectTwo, companyId, trip }: Props) => {
                 unregister('minuteInterval')
                 unregister('timeRange')
               }
-            }}  name="minuteInterval" id="minuteInterval" className="size-5"/>
+            }}  name="minuteInterval" defaultChecked={trip.minuteInterval? true :false} id="minuteInterval" className="size-5"/>
             <span className="flex items-center">
             <label htmlFor="minuteInterval">After set minutes</label>
             </span>
@@ -452,7 +468,7 @@ const EditTrip = ({ effectTwo, companyId, trip }: Props) => {
           </label>
           <div className="mb-5">
           <div className="flex items-center justify-between">
-                                        <select {...register("timeRange.from")} id="timeRange.from" className="border-1 border-neutral-200 rounded-sm justify-between p-1 text-sm flex items-center space-x-2 cursor-pointer outline-none">
+                                        <select {...register("timeRange.from")} defaultValue={trip?.timeRange?.from} id="timeRange.from" className="border-1 border-neutral-200 rounded-sm justify-between p-1 text-sm flex items-center space-x-2 cursor-pointer outline-none">
                                           <option value=''>From</option>
                                           <option value="12AM">12AM</option>
                                           <option value="1AM">1AM</option>
@@ -479,7 +495,7 @@ const EditTrip = ({ effectTwo, companyId, trip }: Props) => {
                                           <option value="10PM">10PM</option>
                                           <option value="11PM">11PM</option>
                                         </select>
-                                        <select {...register("timeRange.to")} id="timeRange.to" className="border-1 border-neutral-200 rounded-sm justify-between p-1 text-sm flex items-center space-x-2 cursor-pointer outline-none">
+                                        <select {...register("timeRange.to")} defaultValue={trip?.timeRange?.to} id="timeRange.to" className="border-1 border-neutral-200 rounded-sm justify-between p-1 text-sm flex items-center space-x-2 cursor-pointer outline-none">
                                           <option value=''>To</option>
                                           <option value="12AM">12AM</option>
                                           <option value="1AM">1AM</option>

@@ -1,7 +1,7 @@
 import { AiOutlineSearch } from "react-icons/ai"
 import { BiCalendarAlt } from "react-icons/bi"
 import TableTwo from "../components/TableTwo"
-import useTickets from "../hooks/useTickets";
+import useTickets, { TicketQuery } from "../hooks/useTickets";
 import CustomDatePicker from "../components/CustomDatePicker";
 import { useState } from "react";
 import { TripQuery } from "../hooks/useTrips";
@@ -10,7 +10,8 @@ import { format } from "date-fns";
 
 function TicketSaleHistory() {
   const [tripQuery, setTripQuery] = useState<TripQuery>({} as TripQuery);
-  const { data: tickets } = useTickets({});
+  const [ticketQuery, setTicketQuery] = useState<TicketQuery>({} as TicketQuery);
+  const { data: tickets } = useTickets(ticketQuery);
    const [open, setOpen] = useState(false);
     const [val, setVal] = useState<Date | [Date, Date] | null>(null);
     const handleSelectDate = (val: Date | [Date, Date] | null) => {
@@ -22,7 +23,7 @@ function TicketSaleHistory() {
           });
       };
     return (
-        <div className="mt-5 m-5 ml-3">
+        <div className="mt-5 m-5 ml-3 dark:text-white">
             <div className="flex items-center space-x-3 p-3 border-1 border-neutral-200 rounded-xl text-sm max-w-2xl">
                     <AiOutlineSearch size={20} />
                     <form action="">

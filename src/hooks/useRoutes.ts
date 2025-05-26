@@ -40,6 +40,7 @@ const useRoutes = (companyId: string,routeQuery: RouteQuery) =>
     getNextPageParam: (lastPage, allPages) => {
       return allPages.length + 1;
     },
+    enabled: !!companyId
   });
 
 export default useRoutes;

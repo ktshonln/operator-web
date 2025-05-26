@@ -1,13 +1,13 @@
 import { useQuery } from "@tanstack/react-query";
 import APIClient from "../services/apiClient";
 
-interface TicketResponseAlt {
+export interface Ticket {
   ticketId: string;
   tripId: string;
   passenger: {
-    passengerId: string;
+    passengerId: string; // this is possible on the passenger client because they are logged in
     firstName: string;
-    LastName: string;
+    lastName: string;
   };
   ticketQuantity:number; // ticket quantity to be added
   seatNumber: number | number[];
@@ -35,12 +35,13 @@ interface TicketResponseAlt {
   IssuedBy: string;
 }
 
-const apiClient = new APIClient<TicketResponseAlt>("/tickets");
+const apiClient = new APIClient<Ticket>("/tickets");
 
 const useTicket = (ticketId: string) =>
-  useQuery<TicketResponseAlt, Error>({
-    queryKey: ["ticket"],
+  useQuery<Ticket, Error>({
+    queryKey: ["ticket", ticketId],
     queryFn: () => apiClient.get(ticketId),
+    enabled: !!ticketId
   });
 
 export default useTicket;

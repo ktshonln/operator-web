@@ -25,7 +25,7 @@ const schema = z.object({
       .string()
       .min(2, { message: "Please enter a valid destination" }),
   }),
-  plateNumber: z
+  busId: z
     .string()
     .min(4, { message: "Please enter a valid plate number." }),
     express: z.boolean().optional(),
@@ -114,57 +114,47 @@ const CreateTrip = ({effectTwo}:{effectTwo:()=>void}) => {
   const [currentOrigin,setCurrentOrigin] = useState('')
   const {data: routes, isLoading: routesLoading} = useRoutes(user?.companyId,{} as RouteQuery)
  const [matchingEnds, setMatchingEnds] = useState<string[]>([])
-  useEffect(()=>{
-     setMatchingEnds([]);
-    setMatchingEnds(routes?.pages.map(page=>page.filter(r=>r.route.start.toLowerCase()===currentOrigin.toLowerCase()).map(o=>o.route.end)).flat(1)??[]) // Matching destinations. Later, filter by id.
-  },[currentOrigin])
-  console.log("rOUTES",routes)
-  console.log("Justify the means",matchingEnds)
-  if(!company) return;
+  
     const [autoschedule, setAutoSchedule] = useState(false);
-      const [tripQuery, setTripQuery] = useState<TripQuery>({} as TripQuery);
     
     const [open, setOpen] = useState(false);
         const [val, setVal] = useState<Date | [Date, Date] | null>(null);
-        const handleSelectDate = (val: Date | [Date, Date] | null) => {
-            if (!val) return;
-            if (!Array.isArray(val))
-              setTripQuery({
-                ...tripQuery,
-                departureTime: `${format(val, "d/M/yyyy HH'H'00")}`,
-              });
-          };
     const [openTime, setOpenTime] = useState(false);
         const [valTime, setValTime] = useState<Date | [Date, Date] | null>(null);
-        const handleSelectTime = (val: Date | [Date, Date] | null) => {
-            if (!val) return;
-            if (!Array.isArray(val))
-              setTripQuery({
-                ...tripQuery,
-                departureTime: `${format(val, "HH'H'00")}`,
-              });
-              console.log('ABrA',tripQuery)
-            };
+       
             const [minuteInterval, setminuteInterval] = useState(false)
             const [minuteVal, setminuteVal] = useState<number|null>(null)
-             useEffect(() => {
-               if (user.role !== "admin")
-                 setTripQuery({ ...tripQuery, branch: user.branch }); // Only show the relevant branch for an agent
-             }, [user]);
+            
 
+             const busOptions = [
+    { id: "None", plateNumber: "None" },
+    ...(buses?.map((b) => ({
+      id: b.busId,
+      plateNumber: b.plateNumber,
+    })) || [])
+  ];
              const {
                  register,
                  unregister,
                  resetField,
+                 getValues,
                  handleSubmit,
                  control,
                  formState: { errors },
                } = useForm<FormData>({ resolver: zodResolver(schema)});
-               const createTrip = useAddTrip(company.companyId);
+               const createTrip = useAddTrip(company?.companyId??'');
                  const onSubmit = async (data: TripDetails) => {
                    console.log("Added!", data);
                    createTrip.mutate(data);
                  };
+
+                 useEffect(()=>{
+     const ends = routes?.pages.map(page=>page.filter(r=>r.route.start.toLowerCase()===currentOrigin.toLowerCase()).map(o=>o.route.end)).flat(1)??[]
+    setMatchingEnds(ends) // Matching destinations. Later, filter by id.
+    if(!ends.includes(getValues('route.end'))){
+      resetField('route.end')
+    }
+  },[currentOrigin])
           
     return (
         <Modal
@@ -206,18 +196,18 @@ const CreateTrip = ({effectTwo}:{effectTwo:()=>void}) => {
           </label>
           <div className="mb-5">
           <div className="ring ring-gray-200 p-1 rounded-xs bg-white">
-            {currentOrigin ?<Controller
+            {currentOrigin ? matchingEnds.length!==0 ?<Controller
                  name="route.end"
                  control={control}
                  render={({ field }) => (
                    <DropDown
                      value={field.value}
                      onSelect={field.onChange}
-                     options={["",...(matchingEnds ?? ['None yet'])]}
+                     options={["",...(matchingEnds??['None yet'])]}
                      style="v1"
                    />
                  )}
-               />: 'Waiting origin choice...'}
+               />: 'No matching destination': 'Waiting origin choice...'}
           </div>
           {errors.route?.end && (
                   <p className="text-red-500 text-xs">{errors.route.end.message}</p>
@@ -229,20 +219,25 @@ const CreateTrip = ({effectTwo}:{effectTwo:()=>void}) => {
           <div className=" mb-5">
           <div className="ring ring-gray-200 p-1 rounded-xs bg-white">
             <Controller
-                 name="plateNumber"
+                 name="busId"
                  control={control}
                  render={({ field }) => (
                    <DropDown
                      value={field.value}
                      onSelect={field.onChange}
-                     options={["",...buses?.map(bus=>bus.plateNumber)??'']}
+                      options={busOptions.map((d) => d.id)}
+                      label={((busId)=>{
+                        const match = busOptions.find((b) => b.id === busId);
+                        return match ? match.plateNumber : "Unknown";
+                    })
+                    }
                      style="v1"
                    />
                  )}
                />
           </div>
-          {errors.plateNumber && (
-                  <p className="text-red-500 text-xs">{errors.plateNumber.message}</p>
+          {errors.busId && (
+                  <p className="text-red-500 text-xs">{errors.busId.message}</p>
                 )}
           </div>
           <div className=" mb-5">
@@ -280,7 +275,6 @@ const CreateTrip = ({effectTwo}:{effectTwo:()=>void}) => {
                                               isOpen={open}
                                               onClose={() => setOpen(false)}
                                               onChange={(selectedVal) => {
-                                                handleSelectDate(selectedVal);
                                                 setVal(selectedVal);
                                                 field.onChange(`${selectedVal}`)
                                               }}
@@ -354,9 +348,8 @@ const CreateTrip = ({effectTwo}:{effectTwo:()=>void}) => {
                                               isOpen={openTime}
                                               onClose={() => setOpenTime(false)}
                                               onChange={(selectedVal) => {
-                                                handleSelectTime(selectedVal);
                                                 setValTime(selectedVal);
-                                                field.onChange(`${format(selectedVal as Date, "HH'H'00")}`)
+                                                field.onChange(`${selectedVal}`)
                                               }}
                                             />
                                           )}

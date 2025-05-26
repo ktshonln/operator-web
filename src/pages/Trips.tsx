@@ -2,7 +2,7 @@ import { BiCalendarAlt, BiCheck, BiChevronDown, BiTime } from "react-icons/bi";
 import DropDown from "../components/DropDown";
 import WidgetLayout from "../components/layouts/WidgetLayout";
 
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { camelCaseToTitle, formatMoney } from "../utils/helpers";
 import { RiFlashlightLine } from "react-icons/ri";
 import { format } from "date-fns";
@@ -13,6 +13,7 @@ import { useNavigate } from "react-router-dom";
 import CreateTrip from "../components/CreateTrip";
 import DestinationManager from "../components/DestinationManager";
 import useUser from "../hooks/useUser";
+import useCompany from "../hooks/useCompany";
 
 function Trips() {
   const {user} = useUser()
@@ -22,12 +23,17 @@ function Trips() {
     const { data: trips, isLoading: tripsLoad } = useTrips({
   
     } as TripQuery);
-    const tableHeaders = ["routeId", "route", 'date'];
+    const tableHeaders = ["tripId", "route", 'date'];
     const navigate = useNavigate();
+    const { data: company } = useCompany(user.companyId);
+     useEffect(() => {
+                   if (user.role !== "admin")
+                     setTripQuery({ ...tripQuery, branch: user.branch }); // Only show the relevant branch for an agent
+                 }, [user]);
   return (
-    <div className="flex  space-x-3 pb-10 mr-5">
+    <div className="flex  space-x-3 pb-10 mr-5 dark:text-white">
       <div className=" ml-3 mt-5 grow ">
-      <Filter onSelectFilter={(filter)=>{
+      <Filter userRole={user.role} branches={company?.branches} onSelectFilter={(filter)=>{
         setTripQuery({
           ...tripQuery,
           startTime: filter.startDate,
@@ -42,7 +48,7 @@ function Trips() {
             Trips
           </h2>
                     <div className="w-full mt-7 overflow-x-hidden">
-                      <table className="text-sm w-full">
+              { trips?.length!==0 ?        <table className="text-sm w-full">
                         <thead>
                           <tr className="gap-2">
                             {tableHeaders.map(
@@ -61,7 +67,7 @@ function Trips() {
                             <tr
                               key={i}
                               onClick={() => {
-                                navigate(`/fleets/buses/`);
+                                navigate(`/trips/${tripId}`);
                               }}
                               className={`even:bg-gray-100 text-neutral-600 hover:bg-gray-200 cursor-pointer`}
                             >
@@ -74,7 +80,7 @@ function Trips() {
                             </tr>
                           ))}
                         </tbody>
-                      </table>
+                      </table>: <p>No trips yet.</p>}
                     </div>
               {tripsLoad && <p>Trips Loading...</p>}
 

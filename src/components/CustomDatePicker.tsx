@@ -12,6 +12,7 @@ import {
   subMonths
 } from 'date-fns';
 import { gsap } from 'gsap';
+import { AiOutlineClose } from 'react-icons/ai';
 
 export type DatePickerMode = 'single' | 'range' | 'mixed' | 'time';
 
@@ -161,14 +162,14 @@ function CustomDatePicker({
   if (!shouldRender) return null;
 
   return (
-    <div ref={containerRef} className="bg-white p-5 rounded-xl shadow-xl w-80 space-y-4">
+    <div ref={containerRef} className="relative bg-white dark:bg-black text-black dark:text-white border border-neutral-200 dark:border-neutral-800 p-5 rounded-xl shadow-xl w-80 space-y-4">
       {mode === 'mixed' && (
         <div className="flex justify-center gap-2">
-          <button type='button' className={`${mixedTab === 'single' ? 'bg-brand text-white' : 'bg-gray-200'} px-3 py-1 rounded`} onClick={() => setMixedTab('single')}>Single</button>
-          <button type='button' className={`${mixedTab === 'range' ? 'bg-brand text-white' : 'bg-gray-200'} px-3 py-1 rounded`} onClick={() => setMixedTab('range')}>Range</button>
+          <button type='button' className={`${mixedTab === 'single' ? 'bg-brand text-white' : 'bg-gray-200 dark:bg-gray-800'} px-3 py-1 rounded`} onClick={() => setMixedTab('single')}>Single</button>
+          <button type='button' className={`${mixedTab === 'range' ? 'bg-brand text-white' : 'bg-gray-200 dark:bg-gray-800'} px-3 py-1 rounded`} onClick={() => setMixedTab('range')}>Range</button>
         </div>
       )}
-
+      <AiOutlineClose className='absolute right-3 top-3 cursor-pointer' onClick={onClose}/>
       <div className="text-center text-sm text-gray-600">{summary}</div>
 
       {showCalendar && (
@@ -198,7 +199,7 @@ function CustomDatePicker({
                   key={dt.toISOString()}
                   onClick={() => handleDateClick(dt)}
                   disabled={!inMonth}
-                  className={`p-2 text-xs rounded ${inMonth ? 'hover:bg-blue-100' : 'text-gray-300'} ${isStart || isEnd ? 'bg-brand text-white' : ''} ${inRange ? 'bg-blue-100' : ''}`}
+                  className={`p-2 text-xs rounded ${inMonth ? 'hover:bg-blue-100 dark:hover:bg-blue-950' : 'text-gray-300'} ${isStart || isEnd ? 'bg-brand text-white dark:text-black' : ''} ${inRange ? 'bg-blue-100 dark:bg-blue-950' : ''}`}
                 >
                   {format(dt, 'd')}
                 </button>

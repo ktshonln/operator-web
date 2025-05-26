@@ -5,7 +5,6 @@ import { Agent } from "../../hooks/useAgent";
 
 let agents = [
   {
-    agentId: "agent_xyz",
     userId: "user_op_101",
     firstName: "John doe",
     lastName: "User",
@@ -16,7 +15,6 @@ let agents = [
     joinedDate: "2025-11-01T10:00:00Z",
   },
   {
-    agentId: "agent_002",
     userId: "user_op_102",
     firstName: "John doenna",
     lastName: "Userria",
@@ -41,19 +39,27 @@ export const handlers = [
   // Intercept "GET /companies/{companyId}/agents/{busId}" requests...
   http.get(`${baseUrl}/companies/:companyId/agents/:busId`, ({ params }) => {
     // ...and respond to them using this JSON response.
-    if (params.agentId && params.companyId)
+    if (params.userId
+       && params.companyId)
       return HttpResponse.json(
-        agents.filter((agent)=> agent.agentId === params.agentId)[0],
+        agents.filter((agent)=> agent.userId === params.userId
+      )[0],
         { status: 200 }
       );
   }),
   
-  // Intercept "PUT /companies/{companyId}/agents/{agentId}" requests...
-  http.put<{agentId: string;companyId: string}, Agent>(`${baseUrl}/companies/:companyId/agents/:agentId`,async ({ params, request }) => {
+  // Intercept "PUT /companies/{companyId}/agents/{userId
+  // }" requests...
+  http.put<{userId
+    : string;companyId: string}, Agent>(`${baseUrl}/companies/:companyId/agents/:userId
+    `,async ({ params, request }) => {
     // ...and respond to them using this JSON response.
-    if (params.agentId && params.companyId){
+    if (params.userId
+       && params.companyId){
       const updatedAgent = await request.json()
-      const index = agents.findIndex(agent => agent.agentId === params.agentId);
+      const index = agents.findIndex(agent => agent.userId === params.userId
+        
+      );
       if (index !== -1) {
         agents[index] = {
           ...agents[index],
@@ -71,11 +77,13 @@ export const handlers = [
     return HttpResponse.json({ message: "Invalid request" }, { status: 400 });
   }), 
 
-  // Intercept "DELETE /companies/{companyId}/agents/{agentId}" requests...
-  http.delete(`${baseUrl}/companies/:companyId/agents/:agentId`, ({ params }) => {
+  // Intercept "DELETE /companies/{companyId}/agents/{userId
+  // }" requests...
+  http.delete(`${baseUrl}/companies/:companyId/agents/:userId`, ({ params }) => {
     // ...and respond to them using this JSON response.
-    if (params.agentId && params.companyId){
-      agents = agents.filter((agent)=> agent.agentId !== params.agentId)
+    if (params.userId
+       && params.companyId){
+      agents = agents.filter((agent)=> agent.userId !== params.userId)
       return HttpResponse.json(
         agents,
         { status: 204 }
@@ -88,8 +96,8 @@ export const handlers = [
     // ...and respond to them using this JSON response.
     const newAgent = await request.json()
     const newId = crypto.randomUUID();
-    newAgent.agentId = newId
-    newAgent.status = 'operational'
+    newAgent.userId = newId
+    newAgent.status = 'notActive'
     agents.push(newAgent)
       return HttpResponse.json(
        newAgent,

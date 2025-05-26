@@ -42,18 +42,18 @@ const LoginPage = () => {
         <path d="M0 0H614L436.5 1024H0V0Z" fill="#041D33" />
       </svg>
       <div className="p-2 pt-10 sm:p-10 sm:pr-32 sm:pl-32">
-        <div className="bg-white relative drop-shadow-lg drop-shadow-black/25 rounded-2xl w-full max-w-screen flex justify-between">
+        <div className="bg-white dark:bg-neutral-900 dark:text-white relative drop-shadow-lg drop-shadow-black/25 rounded-2xl w-full max-w-screen flex justify-between">
           <div className="w-full  lg:w-1/2 xl:w-1/3">
             <img
               src="/logoOne.svg"
-              className="w-20 ml-5 mt-2 mb-7"
+              className="w-20 ml-5 mt-2 mb-7 dark:invert"
               alt="Katisha-logo"
             />
             <div className="m-12 mt-0">
               <p className="text-[#6A717D] text-sm">Welcome to</p>
               <img
                 src="/logoTwo.svg"
-                className="mt-5  mb-7 w-56 sm:w-72 -ml-11 sm:-ml-14"
+                className="mt-5  mb-7 w-56 sm:w-72 -ml-11 sm:-ml-14 dark:invert"
                 alt="Katisha-logo"
               />
               <form onSubmit={handleSubmit(onSubmit)} className="text-xs">
@@ -64,7 +64,7 @@ const LoginPage = () => {
                   Email
                 </label>
                 <div>
-                  <div className="ring ring-gray-200 mb-5 p-2 rounded-xs bg-white">
+                  <div className="ring ring-gray-200 dark:ring-neutral-800 mb-5 p-2 rounded-xs bg-white dark:bg-neutral-900">
                     <input
                       {...register("email")}
                       type="email"
@@ -86,7 +86,7 @@ const LoginPage = () => {
                   Password
                 </label>
                 <div>
-                  <div className="ring ring-gray-200 mb-5 p-2 rounded-xs bg-white">
+                  <div className="ring ring-gray-200 dark:ring-neutral-800 mb-5 p-2 rounded-xs bg-white dark:bg-neutral-900">
                     <input
                       {...register("password")}
                       type="password"
@@ -103,7 +103,7 @@ const LoginPage = () => {
                 </div>
                 <button
                   disabled={loginUser.isPending}
-                  className="bg-[#0A4370] p-2 w-full text-white mt-10 rounded-sm cursor-pointer hover:text-[#0A4370] hover:bg-white hover:ring hover:ring-[#0A4370] active:scale-95 disabled:active:scale-none disabled:hover:ring-0 disabled:opacity-50 disabled:hover:bg-[#0A4370] disabled:hover:text-white disabled:cursor-not-allowed"
+                  className="bg-[#0A4370] p-2 w-full text-white mt-10 rounded-sm cursor-pointer hover:text-[#0A4370] hover:bg-white dark:hover:bg-black hover:ring hover:ring-[#0A4370] active:scale-95 disabled:active:scale-none disabled:hover:ring-0 disabled:opacity-50 disabled:hover:bg-[#0A4370] disabled:hover:text-white disabled:cursor-not-allowed"
                 >
                   {loginUser.isPending ? "LOGING IN..." : "LOGIN"}
                 </button>

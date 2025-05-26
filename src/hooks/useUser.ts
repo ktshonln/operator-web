@@ -4,26 +4,18 @@ import { useToastStore } from "../stores/toastStore";
 import useLogout from "./useLogout";
 import { useNavigate } from "react-router-dom";
 
+export const userRoles = ['admin', 'agent', "agentManager"] as const; 
+export type Role = typeof userRoles[number];
 export interface LoggedInUser { // The JWT data
   id?: string;
   firstName: string;
   lastName: string;
   userType: string;
   companyId: string;
-  role: 'admin' | 'agent' | "agentManager" 
+  role: Role;
   branch:string; // An agent needs one but for an admin it is not necessary this could default to 'main'
   exp?:number
 }
-
-const defaultUser: LoggedInUser = {
-  id: "1",
-  firstName: "agent",
-  lastName: "user",
-  userType: "operator",
-  role: 'agent',
-  branch: 'Kigali',
-  companyId: 'comp_001'
-};
 
 const useUser = () => {
   const [user, setUser] = useState<LoggedInUser>({} as LoggedInUser);
@@ -47,8 +39,9 @@ const useUser = () => {
       const currentTime = Date.now() / 1000;
       if (decodedToken.exp != undefined && decodedToken.exp < currentTime) {
         // Token is expired
-        showToast("Token has expired", "warning");
+        showToast("Your session has expired", "warning");
         logout();
+        localStorage.setItem('token','')
       }
       setUser({
         ...decodedToken,
@@ -66,9 +59,3 @@ const useUser = () => {
 };
 
  export default useUser;
-
- /*const logout = () => {
-    localStorage.removeItem('token');
-    window.location.href = '/login';
-  };
- */

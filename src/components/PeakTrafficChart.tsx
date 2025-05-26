@@ -99,9 +99,9 @@ export default function PeakTrafficChart({
   }, [liveIndex]); // Re-run when liveIndex changes
 
   return (
-    <div ref={chartRef} className="relative bg-white border-1 border-neutral-200 rounded-xl p-3 w-full  overflow-x-auto  mx-auto">
+    <div ref={chartRef} className="relative bg-white dark:bg-black border-1 border-neutral-200 dark:border-neutral-800 rounded-xl p-3 w-full  overflow-x-auto scrollab  mx-auto">
       <div className="flex justify-between space-x-6 items-center mb-16 sticky left-0">
-        <h2 className="text-xs text-gray-800">
+        <h2 className="text-xs text-gray-800 dark:text-gray-200">
           Peak {view === "hours" ? "Hours" : "Days"}
         </h2>
         <div className="flex space-x-2">
@@ -111,7 +111,7 @@ export default function PeakTrafficChart({
               onClick={() => setView(v)}
               className={clsx(
                 "px-3 py-1 rounded-full text-xs font-medium transition cursor-pointer",
-                view === v ? "bg-brand text-white" : "bg-gray-100 text-gray-700"
+                view === v ? "bg-brand text-white" : "bg-gray-100 dark:bg-gray-900 text-gray-700"
               )}
             >
               {v.charAt(0).toUpperCase() + v.slice(1)}
@@ -131,7 +131,7 @@ export default function PeakTrafficChart({
         {/* Grid lines */}
         <div className="absolute inset-0 flex flex-col justify-between">
           {[...Array(5)].map((_, i) => (
-            <div key={i} className="border-t border-gray-200 h-0" />
+            <div key={i} className="border-t border-gray-200 dark:border-gray-800 h-0" />
           ))}
         </div>
         {/* Live indicator */}
@@ -160,13 +160,13 @@ export default function PeakTrafficChart({
                 barsRef.current[i] = el;
               }}
               className={clsx(
-                "w-3 rounded-lg bg-neutral-300 group-hover:bg-brand group-hover:cursor-pointer transition-colors",
+                "w-3 rounded-lg bg-neutral-300 dark:bg-neutral-700 group-hover:bg-brand group-hover:cursor-pointer transition-colors",
                 i === liveIndex && "bg-blue-600"
               )}
               style={{ height: "0%" }}
             />
             
-            <div className="absolute bottom-full mb-1 px-2 py-1 text-xs bg-black text-white rounded opacity-0 group-hover:opacity-100 transition-opacity">
+            <div className="absolute bottom-full mb-1 px-2 py-1 text-xs bg-black text-white dark:bg-white dark:text-black rounded opacity-0 group-hover:opacity-100 transition-opacity">
             {d.value} avarage tickets
             </div>
             <p className="text-xs mt-1 text-gray-700">{d.label}</p>

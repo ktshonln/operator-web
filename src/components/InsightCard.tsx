@@ -1,6 +1,7 @@
 import { IconType } from "react-icons";
 import { FiArrowDownLeft, FiArrowUpRight } from "react-icons/fi";
 import { letterFormatTotal } from "../utils/helpers";
+import Skeleton from "../pages/Skeleton";
 
 interface Props {
   metric: number;
@@ -11,7 +12,8 @@ interface Props {
   action?: string;
   effect?: () => void;
   variation: { type: string; value: number };
-  options?: string[]
+  options?: string[];
+  loading: boolean;
 }
 const InsightCard = ({
   metric,
@@ -22,11 +24,12 @@ const InsightCard = ({
   action,
   effect,
   variation,
-  options
+  options,
+  loading
 }: Props) => {
   return (
-      <div className="relative self-stretch  items-end w-full border rounded-xl border-neutral-200 mt-1 p-1 pl-4 pr-4">
-        <p onClick={effect} className=" flex justify-self-end text-brand text-xs mr-6 cursor-pointer">
+      <div className="relative self-stretch  items-end w-full border rounded-xl border-neutral-200 dark:border-neutral-800 mt-1 p-1 pl-4 pr-4">
+ {loading?<Skeleton width="w-full" height="h-26"/>:<>       <p onClick={effect} className=" flex justify-self-end text-brand text-xs mr-6 cursor-pointer">
           {action??""}
           {!action&&<br/>}
         </p>
@@ -50,7 +53,7 @@ const InsightCard = ({
         >
           {variation.type === "up" ? <FiArrowUpRight /> : <FiArrowDownLeft />}
           <p>{variation.value}%</p>
-        </div>
+        </div></>}
       </div>
   );
 };

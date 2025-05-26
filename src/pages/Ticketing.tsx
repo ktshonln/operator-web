@@ -15,11 +15,12 @@ import { Manifest } from "../hooks/useManifest";
 import useTrips, { TripQuery } from "../hooks/useTrips";
 import useUser from "../hooks/useUser";
 import { camelCaseToTitle } from "../utils/helpers";
+import Skeleton from "./Skeleton";
 
 function Ticketing() {
-  const { user } = useUser();
+  const { user, loading: userLoad } = useUser();
   const [tripQuery, setTripQuery] = useState<TripQuery>({} as TripQuery);
-  const { data: company } = useCompany(user.companyId);
+  const { data: company, isLoading: companyLoad } = useCompany(user.companyId);
   const { data: trips, isLoading:tripsLoad } = useTrips(tripQuery);
   const [viewList, setViewList] = useState(false);
   const [list, setList] = useState<Manifest>();
@@ -64,7 +65,7 @@ function Ticketing() {
   }, [user]);
   
   return (
-    <div className="mt-5 m-5 ml-3">
+    <div className="mt-5 m-5 ml-3 dark:text-white text-sm sm:text-base">
       <Search
       label="Enter  destination..."
         onSearch={(searchText) =>
@@ -73,7 +74,7 @@ function Ticketing() {
       />
       {tripQuery.searchText && matched!=0 && (
         <p className="text-[#FF8C00] text-sm mt-2 ml-5">
-          <span className="font-bold">{matched}</span> trips matching intermediate
+          <span className="font-bold">{matched}</span> trip{!(matched===1)&&"s"} matching intermediate
           stop found...
         </p>
       )}
@@ -87,24 +88,27 @@ function Ticketing() {
      
 
       <div className="mt-3 mb-10 flex items-center justify-between">
-        <div className="flex items-center gap-2">
+        <div className="flex items-center gap-2 text-sm">
           {user.role === "admin" ? (
+            companyLoad ?<div className="w-full h-8 mb-2 rounded-md animate-pulse bg-neutral-200 dark:bg-neutral-900"/>:
             <DropDown
-              style="v2"
-              onSelect={(branch) => setTripQuery({ ...tripQuery, branch })}
-              options={[ "All branches",...(company?.branches ?? [])]}
+            style="v2"
+            onSelect={(branch) => setTripQuery({ ...tripQuery, branch })}
+            options={[ "All branches",...(company?.branches ?? [])]}
             />
           ) : (
-            <div className="border-1 border-neutral-200 rounded-sm w-fit p-1 pl-10 pr-10 text-sm text-neutral-500">
+            <div className="border-1 border-neutral-200 dark:border-neutral-800 rounded-sm w-fit p-1 pl-10 pr-10 text-sm text-neutral-500">
+              {userLoad && <Skeleton/>}
               <p>{camelCaseToTitle(user.branch??"")}</p>
             </div>
           )}
-          <div className="border-1 border-neutral-200 rounded-sm w-fit p-1 pl-10 pr-10 text-sm ">
+            {companyLoad && <Skeleton mb="mb-0" width="w-24"/>}
+           <div className="border-1 border-neutral-200 dark:border-neutral-800 rounded-sm w-fit p-1 pl-10 pr-10 text-sm ">
             <p>{company?.name}</p>
-          </div>
+          </div> 
         </div>
         <div className="flex items-center gap-2">
-          <div className="border-1 border-neutral-200 rounded-sm w-fit p-1  text-sm">
+          <div className="border-1 border-neutral-200 dark:border-neutral-800 rounded-sm w-fit p-1  text-sm">
             <DropDown
               onSelect={(status) => setTripQuery({ ...tripQuery, status })}
               style={"v1"}
@@ -114,7 +118,7 @@ function Ticketing() {
           <div className="relative ">
             <div
               onClick={() => setOpen(!open)}
-              className="border-1 border-neutral-200 rounded-sm w-fit p-1 text-sm flex items-center space-x-2 cursor-pointer"
+              className="border-1 border-neutral-200 dark:border-neutral-800 rounded-sm w-fit p-1 text-sm flex items-center space-x-2 cursor-pointer"
             >
               <p>
                 {val ? format(val as Date, "PPpp") : "Choose date and time"}
@@ -135,7 +139,8 @@ function Ticketing() {
           </div>
         </div>
       </div>
-      {tripsLoad && <p>Trips are loading...</p>}
+      {!tripsLoad && trips?.length===0 && <p className="font-black text-brand2 text-center mt-40 text-2xl ">No trips found.</p>}
+      {tripsLoad && Array(4).fill('.')?.map(()=><div className="w-full h-28 mb-2 rounded-xl animate-pulse bg-neutral-200 dark:bg-neutral-900"/>)}
       {trips &&
         company &&
         trips.map((trip, i) => {
@@ -166,16 +171,16 @@ function Ticketing() {
 
             <p className="text-brand font-semibold">
               Trip ID:{" "}
-              <span className="text-black font-normal">{list.tripId}</span>
+              <span className="text-black dark:text-white font-normal">{list.tripId}</span>
             </p>
 
             <p className="text-brand font-semibold">
               Route:{" "}
-              <span className="text-black font-normal">{list.route}</span>
+              <span className="text-black dark:text-white font-normal">{list.route}</span>
             </p>
             <p className="text-brand font-semibold">
               Departure Time:{" "}
-              <span className="text-black font-normal">
+              <span className="text-black dark:text-white font-normal">
                 {format(list.departureTime, "d/M/yyyy HH'H'00")}
               </span>
             </p>
@@ -184,15 +189,15 @@ function Ticketing() {
 
             <p className="text-brand font-semibold">
               Passenger count:{" "}
-              <span className="text-black">{list.manifest.length}</span>
+              <span className="text-black dark:text-white">{list.manifest.length}</span>
             </p>
             <p className="text-brand font-semibold">
               Bus:{" "}
-              <span className="text-black font-normal">{list.busPlate}</span>
+              <span className="text-black dark:text-white font-normal">{list.busPlate}</span>
             </p>
             <p className="text-brand font-semibold">
               Driver:{" "}
-              <span className="text-black font-normal">{list.driverName}</span>
+              <span className="text-black dark:text-white font-normal">{list.driverName}</span>
             </p>
           </div>
 
@@ -200,21 +205,21 @@ function Ticketing() {
 
             <table className="mt-2 ">
               <div className="max-h-72 overflow-y-scroll">
-                <div className="relative contain-content border  border-neutral-300 rounded-t-lg mr-3">
-                  <tr className="bg-neutral-200 sticky top-0">
-                    <th className="text-start w-40 p-1 pl-3 border-r border-neutral-300">
+                <div className="relative contain-content border  border-neutral-300 dark:border-neutral-700 rounded-t-lg mr-3">
+                  <tr className="bg-neutral-200 dark:bg-neutral-800 sticky top-0">
+                    <th className="text-start w-40 p-1 pl-3 border-r border-neutral-300 dark:border-neutral-700">
                       T-ID
                     </th>
-                    <th className="text-start w-40 p-1 pl-3 border-r border-neutral-300">
+                    <th className="text-start w-40 p-1 pl-3 border-r border-neutral-300 dark:border-neutral-700">
                       Name
                     </th>
-                    <th className="text-start w-40 p-1 pl-3 border-r border-neutral-300">
+                    <th className="text-start w-40 p-1 pl-3 border-r border-neutral-300 dark:border-neutral-700">
                       Phone
                     </th>
-                    <th className="text-start w-40 p-1 pl-3 border-r border-neutral-300">
+                    <th className="text-start w-40 p-1 pl-3 border-r border-neutral-300 dark:border-neutral-700">
                       Seat
                     </th>
-                    <th className="text-start w-40 p-1 pl-3 border-r border-neutral-300">
+                    <th className="text-start w-40 p-1 pl-3 border-r border-neutral-300 dark:border-neutral-700">
                       TT
                     </th>
                   </tr>

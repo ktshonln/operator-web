@@ -19,7 +19,7 @@ const schema = z.object({
     .min(5, { message: "Please enter a valid license number." }),
   phoneNumber: z
     .string()
-    .min(11, { message: "Please enter a valid phone number. starting with country code(eg:+250)" }),
+    .min(11, { message: "Please enter a valid phone number, starting with country code(eg:+250)" }),
   assignedBusId: z.string().min(1, { message: "Please enter a valid bus." }),
 });
 type FormData = z.infer<typeof schema>;

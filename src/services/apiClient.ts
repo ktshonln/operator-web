@@ -38,10 +38,14 @@ class APIClient<TResponse> {
       .get<TResponse>(`${this.endpoint}/${companyId}/agents`, config)
       .then((res) => res.data);
   };
-
   getAgent = (companyId: string | number, agentId: string | number) => {
     return axiosInstance
       .get<TResponse>(`${this.endpoint}/${companyId}/agents/${agentId}`)
+      .then((res) => res.data);
+  };
+      addAgent = <TRequest>(input: TRequest,companyId: string | number) => {
+    return axiosInstance
+      .post<TResponse>(`${this.endpoint}/${companyId}/agents`, input)
       .then((res) => res.data);
   };
   getBus = (companyId: string | number, busId: string | number) => {
@@ -92,6 +96,21 @@ class APIClient<TResponse> {
   deleteDriver = (companyId: string | number, driverId: string | number) => {
     return axiosInstance
       .delete<TResponse>(`${this.endpoint}/${companyId}/drivers/${driverId}`)
+      .then((res) => res.data);
+  };
+  addTrip = <TRequest>(input: TRequest,companyId: string | number) => {
+    return axiosInstance
+      .post<TResponse>(`${this.endpoint}/${companyId}/trips`, input)
+      .then((res) => res.data);
+  };
+    editTrip = <TRequest>(input: TRequest,companyId: string | number, tripId: string | number) => {
+    return axiosInstance
+      .put<TResponse>(`${this.endpoint}/${companyId}/trips/${tripId}`, input)
+      .then((res) => res.data);
+  };
+  deleteTrip = (companyId: string | number, tripId: string | number) => {
+    return axiosInstance
+      .delete<TResponse>(`${this.endpoint}/${companyId}/trips/${tripId}`)
       .then((res) => res.data);
   };
    getRoute = (companyId: string | number, busId: string | number) => {

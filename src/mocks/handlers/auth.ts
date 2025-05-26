@@ -1,7 +1,7 @@
 import { http, HttpResponse } from "msw";
 import { loginResponse } from "../../hooks/useLogin";
 import { User } from "../../hooks/useRegister";
-import { LoggedInUser } from "../../hooks/useUser";
+import { LoggedInUser, Role } from "../../hooks/useUser";
 import { baseUrl, generateFakeJWT } from "./utils";
 
 export type AuthErrorResponse = InvalidCredentialsError | UserNotFoundError;
@@ -69,7 +69,7 @@ export const handlers = [
         firstName: newUser.firstName,
         lastName: newUser.lastName,
         userType: newUser.userType,
-        role: newUser.role,
+        role: newUser.role as Role,
         branch: newUser.branch,
         companyId: 'comp_001'
       };

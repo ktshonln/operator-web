@@ -24,7 +24,7 @@ const TicketRaw = ({
   const { data: manifest } = useManifest(companyId, trip?.tripId ?? "");
   console.log("BUS", bus);
   return (
-    <div className="flex items-center justify-between drop-shadow-lg bg-white border border-neutral-200 p-3 pl-5 pr-5 mt-4 rounded-xl hover:bg-gray-100 hover:-translate-y-1">
+    <div className="flex items-center justify-between drop-shadow-lg dark:drop-shadow-neutral-800 bg-white dark:bg-neutral-900 border border-neutral-200 dark:border-neutral-800 p-3 pl-5 pr-5 mt-4 rounded-xl hover:bg-gray-100 dark:hover:bg-neutral-800 hover:-translate-y-1">
       <div
         onClick={() => trip?.status !== "booked" && onClick(trip?.tripId??'')}
         className={`grow ${
@@ -38,7 +38,7 @@ const TicketRaw = ({
               stop.toLocaleLowerCase() === searchText?.toLocaleLowerCase()
           ) && (
             <span className="text-[#FF8C00]">
-              <span className="text-black">-</span>{" "}
+              <span className="text-black dark:text-white">-</span>{" "}
               [{camelCaseToTitle(searchText)}]{" "}
             </span>
           )}
@@ -47,21 +47,21 @@ const TicketRaw = ({
         </p>
         <p className="text-neutral-500">
           Departure:{" "}
-          <span className="font-light text-black">
-            {format(trip?.departureTime ?? 0, "d/M/yyyy HH'H'00")}
+          <span className="font-light text-black dark:text-white">
+            {format(trip?.departureDateAndTime ?? 0, "d/M/yyyy HH'H'00")}
           </span>
         </p>
         <p className="text-neutral-500">
           Arrival:{" "}
-          <span className="font-light text-black">
-            {format(trip?.arrivalTime ?? 0, "d/M/yyyy HH'H'00")}
+          <span className="font-light text-black dark:text-white">
+            {format(trip?.arrivalTime??0, "d/M/yyyy HH'H'00")??''}
           </span>
         </p>
       </div>
-      <div className="border-l border-neutral-200 pl-3">
+      <div className="border-l border-neutral-200 dark:border-neutral-800 pl-3">
         <div className="flex items-center space-x-2 text-xs mb-3">
-          <button className="text-brand flex items-center space-x-1">
-            <CgList size={18} />
+          <button className="text-brand group flex items-center space-x-1">
+            <CgList size={18} className="group-hover:-translate-y-0.5"/>
             {manifest && (
               <p onClick={() => viewList(manifest)} className="cursor-pointer">
                 View Passenger List
@@ -69,7 +69,7 @@ const TicketRaw = ({
             )}
           </button>
 
-          <div className="border rounded-full border-neutral-500 font-medium p-1 pt-0.5 pb-0.5 flex justify-center align-middle text-center items-center">
+          <div className="border rounded-full border-neutral-500 font-medium  flex justify-center items-center w-7 h-7">
             {manifest && <p>{manifest.manifest.length}</p>}
           </div>
           {trip?.status === "booked" && (
@@ -80,8 +80,8 @@ const TicketRaw = ({
         </div>
         <p className="text-neutral-500">
           Price:{" "}
-          <span className="font-medium text-lg text-black">
-            {formatMoney(parseInt(trip?.price ?? ""))} RWF
+          <span className="font-medium text-lg text-black dark:text-white">
+            {formatMoney(trip?.price ?? 0)} RWF
           </span>
         </p>
         <div className="flex items-center space-x-1 text-sm">

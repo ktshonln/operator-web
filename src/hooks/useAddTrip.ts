@@ -4,14 +4,16 @@ import APIClient from "../services/apiClient";
 import { useToastStore } from "../stores/toastStore";
 import { Trip } from "./useTrips";
 
+export const scheduleBlocks = ['day', 'week', 'month'] as const; 
+export type ScheduleBlock = typeof scheduleBlocks[number];
 export interface TripDetails {
     route: { start: string, end: string};
-    plateNumber: string;
+    busId: string;
     express?: boolean;
     departureDateAndTime: string;
     autoScheduling?: boolean
     departureTime?: string;
-    scheduleBlock?: string;
+    scheduleBlock?: ScheduleBlock;
     dayRange?:{from:string, to:string}
     minuteInterval?:number; 
     timeRange?:{from:string, to:string}
@@ -22,7 +24,7 @@ const useAddTrip = (companyId: string) => {
   const showToast = useToastStore((state) => state.showToast);
   const navigate = useNavigate();
   return useMutation<Trip, Error ,TripDetails>({
-    mutationFn: (tripDetails: TripDetails)=> apiClient.addBus<TripDetails>(tripDetails,companyId),
+    mutationFn: (tripDetails: TripDetails)=> apiClient.addTrip<TripDetails>(tripDetails,companyId),
     onSuccess: (savedData) => {
       showToast("Successfully created a new trip!", "success");
       navigate(`/trips/${savedData.tripId}`);

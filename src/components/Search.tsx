@@ -9,7 +9,7 @@ const Search = ({ onSearch, label, alt }: Props) => {
   const ref = useRef<HTMLInputElement>(null);
 
   return (
-    <div className={`flex items-center space-x-3  border-1 border-neutral-200  text-sm  ${alt ? 'rounded-full p-1 w-full' :'rounded-xl p-3 max-w-2xl'}`}>
+    <div className={`flex items-center space-x-3  border-1 border-neutral-200 dark:border-neutral-800  text-sm dark:text-white ${alt ? 'rounded-full p-1 w-full' :'rounded-xl p-3 max-w-2xl'}`}>
       <AiOutlineSearch size={20} />
       <form
         onSubmit={(event) => {

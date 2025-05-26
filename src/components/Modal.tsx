@@ -25,8 +25,8 @@ const Modal = ({
         effectOne()
     }
   return (
-    <div className="fixed inset-0 bg-black/50 flex  items-center justify-center">
-      <div className="bg-white sm:min-w-80 lg:min-w-sm p-5 rounded-lg max-h-lvh overflow-y-auto">
+    <div className="fixed inset-0 bg-black/50 dark:bg-neutral-900/90 flex  items-center justify-center z-[99]">
+      <div className="bg-white dark:bg-black dark:text-white sm:min-w-80 lg:min-w-sm p-5 rounded-lg max-h-lvh overflow-y-auto text-black">
         {message ?
         <p className=" w-fit mx-auto mb-3 mt-6 text-brand2">{title}</p>:
         <p className="font-bold text-lg w-fit mx-auto mb-3">{title}</p>
@@ -42,7 +42,7 @@ const Modal = ({
             >
             {actionOne}
           </button>
-          <button onClick={effectTwo} className="bg-neutral-300 p-1.5 w-full mt-10 rounded-xs cursor-pointer active:scale-95">
+          <button onClick={effectTwo} className="bg-neutral-300 p-1.5 w-full  text-black mt-10 rounded-xs cursor-pointer active:scale-95">
             {actionTwo}
           </button>
         </div>
@@ -56,7 +56,7 @@ const Modal = ({
             >
             {actionOne}
           </button>
-          <button onClick={effectTwo} className="bg-neutral-300 p-1.5 w-full mt-10 rounded-xs cursor-pointer active:scale-95">
+          <button onClick={effectTwo} className="bg-neutral-300 text-black p-1.5 w-full mt-10 rounded-xs cursor-pointer active:scale-95">
             {actionTwo}
           </button>
         </div>

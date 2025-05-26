@@ -1,6 +1,7 @@
 import { useQuery } from "@tanstack/react-query";
 import APIClient from "../services/apiClient";
 import { Branch } from "../pages/ProfileSettings";
+import { Ticket } from "./useTicket";
 
 const apiClient = new APIClient<TicketResponse>("/tickets");
 
@@ -9,23 +10,11 @@ export interface TicketQuery {
   startDate?: string;
   endDate?: string;
   passengerId?: string;
-  agenetId?: string;
+  agentId?: string;
+  tripId?: string;
   status?: string;
 }
 
-export interface Ticket {
-  ticketId?: string; // We only know it on response not on request
-  passenger: {
-    passengerId?: string; // this is possible on the passenger client because they are logged in
-    firstName: string;
-    LastName: string;
-  };
-  seatNumber: number;
-  origin: string;
-  destination: string;
-  status: string;
-  date: string; // what is this date? is it the time to leave or the time taken? - time to leave
-}
 
 interface TicketResponse {
   query: { tripId: string };
@@ -42,7 +31,7 @@ const useTickets = (ticketQuery: TicketQuery) =>
           startDate: ticketQuery.startDate,
           endDate: ticketQuery.endDate,
           passengerId: ticketQuery.passengerId,
-          agentId: ticketQuery.agenetId,
+          agentId: ticketQuery.agentId,
           status: ticketQuery.status,
         },
       }),

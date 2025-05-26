@@ -9,13 +9,13 @@ interface EditTripContext {
   previousTrips: Trip[];
 }
 
-const apiClient = new APIClient<Trip>("/trips");
-const useEditTrip = (tripId: string) => {
+const apiClient = new APIClient<Trip>("/companies");
+const useEditTrip = (companyId: string, tripId: string) => {
   const queryClient = useQueryClient();
   const showToast = useToastStore((state) => state.showToast);
   return useMutation<Trip, Error, TripDetails, EditTripContext>({
     mutationFn: (tripDetails: TripDetails) =>
-      apiClient.put<TripDetails>(tripDetails, tripId),
+      apiClient.editTrip<TripDetails>(tripDetails,companyId, tripId),
     onMutate: (newData) => {
       // Optimistic updates
       const previousTrips =

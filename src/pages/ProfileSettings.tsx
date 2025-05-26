@@ -20,7 +20,7 @@ function ProfileSettings() {
   const { data, error, isLoading } = useCompany("comp_001");
   console.log("the data", data);
   return (
-    <div className="mt-10">
+    <div className="mt-10 mb-5">
       <SettingsNav />
       <div className="flex  space-x-3">
         <div>

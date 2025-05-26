@@ -44,10 +44,10 @@ const Toaster = () => {
   // Only render if show is true
   if (!show) return null;
   const color = {
-    error: { main: 'text-red-500', bg: 'bg-[#ffe6e6]', bgAlt:'bg-red-500' , border: 'border-red-500', Icon: IoClose },
-    warning: { main: 'text-[#FFA500]', bg: 'bg-[#fff6e6]', bgAlt:'bg-[#FFA500]', border: 'border-[#FFA500]', Icon: IoWarningOutline },
-    success: { main: 'text-[#32CD32]', bg: 'bg-[#ebfaeb]', bgAlt:'bg-[#32CD32]' , border: 'border-[#32CD32]', Icon: IoCheckmarkSharp },
-    info: { main: 'text-[#1E90FF]', bg: 'bg-[#E9F4FF]', bgAlt:'bg-[#1E90FF]', border: 'border-[#1E90FF]', Icon: BsInfo },
+    error: { main: 'text-red-500', bg: 'bg-[#ffe6e6] dark:bg-red-950', bgAlt:'bg-red-500' , border: 'border-red-500', Icon: IoClose },
+    warning: { main: 'text-[#FFA500]', bg: 'bg-[#fff6e6] dark:bg-yellow-950', bgAlt:'bg-[#FFA500]', border: 'border-[#FFA500]', Icon: IoWarningOutline },
+    success: { main: 'text-[#32CD32]', bg: 'bg-[#ebfaeb] dark:bg-green-950', bgAlt:'bg-[#32CD32]' , border: 'border-[#32CD32]', Icon: IoCheckmarkSharp },
+    info: { main: 'text-[#1E90FF]', bg: 'bg-[#E9F4FF] dark:bg-blue-950', bgAlt:'bg-[#1E90FF]', border: 'border-[#1E90FF]', Icon: BsInfo },
   };
   return (
     <div

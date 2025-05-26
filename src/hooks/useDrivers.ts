@@ -10,7 +10,6 @@ export interface DriverQuery {
 }
 
 export interface Driver {
-  userId: string; // Seriously? for what?
   driverId: string;
   firstName: string;
   lastName: string;

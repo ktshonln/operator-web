@@ -75,7 +75,7 @@ useEffect(() => {
                 key={`border-${i}`}
                 cx={size / 2} cy={size / 2} r={radius}
                 fill="none"
-                stroke="white"
+                className='stroke-white dark:stroke-black'
                 strokeWidth={fullStroke}
                 strokeLinecap="round"
                 strokeDasharray={dashArray}
@@ -116,7 +116,7 @@ useEffect(() => {
 
     return (
         <div
-            className="relative bg-white rounded-full"
+            className="relative bg-white text-black dark:bg-black dark:text-white rounded-full"
             style={{ width: size, height: size }}
         >
             <svg width={size} height={size} >
@@ -125,7 +125,7 @@ useEffect(() => {
              {/* Tooltip */}
              {hoveredIndex !== null && (
                 <div
-                    className="absolute text-xs px-2 py-1 rounded bg-black text-white shadow pointer-events-none"
+                    className="absolute text-xs px-2 py-1 rounded bg-black text-white dark:bg-white dark:text-black shadow pointer-events-none"
                     style={{
                         left: mousePos.x,
                         top: mousePos.y,
@@ -135,7 +135,7 @@ useEffect(() => {
                     }}
                 >
                     <div className="font-bold">{values[hoveredIndex].routeName}</div>
-                    <div>{currency} {letterFormatTotal(Number(values[hoveredIndex].revenue))}</div>
+                    <div>{currency} {letterFormatTotal(Number(values[hoveredIndex].revenue??0))}</div>
                 </div>
             )}
             

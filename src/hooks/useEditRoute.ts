@@ -36,11 +36,15 @@ const useEditRoute = (companyId: string, routeId: string) => {
     onSuccess: (savedData, newData) => {
       // Invalidating cache for freshness
       queryClient.setQueryData<Route[]>(CACHE_KEY_ROUTES, (routes) =>
-        routes?.map((route) => (route.routeId === routeId ? savedData : route))
+        routes?.map((route) => ((route.routeId === routeId && route ===newData) ? savedData : route))
       );
       queryClient.invalidateQueries({
         queryKey: ["company", companyId, "route", routeId],
-      }); // Invalidate single bus to get fresh data
+      }); // Invalidate single route to get fresh data
+            queryClient.invalidateQueries({
+    queryKey: [CACHE_KEY_ROUTES],
+    refetchType: 'active',
+  });
       showToast("Route successfully updated!", "success");
     },
     onError: (error, newData, context) => {
