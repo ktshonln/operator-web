@@ -48,14 +48,14 @@ const LoginPage = () => {
           <div className="w-full  lg:w-1/2 xl:w-1/3">
             <img
               src="/logoOne.svg"
-              className="w-20 ml-5 mt-2 mb-7 dark:invert"
+              className="w-32 ml-5 mt-2 pt-5 mb-7 dark:invert"
               alt="Katisha-logo"
             />
             <div className="m-12 mt-0">
               <p className="text-[#6A717D] text-sm">Welcome to</p>
               <img
                 src="/logoTwo.svg"
-                className="mt-5  mb-7 w-56 sm:w-72 -ml-11 sm:-ml-14 dark:invert"
+                className="mt-5  mb-7 w-32  dark:invert"
                 alt="Katisha-logo"
               />
               <form onSubmit={handleSubmit(onSubmit)} className="text-xs">

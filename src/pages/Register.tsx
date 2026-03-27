@@ -115,7 +115,7 @@ const RegisterPage = () => {
           <div className="w-full">
             <img
               src="/logoOne.svg"
-              className="w-20 ml-5 mt-2 "
+              className="w-32 ml-5 mt-2 pt-5"
               alt="Katisha-logo"
             />
             <h1 className="w-fit mx-auto font-bold text-2xl -mt-5 mb-5">

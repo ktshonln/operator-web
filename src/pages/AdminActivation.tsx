@@ -59,7 +59,7 @@ const AdminActivation = () => {
           <div className="w-full lg:w-1/2 xl:w-1/3">
             <img
               src="/logoOne.svg"
-              className="w-20 ml-5 mt-2 mb-7"
+              className="w-32 ml-5 mt-2 pt-5 mb-7"
               alt="Katisha-logo"
             />
             <div className="m-12 mt-0">

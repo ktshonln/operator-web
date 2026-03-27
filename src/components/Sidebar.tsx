@@ -35,7 +35,7 @@ const Sidebar = () => {
             <div className="w-fit mx-auto">
             <img
               src="/logoOne.svg"
-              className="w-16 dark:invert"
+              className="w-32 dark:invert"
               alt="Katisha-logo"
             />
             </div>
