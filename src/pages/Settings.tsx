@@ -1,9 +1,5 @@
 import React, { useState } from "react";
-import { AiOutlineSearch, AiOutlineSun } from "react-icons/ai";
-import { HiOutlineDesktopComputer } from "react-icons/hi";
-import { MdOutlineDarkMode } from "react-icons/md";
 import { useNavigate } from "react-router-dom";
-import DropDown from "../components/DropDown";
 import SettingsNav from "../components/SettingsNav";
 import useAgents from "../hooks/useAgents";
 import { camelCaseToTitle } from "../utils/helpers";
@@ -44,7 +40,8 @@ function Settings() {
           </div>
         </div>
         <div className="relative  min-w-1/5 max-w-4xl justify-self-end w-full flex">
-          <div className="min-w-0 w-full max-w-[870px] overflow-y-scroll overflow-x-hidden  h-screen fixed top-0 right-0 self-stretch flex flex-col p-3 shadow-lg rounded-r-md shadow-black/15 dark:shadow-white/15">
+          <div className="min-w-0  max-w-[870px] overflow-y-scroll overflow-x-hidden  h-screen fixed top-0 right-0 self-stretch flex flex-col p-3 shadow-lg rounded-r-md shadow-black/15 dark:shadow-white/15">
+            {/* we could make it collapsible */}
             <div className="mr-10 w-full self-stretch">
               <h2 className="font-bold mt-5 mb-5 w-fit text-sm mx-auto dark:text-white">
                 Current users
