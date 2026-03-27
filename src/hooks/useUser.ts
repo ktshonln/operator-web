@@ -1,61 +1,62 @@
-import { jwtDecode } from "jwt-decode";
 import { useEffect, useState } from "react";
 import { useToastStore } from "../stores/toastStore";
-import useLogout from "./useLogout";
 import { useNavigate } from "react-router-dom";
+import { axiosInstance } from "../services/apiClient";
 
-export const userRoles = ['admin', 'agent', "agentManager"] as const; 
-export type Role = typeof userRoles[number];
-export interface LoggedInUser { // The JWT data
+export const userRoles = ["admin", "agent", "agentManager"] as const;
+export type Role = (typeof userRoles)[number];
+export interface LegacyUser {
   id?: string;
   firstName: string;
   lastName: string;
   userType: string;
   companyId: string;
   role: Role;
-  branch:string; // An agent needs one but for an admin it is not necessary this could default to 'main'
-  exp?:number
+  branch: string;
+}
+
+export interface StaffUser {
+  id: string;
+  first_name: string;
+  last_name: string;
+  phone_number?: string | null;
+  email?: string | null;
+  avatar_url?: string | null;
+  user_type: "staff";
+  status: "active" | "pending_verification" | "suspended";
+  org_id: string;
+  roles: string[];
+  permissions: Record<string, unknown>[];
+  driver_license_number?: string | null;
+  driver_license_verified_at?: string | null;
+  last_login_at?: string | null;
+  created_at: string;
+  updated_at: string;
 }
 
 const useUser = () => {
-  const [user, setUser] = useState<LoggedInUser>({} as LoggedInUser);
-  const [loading, setLoading] = useState(false);
-  const logout = useLogout();
+  const [user, setUser] = useState<LegacyUser>({} as LegacyUser);
+  const [loading, setLoading] = useState(true);
   const navigate = useNavigate();
   const showToast = useToastStore((state) => state.showToast);
 
   useEffect(() => {
     setLoading(true);
-    const token = localStorage.getItem("token");
-    const userId = localStorage.getItem('userId')
-    console.log("TOKEN", token);
-    if (!token) {
-      showToast("User not logged in", "error");
-      navigate('/login')
-      return;
-    }
-    try {
-      const decodedToken:LoggedInUser= jwtDecode(token);
-      const currentTime = Date.now() / 1000;
-      if (decodedToken.exp != undefined && decodedToken.exp < currentTime) {
-        // Token is expired
-        showToast("Your session has expired", "warning");
-        logout();
-        localStorage.setItem('token','')
-      }
-      setUser({
-        ...decodedToken,
-        id: userId || ''
+    axiosInstance
+      .get<LegacyUser>("/api/v1/users/me")
+      .then((res) => {
+        setUser(res.data);
+        setLoading(false);
+      })
+      .catch((error) => {
+        console.error("Error fetching logged in user", error);
+        showToast("User not logged in", "error");
+        navigate("/login");
+        setLoading(false);
       });
+  }, [navigate, showToast]);
 
-      setLoading(false);
-    } catch (error) {
-      console.error("Error decoding token", error);
-      showToast(`Login token error`, "error");
-      setLoading(false);
-    }
-  }, []);
   return { user, loading };
 };
 
- export default useUser;
+export default useUser;

@@ -14,6 +14,7 @@ import NotFound from "./pages/NotFound";
 import ProfileSettings from "./pages/ProfileSettings";
 import RegisterPage from "./pages/Register";
 import RegisterSuccess from "./pages/RegisterSuccess";
+import AdminActivation from "./pages/AdminActivation";
 import Reports from "./pages/Reports";
 import SecuritySettings from "./pages/SecuritySettings";
 import Settings from "./pages/Settings";
@@ -36,6 +37,10 @@ function App() {
           <Route path="/login-mfa" element={<LoginMfa />} />
           <Route path="/register" element={<RegisterPage />} />
           <Route path="/register/success" element={<RegisterSuccess />} />
+          <Route
+            path="/activate/:activationToken"
+            element={<AdminActivation />}
+          />
 
           <Route path="/" element={<Layout />}>
             <Route path="home" element={<HomePage />} />

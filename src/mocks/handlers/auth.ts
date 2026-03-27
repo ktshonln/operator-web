@@ -1,134 +1,222 @@
 import { http, HttpResponse } from "msw";
-import { loginResponse } from "../../hooks/useLogin";
-import { User } from "../../hooks/useRegister";
-import { LoggedInUser, Role } from "../../hooks/useUser";
-import { baseUrl, generateFakeJWT } from "./utils";
+import { LoginDetails, LoginResponse, LoginUser } from "../../hooks/useLogin";
+import {
+  OrganizationRegistrationPayload,
+  OrganizationResponse,
+} from "../../hooks/useRegister";
+import {
+  AdminActivationPayload,
+  AdminActivationResponse,
+} from "../../hooks/useActivateOrganization";
+import { Role, LegacyUser } from "../../hooks/useUser";
+import { baseUrl } from "./utils";
 
-export type AuthErrorResponse = InvalidCredentialsError | UserNotFoundError;
-
-interface InvalidCredentialsError {
-  error: "INVALID_CREDENTIALS";
+interface AuthErrorResponse {
+  error: "INVALID_CREDENTIALS" | "USER_NOT_FOUND";
   message: string;
 }
 
-interface UserNotFoundError {
-  error: "USER_NOT_FOUND";
-  message: string;
-}
+const allUsers = new Map<string, any>([
+  [
+    "user_auth_456",
+    {
+      firstName: "Alicia",
+      lastName: "Kunda",
+      email: "user@example.com",
+      password: "12345678Aa!",
+      userType: "operator",
+      role: "admin",
+      branch: "main",
+      companyId: "comp_001",
+    },
+  ],
+]);
 
-const allUsers = new Map();
-allUsers.set("user_auth_456", {
-  firstName: "Alicia",
-  lastName: "Kunda",
-  email: "user@example.com",
-  password: "12345678Aa!",
-  userType: "operator",
-  role: 'admin',
-  branch: 'main',
-  companyId: "comp_001",
-  companyName: "RITCO",
-  companyRegNo: "12345678",
-  companyAddress: "Kigali KN234st",
-  companyContact: "0788833423",
-});
-allUsers.set("user_auth_123", {
-  firstName: "Loic",
-  lastName: "Andy Karangwa",
-  email: "agentuser@example.com",
-  password: "12345678Aa!",
-  userType: "operator",
-  role: 'agent',
-  branch: 'Kigali',
-  companyId: 'comp_002',
-  companyName: "Volcano Express",
-  companyRegNo: "99311178",
-  companyAddress: "Nyabugogo Terminal, Kigali",
-  companyContact: "0792233418",
-});
+const organizations = new Map<string, OrganizationResponse>();
+const activationTokens = new Map<string, string>();
 
-function findUserByCredentials(email: string, password: string) {
+function findUserByCredentials(identifier: string, password: string) {
   for (const [id, user] of allUsers.entries()) {
-    if (user.email === email && user.password === password) {
+    if (
+      (user.email === identifier || user.phone === identifier) &&
+      user.password === password
+    ) {
       return { id, ...user };
     }
   }
-  return null; // No matching user found
+  return null;
 }
 
+type ActivationErrorResponse = {
+  error: "INVALID_CREDENTIALS" | "USER_NOT_FOUND";
+  message: string;
+};
+
 export const handlers = [
-  // Auth
-  // Intercept "POST /users/auth/register" requests...
-  http.post<never, User, loginResponse>(
-    `${baseUrl}/users/auth/register`,
+  // Organization registration
+  http.post<never, OrganizationRegistrationPayload, OrganizationResponse>(
+    `${baseUrl}/api/v1/organizations`,
     async ({ request }) => {
-      const newUser = await request.json();
-      const userId = crypto.randomUUID();
+      const newOrg = await request.json();
+      const orgId = crypto.randomUUID();
+      const slug = newOrg.name
+        .toLowerCase()
+        .replace(/\s+/g, "-")
+        .replace(/[^a-z0-9-]/g, "");
+      const createdAt = new Date().toISOString();
 
-      allUsers.set(userId, newUser);
-      const tokenData: LoggedInUser = {
-        firstName: newUser.firstName,
-        lastName: newUser.lastName,
-        userType: newUser.userType,
-        role: newUser.role as Role,
-        branch: newUser.branch,
-        companyId: 'comp_001'
+      const createdOrg: OrganizationResponse = {
+        id: orgId,
+        name: newOrg.name,
+        slug,
+        org_type: newOrg.org_type,
+        status: "pending",
+        contact_email: newOrg.contact_email,
+        contact_phone: newOrg.contact_phone,
+        parent_org_id: newOrg.parent_org_id || null,
+        created_at: createdAt,
+        logo_url: newOrg.logo_url,
       };
 
-      return HttpResponse.json(
-        { userId: userId, token: generateFakeJWT(tokenData) },
-        { status: 201 }
-      );
-    }
-  ),
-  // Intercept "POST /users/auth/login" requests...
-  http.post<never, User, loginResponse | AuthErrorResponse>(
-    `${baseUrl}/users/auth/login`,
-    async ({ request }) => {
-      const { email, password } = await request.json();
-      const result = findUserByCredentials(email, password);
+      organizations.set(orgId, createdOrg);
 
-      if (!result) {
-        const errorResponse: InvalidCredentialsError = {
+      const token = crypto.randomUUID();
+      activationTokens.set(token, orgId);
+
+      return HttpResponse.json(createdOrg, { status: 201 });
+    },
+  ),
+
+  // Organization admin activation
+  http.post<
+    never,
+    AdminActivationPayload,
+    AdminActivationResponse | ActivationErrorResponse
+  >(`${baseUrl}/api/v1/organizations/activate`, async ({ request }) => {
+    const payload = await request.json();
+    const orgId = activationTokens.get(payload.token);
+    if (!orgId) {
+      return HttpResponse.json(
+        {
           error: "INVALID_CREDENTIALS",
-          message: "Incorrect email or password.",
-        };
-
-        return HttpResponse.json(errorResponse, { status: 401 });
-      }
-      const tokenData: LoggedInUser = {
-        firstName: result.firstName,
-        lastName: result.lastName,
-        userType: result.userType,
-        role: result.role,
-        branch: result.branch,
-        companyId: result.companyId
-      };
-
-      return HttpResponse.json(
-        { userId: result.id, token: generateFakeJWT(tokenData) },
-        { status: 200 }
+          message: "Invalid activation token.",
+        } as ActivationErrorResponse,
+        { status: 401 },
       );
     }
-  ),
-  // Intercept "POST /users/auth/logout" requests...
-  http.post<never>(`${baseUrl}/users/auth/logout`, async ({ request }) => {
-    const token = await request.json();
 
-    if (!token) {
-      const errorResponse: InvalidCredentialsError = {
-        error: "INVALID_CREDENTIALS",
-        message: "Error logging out.",
-      };
-
-      return HttpResponse.json(errorResponse, { status: 401 });
-    }
+    const userId = crypto.randomUUID();
+    allUsers.set(userId, {
+      firstName: payload.first_name || "Admin",
+      lastName: payload.last_name || "User",
+      email: payload.email,
+      password: payload.password,
+      userType: "operator",
+      role: "admin",
+      branch: "main",
+      companyId: orgId,
+    });
 
     return HttpResponse.json(
       {
-        message: "You have been successfully logged out.",
+        id: userId,
+        email: payload.email,
+        first_name: payload.first_name,
+        last_name: payload.last_name,
+        organization_id: orgId,
+      } as AdminActivationResponse,
+      { status: 200 },
+    );
+  }),
+
+  // Login
+  http.post<never, LoginDetails, LoginResponse | AuthErrorResponse>(
+    `${baseUrl}/auth/login`,
+    async ({ request }) => {
+      const { identifier, password } = await request.json();
+      const result = findUserByCredentials(identifier, password);
+      if (!result) {
+        return HttpResponse.json(
+          {
+            error: "INVALID_CREDENTIALS",
+            message: "Incorrect credentials.",
+          },
+          { status: 401 },
+        );
+      }
+
+      const user: LoginUser = {
+        id: result.id,
+        firstName: result.firstName,
+        lastName: result.lastName,
+        userType: result.userType,
+        companyId: result.companyId,
+        role: result.role as Role,
+        branch: result.branch,
+      };
+
+      return HttpResponse.json(
+        { user },
+        {
+          status: 200,
+          headers: {
+            "Set-Cookie":
+              "access_token=fake-jwt; HttpOnly; Secure; SameSite=Strict; Path=/;",
+          },
+        },
+      );
+    },
+  ),
+
+  // GET current user profile
+  http.get<never, LegacyUser>(`${baseUrl}/api/v1/users/me`, () => {
+    const firstUser = Array.from(allUsers.values())[0] as any;
+    if (!firstUser) {
+      return HttpResponse.json(
+        { message: "Not authenticated" },
+        { status: 401 },
+      );
+    }
+
+    const user: LegacyUser = {
+      id: "user_auth_456",
+      firstName: firstUser.firstName,
+      lastName: firstUser.lastName,
+      userType: firstUser.userType,
+      companyId: firstUser.companyId,
+      role: firstUser.role as Role,
+      branch: firstUser.branch,
+    };
+
+    return HttpResponse.json(user, { status: 200 });
+  }),
+
+  // Upload presigned URL
+  http.post<
+    never,
+    { file_name: string; content_type: string },
+    { uploadUrl: string; fileUrl: string }
+  >(`${baseUrl}/api/v1/uploads/presigned-url`, async ({ request }) => {
+    const requestData = await request.json();
+    const filePath = `uploads/${crypto.randomUUID()}-${requestData.file_name}`;
+    const uploadUrl = `${baseUrl}/uploads/${filePath}`;
+    const fileUrl = `${baseUrl}/${filePath}`;
+    return HttpResponse.json({ uploadUrl, fileUrl }, { status: 200 });
+  }),
+
+  // PUT upload location (optional, for transport simulation)
+  http.put(`${baseUrl}/uploads/:filePath`, () => {
+    return HttpResponse.json({ success: true }, { status: 200 });
+  }),
+
+  // Logout endpoint for cookie-based auth
+  http.post(`${baseUrl}/auth/logout`, () => {
+    return HttpResponse.json(
+      {
         status: "Logged out.",
+        message: "You have been successfully logged out.",
       },
-      { status: 200 }
+      { status: 200 },
     );
   }),
 ];

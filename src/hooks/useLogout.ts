@@ -3,26 +3,19 @@ import { useNavigate } from "react-router-dom";
 import APIClient from "../services/apiClient";
 import { useToastStore } from "../stores/toastStore";
 
-export interface LogoutDetails {
-  token: string;
-}
-
-interface logoutResponse {
+interface LogoutResponse {
   status: string;
   message: string;
 }
 
-const apiClient = new APIClient<logoutResponse>("/users/auth/logout");
+const apiClient = new APIClient<LogoutResponse>("/auth/logout");
 const useLogout = () => {
   const showToast = useToastStore((state) => state.showToast);
   const navigate = useNavigate();
-  const { mutate } = useMutation<logoutResponse, Error>({
-    mutationFn: () => {
-      const token = localStorage.getItem("token") || "";
-      return apiClient.post<LogoutDetails>({ token: token });
-    },
+  const { mutate } = useMutation<LogoutResponse, Error>({
+    mutationFn: () => apiClient.post<unknown>({}),
     onSuccess: () => {
-      localStorage.removeItem("token");
+      localStorage.removeItem("user");
       showToast("Successfully logged out", "success");
       navigate("/login");
     },

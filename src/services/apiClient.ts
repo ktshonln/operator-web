@@ -64,7 +64,11 @@ class APIClient<TResponse> {
       .post<TResponse>(`${this.endpoint}/${companyId}/buses`, input)
       .then((res) => res.data);
   };
-  editBus = <TRequest>(input: TRequest, companyId: string | number, busId: string | number) => {
+  editBus = <TRequest>(
+    input: TRequest,
+    companyId: string | number,
+    busId: string | number,
+  ) => {
     return axiosInstance
       .put<TResponse>(`${this.endpoint}/${companyId}/buses/${busId}`, input)
       .then((res) => res.data);
@@ -89,9 +93,16 @@ class APIClient<TResponse> {
       .post<TResponse>(`${this.endpoint}/${companyId}/drivers`, input)
       .then((res) => res.data);
   };
-  editDriver = <TRequest>(input: TRequest, companyId: string | number, driverId: string | number) => {
+  editDriver = <TRequest>(
+    input: TRequest,
+    companyId: string | number,
+    driverId: string | number,
+  ) => {
     return axiosInstance
-      .put<TResponse>(`${this.endpoint}/${companyId}/drivers/${driverId}`, input)
+      .put<TResponse>(
+        `${this.endpoint}/${companyId}/drivers/${driverId}`,
+        input,
+      )
       .then((res) => res.data);
   };
   deleteDriver = (companyId: string | number, driverId: string | number) => {
@@ -104,7 +115,11 @@ class APIClient<TResponse> {
       .post<TResponse>(`${this.endpoint}/${companyId}/trips`, input)
       .then((res) => res.data);
   };
-  editTrip = <TRequest>(input: TRequest, companyId: string | number, tripId: string | number) => {
+  editTrip = <TRequest>(
+    input: TRequest,
+    companyId: string | number,
+    tripId: string | number,
+  ) => {
     return axiosInstance
       .put<TResponse>(`${this.endpoint}/${companyId}/trips/${tripId}`, input)
       .then((res) => res.data);
@@ -129,7 +144,11 @@ class APIClient<TResponse> {
       .post<TResponse>(`${this.endpoint}/${companyId}/routes`, input)
       .then((res) => res.data);
   };
-  editRoute = <TRequest>(input: TRequest, companyId: string | number, routeId: string | number) => {
+  editRoute = <TRequest>(
+    input: TRequest,
+    companyId: string | number,
+    routeId: string | number,
+  ) => {
     return axiosInstance
       .put<TResponse>(`${this.endpoint}/${companyId}/routes/${routeId}`, input)
       .then((res) => res.data);
@@ -152,7 +171,7 @@ class APIClient<TResponse> {
   };
   getRevenueAnalytics = (
     companyId: string | number,
-    config: AxiosRequestConfig
+    config: AxiosRequestConfig,
   ) => {
     return axiosInstance
       .get<TResponse>(`${this.endpoint}/${companyId}/analytics/revenue`, config)
@@ -160,12 +179,12 @@ class APIClient<TResponse> {
   };
   getPopularRoutes = (
     companyId: string | number,
-    config: AxiosRequestConfig
+    config: AxiosRequestConfig,
   ) => {
     return axiosInstance
       .get<TResponse>(
         `${this.endpoint}/${companyId}/analytics/popular-routes`,
-        config
+        config,
       )
       .then((res) => res.data);
   };
@@ -173,7 +192,7 @@ class APIClient<TResponse> {
     return axiosInstance
       .get<TResponse>(
         `${this.endpoint}/${companyId}/analytics/peak-times`,
-        config
+        config,
       )
       .then((res) => res.data);
   };
@@ -199,6 +218,24 @@ class APIClient<TResponse> {
           throw new Error(error.message);
         }
       });
+  };
+
+  getPresignedUploadUrl = async (fileName: string, contentType: string) => {
+    return axiosInstance
+      .post<{
+        uploadUrl: string;
+        fileUrl: string;
+      }>("/api/v1/uploads/presigned-url", { file_name: fileName, content_type: contentType })
+      .then((res) => res.data);
+  };
+
+  uploadFileToUrl = async (uploadUrl: string, file: File) => {
+    return axios
+      .create({ baseURL: "" })
+      .put(uploadUrl, file, {
+        headers: { "Content-Type": file.type },
+      })
+      .then((res) => res.data);
   };
 }
 

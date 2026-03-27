@@ -2,77 +2,104 @@ import { zodResolver } from "@hookform/resolvers/zod";
 import { useForm } from "react-hook-form";
 import { Link, useNavigate } from "react-router-dom";
 import { z } from "zod";
+import { useState } from "react";
 import Footer from "../components/Footer";
-import useRegister, { User } from "../hooks/useRegister";
-import { useRegStore } from "../stores/regStore";
+import useRegister, {
+  OrganizationRegistrationPayload,
+} from "../hooks/useRegister";
+import { axiosInstance } from "../services/apiClient";
 
-const BaseSchema = z.object({
-  firstName: z
-    .string()
-    .min(2, { message: "First Name must be at least 2 characters." }),
-  lastName: z
-    .string()
-    .min(2, { message: "Last name must be at least 2 characters." }),
-  email: z.string().email({ message: "Please enter a valid email." }),
-  password: z
-    .string()
-    .min(8, { message: "Password must be at least 8 characters." }),
-  userType: z
-    .string()
-    .min(3, { message: "User type must be at least 3 characters." }),
-  role: z
-    .string()
-    .min(3, { message: "Role must be at least 3 characters." }),
-  branch: z
-    .string()
-    .min(3, { message: "Branch must be at least 3 characters." }),
-  companyName: z
-    .string()
-    .min(3, { message: "Company name must be at least 3 characters." }),
-  companyRegNo: z
-    .string()
-    .min(5, { message: "Please enter a valid company registration number." }),
-  companyAddress: z
-    .string()
-    .min(5, { message: "Company address must be at least 5 characters." }),
-  companyContact: z.string().min(10, {
-    message: "Company contact must start with a country code(e.g:+250).",
+const OrganizationSchema = z.object({
+  name: z.string().min(2, {
+    message: "Organization name must be at least 2 characters.",
   }),
+  org_type: z.enum(["company", "cooperative"]),
+  tin: z.string().min(3, {
+    message: "Tax ID must be set and at least 3 characters.",
+  }),
+  license_number: z.string().min(3, {
+    message: "License number must be set.",
+  }),
+  contact_email: z.string().email({ message: "Please enter a valid email." }),
+  contact_phone: z.string().min(10, {
+    message: "Please enter a valid E.164 phone number.",
+  }),
+  address: z.string().min(5, {
+    message: "Address must be at least 5 characters.",
+  }),
+  parent_org_id: z.string().optional().or(z.literal("")),
 });
 
-export const FullSchema = BaseSchema.extend({
+export const FullSchema = OrganizationSchema.extend({
   userId: z.string(),
   otp: z.string().length(6, { message: "OTP must be 6 digits." }),
 });
-
-
-export type RegistrationData = z.infer<typeof BaseSchema>;
+export type RegistrationData = z.infer<typeof OrganizationSchema>;
 export type FullRegistrationData = z.infer<typeof FullSchema>;
 
 const RegisterPage = () => {
   const navigate = useNavigate();
+  const [logoFile, setLogoFile] = useState<File | null>(null);
+  const [logoPreview, setLogoPreview] = useState<string>("");
 
   const {
     register,
     handleSubmit,
-    resetField,
+    reset,
     formState: { errors },
-  } = useForm<RegistrationData>({ resolver: zodResolver(BaseSchema) });
+  } = useForm<RegistrationData>({ resolver: zodResolver(OrganizationSchema) });
 
-  const addUser = useRegister();
-  const { setFormData } = useRegStore();
+  const createOrganization = useRegister();
+
+  const onLogoSelected = (event: React.ChangeEvent<HTMLInputElement>) => {
+    const file = event.target.files?.[0];
+    if (!file) return;
+    setLogoFile(file);
+    setLogoPreview(URL.createObjectURL(file));
+  };
 
   const onSubmit = async (data: RegistrationData) => {
-    console.log("submitting");
-    setFormData(data);
-    addUser.mutate(data, {
-      onSuccess: (response: any) => {
-        setFormData({ userId: response.user_id });
-        navigate('/login-mfa');
+    try {
+      let logo_url: string | undefined;
+      if (logoFile) {
+        const presignedResponse = await axiosInstance.post<{
+          uploadUrl: string;
+          fileUrl: string;
+        }>("/api/v1/uploads/presigned-url", {
+          file_name: logoFile.name,
+          content_type: logoFile.type,
+        });
+
+        await fetch(presignedResponse.data.uploadUrl, {
+          method: "PUT",
+          body: logoFile,
+          headers: {
+            "Content-Type": logoFile.type,
+          },
+        });
+
+        logo_url = presignedResponse.data.fileUrl;
       }
-    });
-    resetField("password");
+
+      const payload: OrganizationRegistrationPayload = {
+        ...data,
+        parent_org_id: data.parent_org_id || undefined,
+        logo_url,
+      };
+
+      createOrganization.mutate(payload, {
+        onSuccess: () => {
+          reset();
+          setLogoFile(null);
+          setLogoPreview("");
+          navigate("/register/success");
+        },
+      });
+    } catch (error) {
+      console.error(error);
+    }
   };
+
   return (
     <div className="relative bg-[#0A4370] font-heebo">
       <svg
@@ -99,225 +126,178 @@ const RegisterPage = () => {
               onSubmit={handleSubmit(onSubmit)}
               className="text-xs justify-self-center w-full px-32"
             >
-              <div className="flex gap-48 items-baseline">
-                <div className="w-full">
-                  <h2 className="font-bold text-base mb-8">
-                    Company information
-                  </h2>
-                  <label
-                    htmlFor="companyName"
-                    className="text-[#6A717D] block mb-0.5 text-xs"
-                  >
-                    Name
-                  </label>
-                  <div className="mb-5">
-                    <div className="ring ring-gray-200  p-2 rounded-xs bg-white">
-                      <input
-                        {...register("companyName")}
-                        type="text"
-                        id="companyName"
-                        name="companyName"
-                        className=" outline-none w-full"
-                      />
-                    </div>
-                    {errors.companyName && (
-                      <p className="text-red-500 text-xs">
-                        {errors.companyName.message}
-                      </p>
-                    )}
-                  </div>
-                  <label
-                    htmlFor="regNo"
-                    className="text-[#6A717D] block mb-0.5 text-xs"
-                  >
-                    Registration Number
-                  </label>
-                  <div className="mb-5">
-                    <div className="ring ring-gray-200  p-2 rounded-xs bg-white">
-                      <input
-                        {...register("companyRegNo")}
-                        type="text"
-                        id="companyRegNo"
-                        name="companyRegNo"
-                        className="outline-none w-full"
-                      />
-                    </div>
-                    {errors.companyRegNo && (
-                      <p className="text-red-500 text-xs">
-                        {errors.companyRegNo.message}
-                      </p>
-                    )}
-                  </div>
-                  <label
-                    htmlFor="address"
-                    className="text-[#6A717D] block mb-0.5 text-xs"
-                  >
-                    Address
-                  </label>
-                  <div className=" mb-5">
-                    <div className="ring ring-gray-200 p-2 rounded-xs bg-white">
-                      <input
-                        {...register("companyAddress")}
-                        type="text"
-                        id="companyAddress"
-                        name="companyAddress"
-                        className="outline-none w-full"
-                      />
-                    </div>
-                    {errors.companyAddress && (
-                      <p className="text-red-500 text-xs">
-                        {errors.companyAddress.message}
-                      </p>
-                    )}
-                  </div>
-                  <label
-                    htmlFor="contact"
-                    className="text-[#6A717D] block mb-0.5 text-xs"
-                  >
-                    Contact information
-                  </label>
-                  <div className="mb-5">
-                    <div className="ring ring-gray-200 p-2 rounded-xs bg-white">
-                      <input
-                        {...register("companyContact")}
-                        type="text"
-                        id="companyContact"
-                        name="companyContact"
-                        className="outline-none w-full"
-                      />
-                    </div>
-                    {errors.companyContact && (
-                      <p className="text-red-500 text-xs">
-                        {errors.companyContact.message}
-                      </p>
-                    )}
-                  </div>
-                </div>
-                <div className="w-full">
-                  <h2 className="font-bold text-base mb-8">
-                    Admin information
-                  </h2>
-                  <label
-                    htmlFor="firstName"
-                    className="text-[#6A717D] block mb-0.5 text-xs"
-                  >
-                    First Name
-                  </label>
-                  <div className="mb-5">
-                    <div className="ring ring-gray-200 p-2 rounded-xs bg-white">
-                      <input
-                        {...register("firstName")}
-                        type="text"
-                        id="firstName"
-                        name="firstName"
-                        className=" outline-none w-full"
-                      />
-                    </div>
-                    {errors.firstName && (
-                      <p className="text-red-500 text-xs">
-                        {errors.firstName.message}
-                      </p>
-                    )}
-                  </div>
-                  <label
-                    htmlFor="lastName"
-                    className="text-[#6A717D] block mb-0.5 text-xs"
-                  >
-                    Last Name
-                  </label>
-                  <div className="mb-5">
-                    <div className="ring ring-gray-200 p-2 rounded-xs bg-white">
-                      <input
-                        {...register("lastName")}
-                        type="text"
-                        id="lastName"
-                        name="lastName"
-                        className="outline-none w-full"
-                      />
-                    </div>
-                    {errors.lastName && (
-                      <p className="text-red-500 text-xs">
-                        {errors.lastName.message}
-                      </p>
-                    )}
-                  </div>
-                  <label
-                    htmlFor="email"
-                    className="text-[#6A717D] block mb-0.5 text-xs"
-                  >
-                    Email
-                  </label>
-                  <div className="mb-5">
-                    <div className="ring ring-gray-200 p-2 rounded-xs bg-white">
-                      <input
-                        {...register("email")}
-                        type="email"
-                        id="email"
-                        name="email"
-                        className="outline-none w-full"
-                      />
-                    </div>
-                    {errors.email && (
-                      <p className="text-red-500 text-xs">
-                        {errors.email.message}
-                      </p>
-                    )}
-                  </div>
-                  <label
-                    htmlFor="password"
-                    className="text-[#6A717D] block mb-0.5 text-xs"
-                  >
-                    Password
-                  </label>
-                  <div className="mb-5">
-                    <div className="ring ring-gray-200 p-2 rounded-xs bg-white">
-                      <input
-                        {...register("password")}
-                        type="password"
-                        id="password"
-                        name="password"
-                        className="outline-none w-full"
-                      />
-                    </div>
-                    {errors.password && (
-                      <p className="text-red-500 text-xs">
-                        {errors.password.message}
-                      </p>
-                    )}
-                  </div>
-                  <input
-                    {...register("userType")} // Setting userType by default since this is the operator client
-                    type="text"
-                    id="userType"
-                    name="userType"
-                    value={"operator"}
-                    className=" outline-none w-full hidden"
+              <div className="flex flex-col gap-6">
+                <h2 className="font-bold text-base mb-4">
+                  Organization details
+                </h2>
+
+                <label
+                  htmlFor="name"
+                  className="text-[#6A717D] block mb-0.5 text-xs"
+                >
+                  Name
+                </label>
+                <input
+                  {...register("name")}
+                  type="text"
+                  id="name"
+                  className="ring ring-gray-200 p-2 rounded-xs bg-white w-full outline-none"
+                />
+                {errors.name && (
+                  <p className="text-red-500 text-xs">{errors.name.message}</p>
+                )}
+
+                <label
+                  htmlFor="org_type"
+                  className="text-[#6A717D] block mb-0.5 text-xs"
+                >
+                  Organization Type
+                </label>
+                <select
+                  {...register("org_type")}
+                  id="org_type"
+                  className="ring ring-gray-200 p-2 rounded-xs bg-white w-full outline-none"
+                  defaultValue="company"
+                >
+                  <option value="company">Company</option>
+                  <option value="cooperative">Cooperative</option>
+                </select>
+                {errors.org_type && (
+                  <p className="text-red-500 text-xs">
+                    {errors.org_type.message}
+                  </p>
+                )}
+
+                <label
+                  htmlFor="tin"
+                  className="text-[#6A717D] block mb-0.5 text-xs"
+                >
+                  Tax Identification Number (TIN)
+                </label>
+                <input
+                  {...register("tin")}
+                  type="text"
+                  id="tin"
+                  className="ring ring-gray-200 p-2 rounded-xs bg-white w-full outline-none"
+                />
+                {errors.tin && (
+                  <p className="text-red-500 text-xs">{errors.tin.message}</p>
+                )}
+
+                <label
+                  htmlFor="license_number"
+                  className="text-[#6A717D] block mb-0.5 text-xs"
+                >
+                  License Number
+                </label>
+                <input
+                  {...register("license_number")}
+                  type="text"
+                  id="license_number"
+                  className="ring ring-gray-200 p-2 rounded-xs bg-white w-full outline-none"
+                />
+                {errors.license_number && (
+                  <p className="text-red-500 text-xs">
+                    {errors.license_number.message}
+                  </p>
+                )}
+
+                <label
+                  htmlFor="contact_email"
+                  className="text-[#6A717D] block mb-0.5 text-xs"
+                >
+                  Official email
+                </label>
+                <input
+                  {...register("contact_email")}
+                  type="email"
+                  id="contact_email"
+                  className="ring ring-gray-200 p-2 rounded-xs bg-white w-full outline-none"
+                />
+                {errors.contact_email && (
+                  <p className="text-red-500 text-xs">
+                    {errors.contact_email.message}
+                  </p>
+                )}
+
+                <label
+                  htmlFor="contact_phone"
+                  className="text-[#6A717D] block mb-0.5 text-xs"
+                >
+                  Contact phone
+                </label>
+                <input
+                  {...register("contact_phone")}
+                  type="text"
+                  id="contact_phone"
+                  placeholder="+2507xxxxxxx"
+                  className="ring ring-gray-200 p-2 rounded-xs bg-white w-full outline-none"
+                />
+                {errors.contact_phone && (
+                  <p className="text-red-500 text-xs">
+                    {errors.contact_phone.message}
+                  </p>
+                )}
+
+                <label
+                  htmlFor="address"
+                  className="text-[#6A717D] block mb-0.5 text-xs"
+                >
+                  Address
+                </label>
+                <textarea
+                  {...register("address")}
+                  id="address"
+                  className="ring ring-gray-200 p-2 rounded-xs bg-white w-full outline-none"
+                />
+                {errors.address && (
+                  <p className="text-red-500 text-xs">
+                    {errors.address.message}
+                  </p>
+                )}
+
+                <label
+                  htmlFor="parent_org_id"
+                  className="text-[#6A717D] block mb-0.5 text-xs"
+                >
+                  Parent Organization ID (optional)
+                </label>
+                <input
+                  {...register("parent_org_id")}
+                  type="text"
+                  id="parent_org_id"
+                  className="ring ring-gray-200 p-2 rounded-xs bg-white w-full outline-none"
+                />
+
+                <label
+                  htmlFor="logo"
+                  className="text-[#6A717D] block mb-0.5 text-xs"
+                >
+                  Logo (optional)
+                </label>
+                <input
+                  id="logo"
+                  type="file"
+                  accept="image/*"
+                  onChange={onLogoSelected}
+                  className="ring ring-gray-200 p-2 rounded-xs bg-white w-full outline-none"
+                />
+                {logoPreview && (
+                  <img
+                    src={logoPreview}
+                    alt="Logo preview"
+                    className="h-24 mt-2 object-contain"
                   />
-                  <input
-                    {...register("role")} // Setting role to admin on registration since the admin is the only one to register
-                    type="text"
-                    id="role"
-                    name="role"
-                    value={"admin"}
-                    className="outline-none w-full hidden"
-                  />
-                  <input
-                    {...register("branch")} // Setting the admin's branch to default to main 
-                    type="text"
-                    id="branch"
-                    name="branch"
-                    value={"main"}
-                    className="outline-none w-full hidden"
-                  />
-                </div>
+                )}
+
+                <button
+                  disabled={createOrganization.isPending}
+                  type="submit"
+                  className="bg-[#0A4370] p-2 block w-full text-white mt-6 rounded-sm cursor-pointer hover:text-[#0A4370] hover:bg-white hover:ring hover:ring-[#0A4370] active:scale-95 disabled:active:scale-none disabled:hover:ring-0 disabled:opacity-50 disabled:hover:bg-[#0A4370] disabled:hover:text-white disabled:cursor-not-allowed"
+                >
+                  {createOrganization.isPending ? "REGISTERING..." : "REGISTER"}
+                </button>
               </div>
-              <button
-                disabled={addUser.isPending}
-                type="submit"
-                className="bg-[#0A4370] p-2 block pl-20 pr-20 w-fit mx-auto text-white mt-10 rounded-sm cursor-pointer hover:text-[#0A4370] hover:bg-white hover:ring hover:ring-[#0A4370] active:scale-95 disabled:active:scale-none disabled:hover:ring-0 disabled:opacity-50 disabled:hover:bg-[#0A4370] disabled:hover:text-white disabled:cursor-not-allowed"
-              >
-                {addUser.isPending ? "REGISTERING..." : "REGISTER"}
-              </button>
             </form>
             <p className="text-xs w-fit pb-3 mt-10 mx-auto sm:ml-12">
               Already have an account?

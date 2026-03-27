@@ -40,20 +40,22 @@ const LoginMfa = () => {
     }
   };
 
-  const handleKeyDown = (index: number, e: React.KeyboardEvent<HTMLInputElement>) => {
+  const handleKeyDown = (
+    index: number,
+    e: React.KeyboardEvent<HTMLInputElement>,
+  ) => {
     if (e.key === "Backspace" && !otp[index] && index > 0) {
       inputRefs.current[index - 1]?.focus();
     }
   };
 
-
   const handleResend = () => {
     if (timeLeft === 0) {
       setTimeLeft(60);
       // Logic to resend OTP
-      if (formData.companyContact) {
+      if (formData.contact_phone) {
         resendOtp(
-          { phone_number: formData.companyContact },
+          { phone_number: formData.contact_phone },
           {
             onSuccess: () => setTimeLeft(60),
           },
@@ -74,7 +76,7 @@ const LoginMfa = () => {
     }
     setError("");
     const finalData = { ...formData, otp: otp.join("") };
-    const result = FullSchema.safeParse(finalData)
+    const result = FullSchema.safeParse(finalData);
     if (result.success && formData.userId) {
       verifyOtp(
         { user_id: formData.userId, otp: otp.join("") },
@@ -108,14 +110,16 @@ const LoginMfa = () => {
                 <p className="text-sm font-bold">Enter verification code</p>
                 <p className="font-medium">
                   We've sent a code to{" "}
-                  <span className="text-brand2">{formData.companyContact}</span>
+                  <span className="text-brand2">{formData.contact_phone}</span>
                 </p>
 
                 <div className="relative mt-14 mb-14 flex items-center gap-x-3 justify-between text-xl">
                   {otp.map((digit, index) => (
                     <input
                       key={index}
-                      ref={(el) => { inputRefs.current[index] = el }}
+                      ref={(el) => {
+                        inputRefs.current[index] = el;
+                      }}
                       type="text"
                       maxLength={1}
                       inputMode="numeric"
@@ -135,19 +139,30 @@ const LoginMfa = () => {
                 <p className="text-xs">
                   Didn't get code?
                   {timeLeft > 0 ? (
-                    <span className="text-neutral-500 ml-2">Wait {timeLeft}s to resend</span>
+                    <span className="text-neutral-500 ml-2">
+                      Wait {timeLeft}s to resend
+                    </span>
                   ) : (
-                    <span onClick={handleResend} className="text-brand cursor-pointer ml-2">
+                    <span
+                      onClick={handleResend}
+                      className="text-brand cursor-pointer ml-2"
+                    >
                       Click to resend
                     </span>
                   )}
                 </p>
                 <div className="mt-3 flex items-center space-x-5">
-                  <button disabled={isVerifying} type="submit" className="bg-[#0A4370] p-2 w-full text-white rounded-sm cursor-pointer hover:text-[#0A4370] hover:bg-white hover:ring hover:ring-[#0A4370] active:scale-95">
-
+                  <button
+                    disabled={isVerifying}
+                    type="submit"
+                    className="bg-[#0A4370] p-2 w-full text-white rounded-sm cursor-pointer hover:text-[#0A4370] hover:bg-white hover:ring hover:ring-[#0A4370] active:scale-95"
+                  >
                     {isVerifying ? "Verifying..." : "VERIFY"}
                   </button>
-                  <button type="button" className="ring ring-gray-300 p-2 w-full text-neutral-500 rounded-sm cursor-pointer hover:bg-neutral-400 hover:text-white active:scale-95">
+                  <button
+                    type="button"
+                    className="ring ring-gray-300 p-2 w-full text-neutral-500 rounded-sm cursor-pointer hover:bg-neutral-400 hover:text-white active:scale-95"
+                  >
                     CANCEL
                   </button>
                 </div>
@@ -183,7 +198,8 @@ const LoginMfa = () => {
           <BsTicketFill className="absolute lg:w-18 lg:h-18 rotate-45 top-64 right-2 fill-[#6A717D]/25" />
           <BsTicketFill className="absolute lg:w-7 lg:h-7 rotate-[30deg] bottom-20 right-52 fill-[#6A717D]/25" />
           <p className="absolute md:bottom-3/4 lg:bottom-80 xl:bottom-1/2 top-5 md:top-auto -right-5 sm:-right-3 md:right-0 font-semibold md:text-lg lg:text-2xl  text-white max-w-40 md:max-w-52 lg:max-w-96 xl:max-w-[450px]">
-            Making travel simpler, smarter, and more convenient for everyone.{" "}
+            Making travel simpler, smarter, and more convenient for
+            everyone.{" "}
           </p>
         </div>
         <Footer />

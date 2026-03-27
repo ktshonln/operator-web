@@ -8,7 +8,7 @@ import { z } from "zod";
 import useLogin, { LoginDetails } from "../hooks/useLogin";
 
 const schema = z.object({
-  email: z.string().email({ message: "Please enter a valid email." }),
+  identifier: z.string().min(3, { message: "Please enter email or phone." }),
   password: z
     .string()
     .min(8, { message: "Password must be at least 8 characters." }),
@@ -25,10 +25,12 @@ const LoginPage = () => {
 
   const loginUser = useLogin();
 
-  const onSubmit = async (data: LoginDetails) => {
-    console.log("submitting");
-    console.log(data);
-    loginUser.mutate(data);
+  const onSubmit = async (data: FormData) => {
+    loginUser.mutate({
+      identifier: data.identifier,
+      password: data.password,
+      device_name: "web",
+    });
     resetField("password");
   };
   return (
@@ -58,24 +60,24 @@ const LoginPage = () => {
               />
               <form onSubmit={handleSubmit(onSubmit)} className="text-xs">
                 <label
-                  htmlFor="email"
+                  htmlFor="identifier"
                   className="text-[#6A717D] block mb-0.5 text-xs"
                 >
-                  Email
+                  Email or Phone
                 </label>
                 <div>
-                  <div className="ring ring-gray-200 dark:ring-neutral-800 mb-5 p-2 rounded-xs bg-white dark:bg-neutral-900">
+                  <div className="ring ring-gray-200 dark:ring-neutral-800 mb-5 p-2 rounded-xs bg-white">
                     <input
-                      {...register("email")}
-                      type="email"
-                      id="email"
-                      name="email"
+                      {...register("identifier")}
+                      type="text"
+                      id="identifier"
+                      name="identifier"
                       className=" outline-none w-full"
                     />
                   </div>
-                  {errors.email && (
+                  {errors.identifier && (
                     <p className="text-red-500 text-xs">
-                      {errors.email.message}
+                      {errors.identifier.message}
                     </p>
                   )}
                 </div>
@@ -101,7 +103,12 @@ const LoginPage = () => {
                     </p>
                   )}
                   <div className="flex justify-end w-full mb-2">
-                    <Link to="/forgot-password" className="text-brand hover:underline">Forgot Password?</Link>
+                    <Link
+                      to="/forgot-password"
+                      className="text-brand hover:underline"
+                    >
+                      Forgot Password?
+                    </Link>
                   </div>
                 </div>
                 <button
@@ -142,7 +149,8 @@ const LoginPage = () => {
           <BsTicketFill className="absolute lg:w-18 lg:h-18 rotate-45 top-64 right-2 fill-[#6A717D]/25" />
           <BsTicketFill className="absolute lg:w-7 lg:h-7 rotate-[30deg] bottom-20 right-52 fill-[#6A717D]/25" />
           <p className="absolute md:bottom-3/4 lg:bottom-80 xl:bottom-1/2 top-5 md:top-auto -right-5 sm:-right-3 md:right-0 font-semibold md:text-lg lg:text-2xl  text-white max-w-40 md:max-w-52 lg:max-w-96 xl:max-w-[450px]">
-            Making travel simpler, smarter, and more convenient for everyone.{" "}
+            Making travel simpler, smarter, and more convenient for
+            everyone.{" "}
           </p>
         </div>
         <Footer />

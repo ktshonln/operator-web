@@ -4,24 +4,33 @@ import APIClient from "../services/apiClient";
 import { useToastStore } from "../stores/toastStore";
 
 export interface LoginDetails {
-  email: string;
+  identifier: string;
   password: string;
+  device_name?: string;
 }
 
-export interface loginResponse {
-  token: string;
-  userId: string;
+export interface LoginUser {
+  id: string;
+  firstName: string;
+  lastName: string;
+  userType: string;
+  companyId: string;
+  role: string;
+  branch: string;
 }
 
-const apiClient = new APIClient<loginResponse>("/users/auth/login");
+export interface LoginResponse {
+  user: LoginUser;
+}
+
+const apiClient = new APIClient<LoginResponse>("/auth/login");
 const useLogin = () => {
   const showToast = useToastStore((state) => state.showToast);
   const navigate = useNavigate();
-  return useMutation<loginResponse, Error ,LoginDetails>({
+  return useMutation<LoginResponse, Error, LoginDetails>({
     mutationFn: apiClient.loginUser<LoginDetails>,
     onSuccess: (savedData) => {
-      localStorage.setItem('userId', savedData.userId)
-      localStorage.setItem("token", savedData.token);
+      localStorage.setItem("user", JSON.stringify(savedData.user));
       showToast("Successfully logged in", "success");
       navigate("/home");
     },
