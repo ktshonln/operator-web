@@ -7,6 +7,8 @@ import DriverDetails from "./pages/DriverDetails";
 import Drivers from "./pages/Drivers";
 import HomePage from "./pages/Home";
 import LoginPage from "./pages/Login";
+import ForgotPassword from "./pages/ForgotPassword";
+import ResetPassword from "./pages/ResetPassword";
 import LoginMfa from "./pages/LoginMfa";
 import NotFound from "./pages/NotFound";
 import ProfileSettings from "./pages/ProfileSettings";
@@ -29,6 +31,8 @@ function App() {
         <Routes>
           <Route path="/" element={<Navigate to="/login" replace />} />
           <Route path="/login" element={<LoginPage />} />
+          <Route path="/forgot-password" element={<ForgotPassword />} />
+          <Route path="/reset-password" element={<ResetPassword />} />
           <Route path="/login-mfa" element={<LoginMfa />} />
           <Route path="/register" element={<RegisterPage />} />
           <Route path="/register/success" element={<RegisterSuccess />} />

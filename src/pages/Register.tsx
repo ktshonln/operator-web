@@ -1,11 +1,12 @@
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useForm } from "react-hook-form";
-import { Link } from "react-router-dom";
+import { Link, useNavigate } from "react-router-dom";
 import { z } from "zod";
 import Footer from "../components/Footer";
 import useRegister, { User } from "../hooks/useRegister";
+import { useRegStore } from "../stores/regStore";
 
-const schema = z.object({
+const BaseSchema = z.object({
   firstName: z
     .string()
     .min(2, { message: "First Name must be at least 2 characters." }),
@@ -39,22 +40,37 @@ const schema = z.object({
   }),
 });
 
-type FormData = z.infer<typeof schema>;
+export const FullSchema = BaseSchema.extend({
+  userId: z.string(),
+  otp: z.string().length(6, { message: "OTP must be 6 digits." }),
+});
+
+
+export type RegistrationData = z.infer<typeof BaseSchema>;
+export type FullRegistrationData = z.infer<typeof FullSchema>;
 
 const RegisterPage = () => {
+  const navigate = useNavigate();
+
   const {
     register,
     handleSubmit,
     resetField,
     formState: { errors },
-  } = useForm<FormData>({ resolver: zodResolver(schema) });
+  } = useForm<RegistrationData>({ resolver: zodResolver(BaseSchema) });
 
   const addUser = useRegister();
+  const { setFormData } = useRegStore();
 
-  const onSubmit = async (data: User) => {
+  const onSubmit = async (data: RegistrationData) => {
     console.log("submitting");
-    console.log(data);
-    addUser.mutate(data);
+    setFormData(data);
+    addUser.mutate(data, {
+      onSuccess: (response: any) => {
+        setFormData({ userId: response.user_id });
+        navigate('/login-mfa');
+      }
+    });
     resetField("password");
   };
   return (

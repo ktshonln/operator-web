@@ -1,7 +1,90 @@
 import { BsTicketFill } from "react-icons/bs";
 import Footer from "../components/Footer";
-import { Link } from "react-router-dom";
+import { Link, useNavigate } from "react-router-dom";
+import { useState, useEffect, useRef } from "react";
+import { useVerifyPhone, useResendOtp } from "../hooks/useAuth";
+import { useRegStore } from "../stores/regStore";
+import { FullSchema } from "./Register";
+
 const LoginMfa = () => {
+  const navigate = useNavigate();
+  const { formData } = useRegStore();
+  const { mutate: verifyOtp, isPending: isVerifying } = useVerifyPhone();
+  const { mutate: resendOtp, isPending: isResending } = useResendOtp();
+  const [error, setError] = useState("");
+  const [fieldErrors, setFieldErrors] = useState<Record<string, string>>({});
+  const [otp, setOtp] = useState(["", "", "", "", "", ""]);
+  const [timeLeft, setTimeLeft] = useState(60);
+  const inputRefs = useRef<(HTMLInputElement | null)[]>([]);
+
+  useEffect(() => {
+    if (timeLeft > 0) {
+      const timerId = setTimeout(() => setTimeLeft(timeLeft - 1), 1000);
+      return () => clearTimeout(timerId);
+    }
+  }, [timeLeft]);
+
+  if (!formData) {
+    navigate("/register");
+  }
+
+  const handleChange = (index: number, value: string) => {
+    if (isNaN(Number(value))) return;
+    const newOtp = [...otp];
+    newOtp[index] = value;
+    setOtp(newOtp);
+
+    // Focus next input
+    if (value !== "" && index < 5) {
+      inputRefs.current[index + 1]?.focus();
+    }
+  };
+
+  const handleKeyDown = (index: number, e: React.KeyboardEvent<HTMLInputElement>) => {
+    if (e.key === "Backspace" && !otp[index] && index > 0) {
+      inputRefs.current[index - 1]?.focus();
+    }
+  };
+
+
+  const handleResend = () => {
+    if (timeLeft === 0) {
+      setTimeLeft(60);
+      // Logic to resend OTP
+      if (formData.companyContact) {
+        resendOtp(
+          { phone_number: formData.companyContact },
+          {
+            onSuccess: () => setTimeLeft(60),
+          },
+        );
+      }
+    }
+  };
+
+  if (!formData.userId) {
+    navigate("/register");
+  }
+
+  const handleVerify = (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!otp || otp.length < 6) {
+      setError("* 6-digit OTP required");
+      return;
+    }
+    setError("");
+    const finalData = { ...formData, otp: otp.join("") };
+    const result = FullSchema.safeParse(finalData)
+    if (result.success && formData.userId) {
+      verifyOtp(
+        { user_id: formData.userId, otp: otp.join("") },
+        {
+          onSuccess: () => navigate("/register/success"),
+        },
+      );
+    }
+  };
+
   return (
     <div className="relative bg-[#0A4370] font-heebo">
       <svg
@@ -21,56 +104,50 @@ const LoginMfa = () => {
               alt="Katisha-logo"
             />
             <div className="m-12 mt-0 mb-[134px]">
-              <form className="text-xs">
+              <form onSubmit={handleVerify} className="text-xs">
                 <p className="text-sm font-bold">Enter verification code</p>
                 <p className="font-medium">
                   We've sent a code to{" "}
-                  <span className="text-brand2">rnkusi23@gmailcom</span>
+                  <span className="text-brand2">{formData.companyContact}</span>
                 </p>
 
-                <div className="mt-14 mb-14 flex items-center gap-x-6 justify-between text-xl">
-                  <input
-                    type="text"
-                    pattern="[0-9]"
-                    maxLength={1}
-                    inputMode="numeric"
-                    className="ring ring-gray-200 text-center w-12 h-12 p-2 rounded-xs bg-white outline-none [appearance:textfield] [&::-webkit-inner-spin-button]:appearance-none [&::-webkit-outer-spin-button]:appearance-none" // The custom classes are for removing number arrows
-                  />
-                  <input
-                    type="text"
-                    pattern="[0-9]"
-                    maxLength={1}
-                    inputMode="numeric"
-                    className="ring ring-gray-200 text-center w-12 h-12 p-2 rounded-xs bg-white outline-none [appearance:textfield] [&::-webkit-inner-spin-button]:appearance-none [&::-webkit-outer-spin-button]:appearance-none"
-                  />
-                  <input
-                    type="text"
-                    pattern="[0-9]"
-                    maxLength={1}
-                    inputMode="numeric"
-                    className="ring ring-gray-200 text-center w-12 h-12 p-2 rounded-xs bg-white outline-none [appearance:textfield] [&::-webkit-inner-spin-button]:appearance-none [&::-webkit-outer-spin-button]:appearance-none"
-                  />
-                  <input
-                    type="text"
-                    pattern="[0-9]"
-                    maxLength={1}
-                    inputMode="numeric"
-                    className="ring ring-gray-200 text-center w-12 h-12 p-2 rounded-xs bg-white outline-none [appearance:textfield] [&::-webkit-inner-spin-button]:appearance-none [&::-webkit-outer-spin-button]:appearance-none"
-                  />
+                <div className="relative mt-14 mb-14 flex items-center gap-x-3 justify-between text-xl">
+                  {otp.map((digit, index) => (
+                    <input
+                      key={index}
+                      ref={(el) => { inputRefs.current[index] = el }}
+                      type="text"
+                      maxLength={1}
+                      inputMode="numeric"
+                      value={digit}
+                      onChange={(e) => handleChange(index, e.target.value)}
+                      onKeyDown={(e) => handleKeyDown(index, e)}
+                      autoFocus={index === 0}
+                      className="ring ring-gray-200 text-center w-10 sm:w-12 h-10 sm:h-12 p-2 rounded-xs bg-white outline-none [appearance:textfield] [&::-webkit-inner-spin-button]:appearance-none [&::-webkit-outer-spin-button]:appearance-none focus:ring-brand"
+                    />
+                  ))}
+                  {error && (
+                    <div className=" absolute bottom-[-20px] left-0 text-red-500 text-xs">
+                      {error}
+                    </div>
+                  )}
                 </div>
                 <p className="text-xs">
                   Didn't get code?
-                  <span className="text-brand cursor-pointer">
-                    {" "}
-                    Click to resend
-                  </span>{" "}
-                  <span className="text-neutral-500 ml-2">5</span>
+                  {timeLeft > 0 ? (
+                    <span className="text-neutral-500 ml-2">Wait {timeLeft}s to resend</span>
+                  ) : (
+                    <span onClick={handleResend} className="text-brand cursor-pointer ml-2">
+                      Click to resend
+                    </span>
+                  )}
                 </p>
                 <div className="mt-3 flex items-center space-x-5">
-                  <button className="bg-[#0A4370] p-2 w-full text-white rounded-sm cursor-pointer hover:text-[#0A4370] hover:bg-white hover:ring hover:ring-[#0A4370] active:scale-95">
-                    VERIFY
+                  <button disabled={isVerifying} type="submit" className="bg-[#0A4370] p-2 w-full text-white rounded-sm cursor-pointer hover:text-[#0A4370] hover:bg-white hover:ring hover:ring-[#0A4370] active:scale-95">
+
+                    {isVerifying ? "Verifying..." : "VERIFY"}
                   </button>
-                  <button className="ring ring-gray-300 p-2 w-full text-neutral-500 rounded-sm cursor-pointer hover:bg-neutral-400 hover:text-white active:scale-95">
+                  <button type="button" className="ring ring-gray-300 p-2 w-full text-neutral-500 rounded-sm cursor-pointer hover:bg-neutral-400 hover:text-white active:scale-95">
                     CANCEL
                   </button>
                 </div>

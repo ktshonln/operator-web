@@ -1,36 +1,36 @@
 import { BsTicketFill } from "react-icons/bs";
 import Footer from "../components/Footer";
-import { Link } from "react-router-dom";
-
+import { Link, useNavigate } from "react-router-dom";
+import { useState } from "react";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useForm } from "react-hook-form";
 import { z } from "zod";
-import useLogin, { LoginDetails } from "../hooks/useLogin";
 
 const schema = z.object({
-  email: z.string().email({ message: "Please enter a valid email." }),
-  password: z
-    .string()
-    .min(8, { message: "Password must be at least 8 characters." }),
+  contact: z.string().min(1, { message: "Please enter your email or phone number." }),
 });
+
 type FormData = z.infer<typeof schema>;
 
-const LoginPage = () => {
+const ForgotPassword = () => {
+  const [isPending, setIsPending] = useState(false);
+  const navigate = useNavigate();
   const {
     register,
     handleSubmit,
-    resetField,
     formState: { errors },
   } = useForm<FormData>({ resolver: zodResolver(schema) });
 
-  const loginUser = useLogin();
-
-  const onSubmit = async (data: LoginDetails) => {
-    console.log("submitting");
-    console.log(data);
-    loginUser.mutate(data);
-    resetField("password");
+  const onSubmit = async (data: FormData) => {
+    setIsPending(true);
+    console.log("Submitting forgot password for:", data);
+    // Simulate API call
+    setTimeout(() => {
+      setIsPending(false);
+      navigate("/login-mfa"); // Redirect to OTP verification
+    }, 1500);
   };
+
   return (
     <div className="relative bg-[#0A4370] font-heebo">
       <svg
@@ -50,73 +50,48 @@ const LoginPage = () => {
               alt="Katisha-logo"
             />
             <div className="m-12 mt-0">
-              <p className="text-[#6A717D] text-sm">Welcome to</p>
-              <img
-                src="/logoTwo.svg"
-                className="mt-5  mb-7 w-56 sm:w-72 -ml-11 sm:-ml-14 dark:invert"
-                alt="Katisha-logo"
-              />
+              <h1 className="text-2xl font-bold text-[#0A4370] dark:text-blue-400 mb-2">Forgot Password</h1>
+              <p className="text-[#6A717D] text-sm mb-8">
+                Enter your email or phone number and we'll send you a verification code to reset your password.
+              </p>
+              
               <form onSubmit={handleSubmit(onSubmit)} className="text-xs">
                 <label
-                  htmlFor="email"
+                  htmlFor="contact"
                   className="text-[#6A717D] block mb-0.5 text-xs"
                 >
-                  Email
+                  Email or Phone Number
                 </label>
                 <div>
                   <div className="ring ring-gray-200 dark:ring-neutral-800 mb-5 p-2 rounded-xs bg-white dark:bg-neutral-900">
                     <input
-                      {...register("email")}
-                      type="email"
-                      id="email"
-                      name="email"
-                      className=" outline-none w-full"
+                      {...register("contact")}
+                      type="text"
+                      id="contact"
+                      name="contact"
+                      placeholder="e.g. user@example.com or +250..."
+                      className=" outline-none w-full bg-transparent"
                     />
                   </div>
-                  {errors.email && (
-                    <p className="text-red-500 text-xs">
-                      {errors.email.message}
+                  {errors.contact && (
+                    <p className="text-red-500 text-xs -mt-3 mb-3">
+                      {errors.contact.message}
                     </p>
                   )}
                 </div>
-                <label
-                  htmlFor="password"
-                  className="text-[#6A717D] block mb-0.5 text-xs"
-                >
-                  Password
-                </label>
-                <div>
-                  <div className="ring ring-gray-200 dark:ring-neutral-800 mb-5 p-2 rounded-xs bg-white dark:bg-neutral-900">
-                    <input
-                      {...register("password")}
-                      type="password"
-                      id="password"
-                      name="password"
-                      className=" outline-none w-full"
-                    />
-                  </div>
-                  {errors.password && (
-                    <p className="text-red-500 text-xs -mt-3 mb-2">
-                      {errors.password.message}
-                    </p>
-                  )}
-                  <div className="flex justify-end w-full mb-2">
-                    <Link to="/forgot-password" className="text-brand hover:underline">Forgot Password?</Link>
-                  </div>
-                </div>
+                
                 <button
-                  disabled={loginUser.isPending}
-                  className="bg-[#0A4370] p-2 w-full text-white mt-10 rounded-sm cursor-pointer hover:text-[#0A4370] hover:bg-white dark:hover:bg-black hover:ring hover:ring-[#0A4370] active:scale-95 disabled:active:scale-none disabled:hover:ring-0 disabled:opacity-50 disabled:hover:bg-[#0A4370] disabled:hover:text-white disabled:cursor-not-allowed"
+                  disabled={isPending}
+                  className="bg-[#0A4370] p-2 w-full text-white mt-5 rounded-sm cursor-pointer hover:text-[#0A4370] hover:bg-white dark:hover:bg-black hover:ring hover:ring-[#0A4370] active:scale-95 disabled:active:scale-none disabled:hover:ring-0 disabled:opacity-50 disabled:hover:bg-[#0A4370] disabled:hover:text-white disabled:cursor-not-allowed"
                 >
-                  {loginUser.isPending ? "LOGING IN..." : "LOGIN"}
+                  {isPending ? "SENDING..." : "SEND VERIFICATION CODE"}
                 </button>
               </form>
             </div>
-            <p className="text-xs w-fit pb-3 mx-auto sm:ml-12">
-              No account yet?
-              <Link to={"/register"} className="text-brand cursor-pointer">
-                {" "}
-                Register
+            <p className="text-xs w-fit pb-5 mx-auto sm:ml-12 mt-4 cursor-pointer">
+              Remembered your password?
+              <Link to={"/login"} className="text-brand ml-1">
+                Back to Login
               </Link>
             </p>
           </div>
@@ -151,4 +126,4 @@ const LoginPage = () => {
   );
 };
 
-export default LoginPage;
+export default ForgotPassword;
