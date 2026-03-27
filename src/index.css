@@ -2,7 +2,7 @@
 @import "tailwindcss";
 @theme {
   --font-heebo: "Heebo", sans-serif;
-  --color-brand: #2e82c8;
+  --color-brand: #008BFF;
   --color-brand2: #6a717d;
 }
 
