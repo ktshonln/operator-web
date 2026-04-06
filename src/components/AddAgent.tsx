@@ -3,7 +3,6 @@ import { Controller, useForm } from "react-hook-form";
 import { z } from "zod";
 import useAddAgent, { AgentDetails } from "../hooks/useAddAgent";
 import useCompany from "../hooks/useCompany";
-import { userRoles } from "../hooks/useUser";
 import { camelCaseToTitle } from "../utils/helpers";
 import DropDown from "./DropDown";
 import { useState } from "react";
@@ -23,7 +22,7 @@ const schema = z.object({
     message:
       "Please enter a valid phone number, starting with country code(eg:+250)",
   }),
-  role: z.enum(userRoles, { message: "Please select a user role." }),
+  role: z.string().min(1, { message: "Please select a user role." }),
   branch: z.string().min(2, { message: "Please select a branch" }),
 });
 type FormData = z.infer<typeof schema>;
@@ -31,10 +30,12 @@ type FormData = z.infer<typeof schema>;
 interface Props {
   companyId: string;
   userId: string;
+  roles: string[];
+  rolePermissions: Record<string, string[]>;
 }
-const AddAgent = ({ companyId, userId }: Props) => {
+const AddAgent = ({ companyId, userId, roles, rolePermissions }: Props) => {
   const { data: company } = useCompany(companyId);
-  const [refreshKey, setRefreshKey] = useState(0)
+  const [refreshKey, setRefreshKey] = useState(0);
 
   const values = {
     inviteUserId: userId,
@@ -44,7 +45,7 @@ const AddAgent = ({ companyId, userId }: Props) => {
     lastName: "",
     email: "",
     phoneNumber: "",
-    role: userRoles[1],
+    role: roles[0] ?? "",
   };
 
   const {
@@ -52,50 +53,71 @@ const AddAgent = ({ companyId, userId }: Props) => {
     handleSubmit,
     control,
     resetField,
+    watch,
     formState: { errors },
-  } = useForm<FormData>({ resolver: zodResolver(schema), values });
+  } = useForm<FormData>({
+    resolver: zodResolver(schema),
+    defaultValues: values,
+  });
+  const selectedRole = watch("role", values.role);
   const addAgent = useAddAgent(companyId);
 
   const onSubmit = async (data: AgentDetails) => {
     console.log("Added!", data);
     addAgent.mutate(data);
-    resetField('firstName'),
-    resetField('lastName'),
-    resetField('email'),
-    resetField('phoneNumber'),
-    resetField('branch')
-    setRefreshKey(c=>c+1)
+    resetField("firstName");
+    resetField("lastName");
+    resetField("email");
+    resetField("phoneNumber");
+    resetField("branch");
+    setRefreshKey((c) => c + 1);
   };
   console.log("Invite user", userId);
   return (
-    <form onSubmit={handleSubmit(onSubmit)} className="text-sm">
-      <p className="font-bold text-sm w-fit mx-auto mb-3 dark:text-white">
-        Add new user
-      </p>
-      <div className="flex justify-between">
-        <p className="text-sm font-semibold dark:text-white">Add</p>
-        <div>
-          <div className="ring ring-gray-200 p-0.5 rounded-sm dark:text-white">
-            <Controller
-              name="role"
-              defaultValue={userRoles[1]} // default to agent
-              control={control}
-              render={({ field }) => (
-                <DropDown
-                key={refreshKey} //Trick to make dropdown component refresh when key changes to prevent staleness after form submission
-                  onSelect={field.onChange}
-                  options={[...userRoles.slice(1)]} // Skip admin as a role
-                  label={(choice) => camelCaseToTitle(choice)}
-                  style="v2"
-                />
-              )}
-            />
+    <div className="rounded-md border border-gray-200 dark:border-neutral-800 p-6 bg-white dark:bg-neutral-900">
+      <form onSubmit={handleSubmit(onSubmit)} className="text-sm space-y-4">
+        <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+          <p className="text-sm font-semibold dark:text-white">Add new user</p>
+          <div className="w-full sm:w-auto">
+            <div className="ring ring-gray-200 p-0.5 rounded-sm dark:text-white">
+              <Controller
+                name="role"
+                defaultValue={roles[0] ?? ""}
+                control={control}
+                render={({ field }) => (
+                  <DropDown
+                    key={refreshKey}
+                    onSelect={field.onChange}
+                    options={roles}
+                    label={(choice) => camelCaseToTitle(choice)}
+                    value={field.value}
+                    style="v2"
+                  />
+                )}
+              />
+            </div>
+            {errors.role && (
+              <p className="text-red-500 text-xs">{errors.role.message}</p>
+            )}
           </div>
-          {errors.role && (
-            <p className="text-red-500 text-xs">{errors.role.message}</p>
-          )}
         </div>
-      </div>
+      {selectedRole && rolePermissions[selectedRole] && (
+        <div className="mb-4 rounded-md bg-gray-50 p-3 text-xs text-neutral-700 dark:bg-neutral-900 dark:text-neutral-300">
+          <p className="font-semibold mb-2">
+            Permissions for {camelCaseToTitle(selectedRole)}:
+          </p>
+          <div className="flex flex-wrap gap-2">
+            {rolePermissions[selectedRole].map((permission) => (
+              <span
+                key={permission}
+                className="rounded-full bg-brand/10 px-2.5 py-1 text-[11px] text-brand"
+              >
+                {permission}
+              </span>
+            ))}
+          </div>
+        </div>
+      )}
       <label
         htmlFor="firstName"
         className="block mb-0.5 font-medium dark:text-white"
@@ -189,9 +211,9 @@ const AddAgent = ({ companyId, userId }: Props) => {
             control={control}
             render={({ field }) => (
               <DropDown
-              key={refreshKey+1}
+                key={refreshKey + 1}
                 onSelect={field.onChange}
-                options={["Select a branch", ...(company?.branches ?? "")]}
+                options={company?.branches ?? []}
                 style="v1"
               />
             )}
@@ -201,15 +223,16 @@ const AddAgent = ({ companyId, userId }: Props) => {
           <p className="text-red-500 text-xs">{errors.branch.message}</p>
         )}
       </div>
-      <div className="text-sm font-medium flex items-center gap-14 mx-16">
-        <button
-          type="submit"
-          className="bg-brand p-1.5 w-full text-white mt-1 rounded-xs cursor-pointer active:scale-95"
-        >
-          Add User
-        </button>
-      </div>
-    </form>
+        <div className="pt-4">
+          <button
+            type="submit"
+            className="bg-brand p-2 w-full text-white rounded-sm cursor-pointer hover:brightness-95 active:scale-95 transition-all"
+          >
+            Add User
+          </button>
+        </div>
+      </form>
+    </div>
   );
 };
 

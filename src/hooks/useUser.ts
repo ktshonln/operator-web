@@ -4,7 +4,7 @@ import { useNavigate } from "react-router-dom";
 import { axiosInstance } from "../services/apiClient";
 
 export const userRoles = ["admin", "agent", "agentManager"] as const;
-export type Role = (typeof userRoles)[number];
+export type Role = (typeof userRoles)[number] | string;
 export interface LegacyUser {
   id?: string;
   firstName: string;
@@ -25,13 +25,16 @@ export interface StaffUser {
   user_type: "staff";
   status: "active" | "pending_verification" | "suspended";
   org_id: string;
+  companyId?: string;
+  branch?: string;
   roles: string[];
+  role?: Role;
   permissions: Record<string, unknown>[];
   driver_license_number?: string | null;
   driver_license_verified_at?: string | null;
   last_login_at?: string | null;
-  created_at: string;
-  updated_at: string;
+  created_at?: string;
+  updated_at?: string;
 }
 
 const useUser = () => {
@@ -45,7 +48,13 @@ const useUser = () => {
     axiosInstance
       .get<StaffUser>("/api/v1/users/me")
       .then((res) => {
-        setUser(res.data);
+        const userData = res.data;
+        setUser({
+          ...userData,
+          companyId: userData.org_id,
+          role: userData.roles?.[0] ?? undefined,
+          branch: (userData as any).branch ?? undefined,
+        });
         setLoading(false);
       })
       .catch((error) => {
