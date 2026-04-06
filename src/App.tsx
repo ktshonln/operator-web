@@ -24,6 +24,7 @@ import TicketSaleHistory from "./pages/TicketSaleHistory";
 import Trips from "./pages/Trips";
 import UserDetails from "./pages/UserDetails";
 import Layout from "./components/layouts/Layout";
+import AuthGuard from "./components/AuthGuard";
 
 function App() {
   return (
@@ -44,22 +45,121 @@ function App() {
 
           <Route path="/" element={<Layout />}>
             <Route path="home" element={<HomePage />} />
-            <Route path="ticketing" element={<Ticketing />} />
-            <Route path="ticketing/:ticketId" element={<TicketDetails />} />
-            <Route path="ticketing/history" element={<TicketSaleHistory />} />
+            <Route
+              path="ticketing"
+              element={
+                <AuthGuard action="read" subject="Ticket">
+                  <Ticketing />
+                </AuthGuard>
+              }
+            />
+            <Route
+              path="ticketing/:ticketId"
+              element={
+                <AuthGuard action="read" subject="Ticket">
+                  <TicketDetails />
+                </AuthGuard>
+              }
+            />
+            <Route
+              path="ticketing/history"
+              element={
+                <AuthGuard action="read" subject="Ticket">
+                  <TicketSaleHistory />
+                </AuthGuard>
+              }
+            />
             <Route path="fleets">
-              <Route index path="buses" element={<Buses />} />
-              <Route path="buses/:busId" element={<BusDetails />} />
-              <Route path="drivers" element={<Drivers />} />
-              <Route path="drivers/:driverId" element={<DriverDetails />} />
+              <Route
+                index
+                path="buses"
+                element={
+                  <AuthGuard action="read" subject="Bus">
+                    <Buses />
+                  </AuthGuard>
+                }
+              />
+              <Route
+                path="buses/:busId"
+                element={
+                  <AuthGuard action="read" subject="Bus">
+                    <BusDetails />
+                  </AuthGuard>
+                }
+              />
+              <Route
+                path="drivers"
+                element={
+                  <AuthGuard action="read" subject="Driver">
+                    <Drivers />
+                  </AuthGuard>
+                }
+              />
+              <Route
+                path="drivers/:driverId"
+                element={
+                  <AuthGuard action="read" subject="Driver">
+                    <DriverDetails />
+                  </AuthGuard>
+                }
+              />
             </Route>
-            <Route path="trips" element={<Trips />} />
-            <Route path="trips/:tripId" element={<TripDetails />} />
-            <Route path="reports" element={<Reports />} />
-            <Route path="settings" element={<Settings />} />
-            <Route path="settings/user/:userId" element={<UserDetails />} />
-            <Route path="settings/profile" element={<ProfileSettings />} />
-            <Route path="settings/security" element={<SecuritySettings />} />
+            <Route
+              path="trips"
+              element={
+                <AuthGuard action="read" subject="Trip">
+                  <Trips />
+                </AuthGuard>
+              }
+            />
+            <Route
+              path="trips/:tripId"
+              element={
+                <AuthGuard action="read" subject="Trip">
+                  <TripDetails />
+                </AuthGuard>
+              }
+            />
+            <Route
+              path="reports"
+              element={
+                <AuthGuard action="read" subject="Report">
+                  <Reports />
+                </AuthGuard>
+              }
+            />
+            <Route
+              path="settings"
+              element={
+                <AuthGuard action="read" subject="User">
+                  <Settings />
+                </AuthGuard>
+              }
+            />
+            <Route
+              path="settings/user/:userId"
+              element={
+                <AuthGuard action="read" subject="User">
+                  <UserDetails />
+                </AuthGuard>
+              }
+            />
+            <Route
+              path="settings/profile"
+              element={
+                <AuthGuard action="read" subject="User">
+                  <ProfileSettings />
+                </AuthGuard>
+              }
+            />
+            <Route
+              path="settings/security"
+              element={
+                <AuthGuard action="read" subject="User">
+                  <SecuritySettings />
+                </AuthGuard>
+              }
+            />
           </Route>
           <Route path="*" element={<NotFound />} />
         </Routes>

@@ -12,7 +12,7 @@ import usePeakTimes from "../hooks/usePeakTimes";
 import usePopularRoutes from "../hooks/usePopularRoutes";
 import useRevenueAnalytics from "../hooks/useRevenueAnalytics";
 import useTickets, { TicketQuery } from "../hooks/useTickets";
-import useUser from "../hooks/useUser";
+import useUser, { Role } from "../hooks/useUser";
 import { camelCaseToTitle } from "../utils/helpers";
 import PeakTrafficChart from "../components/PeakTrafficChart";
 import useCompany from "../hooks/useCompany";
@@ -24,7 +24,7 @@ import { LuPanelRightClose, LuPanelRightOpen } from "react-icons/lu";
 function HomePage() {
   const { user } = useUser();
   const userLoad = user ? false : true;
-  const { data: company } = useCompany(user.companyId);
+  const { data: company } = useCompany(user?.org_id ?? "");
   console.log("COMPANY", company);
   const [analyticsQuery, setAnalyticsQuery] = useState<AnalyticsQuery>(
     {} as AnalyticsQuery
@@ -37,16 +37,16 @@ function HomePage() {
     data: analytics,
     error,
     isLoading: analyticsLoad,
-  } = useAnalytics(user.companyId, analyticsQuery);
+  } = useAnalytics(user?.org_id ?? "", analyticsQuery);
   const { data: revAnalytics } = useRevenueAnalytics(
-    user.companyId,
+    user?.org_id ?? "",
     analyticsQuery
   );
   const { data: popularRoutes } = usePopularRoutes(
-    user.companyId,
+    user?.org_id ?? "",
     analyticsQuery
   );
-  const { data: peakTimes } = usePeakTimes(user.companyId, analyticsQuery);
+  const { data: peakTimes } = usePeakTimes(user?.org_id ?? "", analyticsQuery);
   const { data: tickets } = useTickets(ticketQuery);
 
   const [sellTicket, setSellTicket] = useState(false);
@@ -73,14 +73,14 @@ function HomePage() {
         <p className="font-bold text-2xl">
           Good morning,{" "}
           <span className="text-brand">
-            {camelCaseToTitle(user.firstName ?? "")}!
+            {camelCaseToTitle(user?.first_name ?? "")}!
           </span>
         </p>
         <p className="text-sm text-brand2">
           Checkout real-time analytics and insights
         </p>
         <Filter
-          userRole={user.role}
+          userRole={user?.roles[0] as Role}
           branches={company?.branches}
           onSelectFilter={(filter) => {
             setAnalyticsQuery({

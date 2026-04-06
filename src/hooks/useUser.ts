@@ -35,7 +35,7 @@ export interface StaffUser {
 }
 
 const useUser = () => {
-  const [user, setUser] = useState<LegacyUser>({} as LegacyUser);
+  const [user, setUser] = useState<StaffUser | null>(null);
   const [loading, setLoading] = useState(true);
   const navigate = useNavigate();
   const showToast = useToastStore((state) => state.showToast);
@@ -43,7 +43,7 @@ const useUser = () => {
   useEffect(() => {
     setLoading(true);
     axiosInstance
-      .get<LegacyUser>("/api/v1/users/me")
+      .get<StaffUser>("/api/v1/users/me")
       .then((res) => {
         setUser(res.data);
         setLoading(false);

@@ -8,13 +8,14 @@ import ThemeToggle from "../components/ThemeToggle";
 import AddAgent from "../components/AddAgent";
 import useUser from "../hooks/useUser";
 import Search from "../components/Search";
+import { Can } from "../contexts/AbilityContext";
 
 type Theme = "system" | "light" | "dark";
 
 function Settings() {
   const { user } = useUser();
-  const companyId = user?.companyId;
-  const userId = user?.id??''
+  const companyId = user?.org_id ?? "";
+  const userId = user?.id ?? "";
   const tableHeaders = [
     "userId",
     "name",
@@ -33,10 +34,12 @@ function Settings() {
       <h1 className="font-bold text-lg mb-3">Manage users</h1>
       <div className="flex  space-x-3">
         <div className=" ml-3 mt-5 grow w-80">
-         <AddAgent companyId={companyId} userId={userId}/>
+          <Can I="create" a="User">
+            <AddAgent companyId={companyId} userId={userId} />
+          </Can>
           <div className="mt-5">
             <h1 className="font-bold text-lg mb-3 dark:text-white">Theme</h1>
-           <ThemeToggle/>
+            <ThemeToggle />
           </div>
         </div>
         <div className="relative  min-w-1/5 max-w-4xl justify-self-end w-full flex">
@@ -46,14 +49,14 @@ function Settings() {
               <h2 className="font-bold mt-5 mb-5 w-fit text-sm mx-auto dark:text-white">
                 Current users
               </h2>
-              
-               <Search
-                        label="Search users..."
-                        onSearch={(searchText) =>
-                          setAgentQuery({ ...agentQuery, searchText: searchText })
-                        }
-                        alt
-                      />
+
+              <Search
+                label="Search users..."
+                onSearch={(searchText) =>
+                  setAgentQuery({ ...agentQuery, searchText: searchText })
+                }
+                alt
+              />
               <div className=" mt-7 ">
                 <table className="text-sm gap-x-2 w-full">
                   <tbody>
@@ -66,7 +69,7 @@ function Settings() {
                         .map(
                           (
                             header,
-                            i // if some unnecessary headers are present, we can filter them out, e.g: with [includes]
+                            i, // if some unnecessary headers are present, we can filter them out, e.g: with [includes]
                           ) => (
                             <th
                               key={i}
@@ -74,43 +77,47 @@ function Settings() {
                             >
                               {camelCaseToTitle(header).toLocaleUpperCase()}
                             </th>
-                          )
+                          ),
                         )}
                     </tr>
                     {isLoading && <p>Loading...</p>}
-                   {
-                    agents?.pages.map((page, index)=><React.Fragment key={index}>
-                       {page?.map(
-                      (
-                        {
-                          userId,
-                          firstName,
-                          lastName,
-                          email,
-                          phoneNumber,
-                          role,
-                          status,
-                        },
-                        i
-                      ) => (
-                        <tr
-                          key={i}
-                          onClick={() => {
-                            navigate(`/settings/user/${userId}`);
-                          }}
-                          className={`odd:bg-gray-100 dark:odd:bg-neutral-900 text-neutral-600 hover:bg-gray-200 dark:hover:bg-neutral-800 cursor-pointer`}
-                        >
-                          <td className="p-3">{i + 1}</td>
-                          <td className="p-3">{firstName + " " + lastName}</td>
-                          <td className="p-3">{email}</td>
-                          <td className="p-3">{phoneNumber}</td>
-                          <td className="p-3">{camelCaseToTitle(role)}</td>
-                          <td className="p-3">{camelCaseToTitle(status)}</td>
-                        </tr>
-                      )
-                    )}
-                    </React.Fragment>)
-                   }
+                    {agents?.pages.map((page, index) => (
+                      <React.Fragment key={index}>
+                        {page?.map(
+                          (
+                            {
+                              userId,
+                              firstName,
+                              lastName,
+                              email,
+                              phoneNumber,
+                              role,
+                              status,
+                            },
+                            i,
+                          ) => (
+                            <tr
+                              key={i}
+                              onClick={() => {
+                                navigate(`/settings/user/${userId}`);
+                              }}
+                              className={`odd:bg-gray-100 dark:odd:bg-neutral-900 text-neutral-600 hover:bg-gray-200 dark:hover:bg-neutral-800 cursor-pointer`}
+                            >
+                              <td className="p-3">{i + 1}</td>
+                              <td className="p-3">
+                                {firstName + " " + lastName}
+                              </td>
+                              <td className="p-3">{email}</td>
+                              <td className="p-3">{phoneNumber}</td>
+                              <td className="p-3">{camelCaseToTitle(role)}</td>
+                              <td className="p-3">
+                                {camelCaseToTitle(status)}
+                              </td>
+                            </tr>
+                          ),
+                        )}
+                      </React.Fragment>
+                    ))}
                   </tbody>
                 </table>
               </div>

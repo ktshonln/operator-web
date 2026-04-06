@@ -8,7 +8,7 @@ import {
   AdminActivationPayload,
   AdminActivationResponse,
 } from "../../hooks/useActivateOrganization";
-import { Role, LegacyUser } from "../../hooks/useUser";
+import { Role, LegacyUser, StaffUser } from "../../hooks/useUser";
 import { baseUrl } from "./utils";
 
 interface AuthErrorResponse {
@@ -169,7 +169,7 @@ export const handlers = [
   ),
 
   // GET current user profile
-  http.get<never, LegacyUser>(`${baseUrl}/api/v1/users/me`, () => {
+  http.get<never, StaffUser>(`${baseUrl}/api/v1/users/me`, () => {
     const firstUser = Array.from(allUsers.values())[0] as any;
     if (!firstUser) {
       return HttpResponse.json(
@@ -178,14 +178,25 @@ export const handlers = [
       );
     }
 
-    const user: LegacyUser = {
+    const user: StaffUser = {
       id: "user_auth_456",
-      firstName: firstUser.firstName,
-      lastName: firstUser.lastName,
-      userType: firstUser.userType,
-      companyId: firstUser.companyId,
-      role: firstUser.role as Role,
-      branch: firstUser.branch,
+      first_name: firstUser.firstName,
+      last_name: firstUser.lastName,
+      phone_number: firstUser.phone || null,
+      email: firstUser.email,
+      avatar_url: null,
+      user_type: "staff",
+      status: "active",
+      org_id: firstUser.companyId,
+      roles: [firstUser.role],
+      permissions: [
+        { action: "manage", subject: "all" }, // Admin permissions
+      ],
+      driver_license_number: null,
+      driver_license_verified_at: null,
+      last_login_at: new Date().toISOString(),
+      created_at: new Date().toISOString(),
+      updated_at: new Date().toISOString(),
     };
 
     return HttpResponse.json(user, { status: 200 });

@@ -1,0 +1,32 @@
+import { ReactNode } from "react";
+import { Navigate } from "react-router-dom";
+import { useAbility } from "../contexts/AbilityContext";
+import useUser from "../hooks/useUser";
+
+interface AuthGuardProps {
+  children: ReactNode;
+  action: string;
+  subject: string;
+  fallback?: ReactNode;
+}
+
+const AuthGuard = ({ children, action, subject, fallback }: AuthGuardProps) => {
+  const ability = useAbility();
+  const { user, loading } = useUser();
+
+  if (loading) {
+    return <div>Loading...</div>;
+  }
+
+  if (!user) {
+    return <Navigate to="/login" replace />;
+  }
+
+  if (!ability.can(action as any, subject as any)) {
+    return fallback || <Navigate to="/home" replace />;
+  }
+
+  return <>{children}</>;
+};
+
+export default AuthGuard;
