@@ -1,6 +1,5 @@
 import { useEffect, useState } from "react";
 import { BiCalendarAlt } from "react-icons/bi";
-import { Branch } from "../pages/ProfileSettings";
 import { camelCaseToTitle, getDateRange } from "../utils/helpers";
 import CustomDatePicker from "./CustomDatePicker";
 import DropDown from "./DropDown";
@@ -10,6 +9,9 @@ interface Props {
   onSelectFilter: (filter: Filter)=>void;
   branches?:string[];
   userRole?: Role;
+}
+export interface Branch {
+  name: string;
 }
 interface Filter {
   startDate: string;

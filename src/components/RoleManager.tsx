@@ -48,9 +48,6 @@ const RoleManager = ({
 
   return (
     <div className="rounded-md border border-gray-200 dark:border-neutral-800 p-6 bg-white dark:bg-neutral-900">
-      <h2 className="font-bold text-lg mb-2 dark:text-white">
-        Role management
-      </h2>
       <p className="text-xs text-neutral-500 dark:text-neutral-400 mb-4">
         Create a role, assign core permissions, and then use it when adding
         users.

@@ -1,343 +1,157 @@
 import { useState } from "react";
 import SettingsNav from "../components/SettingsNav";
 
-const tableData = [
-  {
-    userId: "1234",
-    name: "Gasana Innocent",
-    email: "user@gmail.com",
-    phoneNumber: "073123456",
-    role: "agent",
-    status: "Activated",
-  },
-  {
-    userId: "1234",
-    name: "Gasana Innocent",
-    email: "user@gmail.com",
-    phoneNumber: "073123456",
-    role: "agent",
-    status: "Pending",
-  },
-  {
-    userId: "1234",
-    name: "Gasana Innocent",
-    email: "user@gmail.com",
-    phoneNumber: "073123456",
-    role: "agent",
-    status: "Pending",
-  },
-  {
-    userId: "1234",
-    name: "Gasana Innocent",
-    email: "user@gmail.com",
-    phoneNumber: "073123456",
-    role: "agent",
-    status: "Pending",
-  },
-  {
-    userId: "1234",
-    name: "Gasana Innocent",
-    email: "user@gmail.com",
-    phoneNumber: "073123456",
-    role: "agent",
-    status: "Pending",
-  },
-  {
-    userId: "1234",
-    name: "Gasana Innocent",
-    email: "user@gmail.com",
-    phoneNumber: "073123456",
-    role: "agent",
-    status: "Pending",
-  },
-  {
-    userId: "1234",
-    name: "Gasana Innocent",
-    email: "user@gmail.com",
-    phoneNumber: "073123456",
-    role: "agent",
-    status: "Pending",
-  },
-  {
-    userId: "1234",
-    name: "Gasana Innocent",
-    email: "user@gmail.com",
-    phoneNumber: "073123456",
-    role: "agent",
-    status: "Pending",
-  },
-  {
-    userId: "1234",
-    name: "Gasana Innocent",
-    email: "user@gmail.com",
-    phoneNumber: "073123456",
-    role: "agent",
-    status: "Pending",
-  },
-  {
-    userId: "1234",
-    name: "Gasana Innocent",
-    email: "user@gmail.com",
-    phoneNumber: "073123456",
-    role: "agent",
-    status: "Pending",
-  },
-  {
-    userId: "1234",
-    name: "Gasana Innocent",
-    email: "user@gmail.com",
-    phoneNumber: "073123456",
-    role: "agent",
-    status: "Pending",
-  },
-  {
-    userId: "1234",
-    name: "Gasana Innocent",
-    email: "user@gmail.com",
-    phoneNumber: "073123456",
-    role: "agent",
-    status: "Pending",
-  },
-  {
-    userId: "1234",
-    name: "Gasana Innocent",
-    email: "user@gmail.com",
-    phoneNumber: "073123456",
-    role: "agent",
-    status: "Pending",
-  },
-  {
-    userId: "1234",
-    name: "Gasana Innocent",
-    email: "user@gmail.com",
-    phoneNumber: "073123456",
-    role: "agent",
-    status: "Pending",
-  },
-  {
-    userId: "1234",
-    name: "Gasana Innocent",
-    email: "user@gmail.com",
-    phoneNumber: "073123456",
-    role: "agent",
-    status: "Pending",
-  },
-  {
-    userId: "1234",
-    name: "Gasana Innocent",
-    email: "user@gmail.com",
-    phoneNumber: "073123456",
-    role: "agent",
-    status: "Pending",
-  },
-  {
-    userId: "1234",
-    name: "Gasana Innocent",
-    email: "user@gmail.com",
-    phoneNumber: "073123456",
-    role: "agent",
-    status: "Pending",
-  },
-  {
-    userId: "1234",
-    name: "Gasana Innocent",
-    email: "user@gmail.com",
-    phoneNumber: "073123456",
-    role: "agent",
-    status: "Pending",
-  },
-  {
-    userId: "1234",
-    name: "Gasana Innocent",
-    email: "user@gmail.com",
-    phoneNumber: "073123456",
-    role: "agent",
-    status: "Pending",
-  },
-  {
-    userId: "1234",
-    name: "Gasana Innocent",
-    email: "user@gmail.com",
-    phoneNumber: "073123456",
-    role: "agent",
-    status: "Pending",
-  },
-  {
-    userId: "1234",
-    name: "Gasana Innocent",
-    email: "user@gmail.com",
-    phoneNumber: "073123456",
-    role: "agent",
-    status: "Pending",
-  },
-  {
-    userId: "1234",
-    name: "Gasana Innocent",
-    email: "user@gmail.com",
-    phoneNumber: "073123456",
-    role: "agent",
-    status: "Pending",
-  },
-  {
-    userId: "1234",
-    name: "Gasana Innocent",
-    email: "user@gmail.com",
-    phoneNumber: "073123456",
-    role: "agent",
-    status: "Pending",
-  },
-  {
-    userId: "1234",
-    name: "Gasana Innocent",
-    email: "user@gmail.com",
-    phoneNumber: "073123456",
-    role: "agent",
-    status: "Pending",
-  },
-  {
-    userId: "1234",
-    name: "Gasana Innocent",
-    email: "user@gmail.com",
-    phoneNumber: "073123456",
-    role: "agent",
-    status: "Pending",
-  },
-  {
-    userId: "1234",
-    name: "Gasana Innocent",
-    email: "user@gmail.com",
-    phoneNumber: "073123456",
-    role: "agent",
-    status: "Pending",
-  },
-  {
-    userId: "1234",
-    name: "Gasana Innocent",
-    email: "user@gmail.com",
-    phoneNumber: "073123456",
-    role: "agent",
-    status: "Pending",
-  },
-  {
-    userId: "1234",
-    name: "Gasana Innocent",
-    email: "user@gmail.com",
-    phoneNumber: "073123456",
-    role: "agent",
-    status: "Pending",
-  },
-  {
-    userId: "1234",
-    name: "Gasana Innocent",
-    email: "user@gmail.com",
-    phoneNumber: "073123456",
-    role: "agent",
-    status: "Pending",
-  },
-  {
-    userId: "1234",
-    name: "Gasana Innocent",
-    email: "user@gmail.com",
-    phoneNumber: "073123456",
-    role: "agent",
-    status: "Pending",
-  },
-  {
-    userId: "1234",
-    name: "Gasana Innocent",
-    email: "user@gmail.com",
-    phoneNumber: "073123456",
-    role: "agent",
-    status: "Pending",
-  },
-  {
-    userId: "1234",
-    name: "Gasana Innocent",
-    email: "user@gmail.com",
-    phoneNumber: "073123456",
-    role: "agent",
-    status: "Pending",
-  },
-];
-
 function SecuritySettings() {
   const [emailCode, setEmailCode] = useState(true); // Make the branch active/not
 
-  const tableHeaders = Object.keys(tableData[0]);
-  console.log(tableHeaders);
-
   return (
-    <div className="mt-10">
+    <div className="max-w-7xl mx-auto px-4 py-8">
       <SettingsNav />
 
-      <h1 className="font-bold text-lg mb-3">Manage your account security</h1>
-      <div className="flex mb-10 space-x-3">
-        <div className="w-lg">
-          <h2 className="font-bold text-sm  mb-3">Change your password</h2>
-          <form className="text-sm">
-            <label
-              htmlFor="firstName"
-              className="block mb-0.5 font-medium text-brand2"
-            >
-              Old password <span className="text-red-500 text-base">*</span>
-            </label>
-            <div className="ring ring-gray-200 mb-5 p-1 rounded-xs bg-white">
-              <input
-                type="password"
-                id="oldPassword"
-                name="oldPassword"
-                className="outline-none w-full"
-              />
+      <div className="mt-6">
+        <h1 className="font-bold text-2xl mb-6">Security Settings</h1>
+
+        <div className="grid gap-6 lg:grid-cols-2">
+          {/* Password Change Section */}
+          <div className="rounded-md border border-gray-200 dark:border-neutral-800 p-6 bg-white dark:bg-neutral-900">
+            <h2 className="font-bold text-lg mb-4 dark:text-white">
+              Change Password
+            </h2>
+            <p className="text-sm text-neutral-600 dark:text-neutral-400 mb-6">
+              Update your password to keep your account secure.
+            </p>
+
+            <form className="space-y-4">
+              <div>
+                <label
+                  htmlFor="oldPassword"
+                  className="block mb-2 font-medium dark:text-white"
+                >
+                  Current Password <span className="text-red-500">*</span>
+                </label>
+                <div className="ring ring-gray-200 p-1 rounded-sm bg-white dark:bg-neutral-950 dark:ring-neutral-700">
+                  <input
+                    type="password"
+                    id="oldPassword"
+                    name="oldPassword"
+                    className="outline-none w-full text-sm dark:text-white dark:bg-neutral-950"
+                    placeholder="Enter current password"
+                  />
+                </div>
+              </div>
+
+              <div>
+                <label
+                  htmlFor="newPassword"
+                  className="block mb-2 font-medium dark:text-white"
+                >
+                  New Password <span className="text-red-500">*</span>
+                </label>
+                <div className="ring ring-gray-200 p-1 rounded-sm bg-white dark:bg-neutral-950 dark:ring-neutral-700">
+                  <input
+                    type="password"
+                    id="newPassword"
+                    name="newPassword"
+                    className="outline-none w-full text-sm dark:text-white dark:bg-neutral-950"
+                    placeholder="Enter new password"
+                  />
+                </div>
+              </div>
+
+              <div className="pt-2">
+                <button
+                  type="submit"
+                  className="bg-brand text-white px-6 py-2 rounded-sm hover:brightness-95 transition-colors w-full sm:w-auto"
+                >
+                  Update Password
+                </button>
+              </div>
+            </form>
+          </div>
+
+          {/* Multi-Factor Authentication Section */}
+          <div className="rounded-md border border-gray-200 dark:border-neutral-800 p-6 bg-white dark:bg-neutral-900">
+            <h2 className="font-bold text-lg mb-4 dark:text-white">
+              Two-Factor Authentication
+            </h2>
+            <p className="text-sm text-neutral-600 dark:text-neutral-400 mb-6">
+              Add an extra layer of security to your account by requiring a
+              verification code in addition to your password.
+            </p>
+
+            <div className="space-y-4">
+              <div className="flex items-center justify-between p-4 border border-gray-200 dark:border-neutral-700 rounded-lg">
+                <div>
+                  <h3 className="font-medium dark:text-white">
+                    Email Verification
+                  </h3>
+                  <p className="text-sm text-neutral-600 dark:text-neutral-400">
+                    Receive verification codes via email
+                  </p>
+                </div>
+                <div
+                  onClick={() => setEmailCode(!emailCode)}
+                  className={`bg-brand w-12 h-6 rounded-full flex items-center p-0.5 cursor-pointer transition-all ${
+                    emailCode ? "justify-end" : "bg-neutral-300"
+                  }`}
+                >
+                  <div className="bg-white w-5 h-5 rounded-full shadow-sm" />
+                </div>
+              </div>
+
+              <div className="p-4 border border-gray-200 dark:border-neutral-700 rounded-lg bg-gray-50 dark:bg-neutral-800">
+                <h3 className="font-medium dark:text-white mb-2">
+                  Security Status
+                </h3>
+                <div className="flex items-center space-x-2">
+                  <div
+                    className={`w-3 h-3 rounded-full ${emailCode ? "bg-green-500" : "bg-yellow-500"}`}
+                  />
+                  <span className="text-sm dark:text-neutral-300">
+                    {emailCode
+                      ? "Two-factor authentication is enabled"
+                      : "Two-factor authentication is disabled"}
+                  </span>
+                </div>
+              </div>
             </div>
-            <label
-              htmlFor="lastName"
-              className="block mb-0.5 font-medium text-brand2"
-            >
-              New password <span className="text-red-500 text-base">*</span>
-            </label>
-            <div className="ring ring-gray-200 mb-5 p-1 rounded-xs bg-white">
-              <input
-                type="password"
-                id="newPassword"
-                name="newPassword"
-                className="outline-none w-full"
-              />
+          </div>
+        </div>
+
+        {/* Account Security Overview */}
+        <div className="mt-6 rounded-md border border-gray-200 dark:border-neutral-800 p-6 bg-white dark:bg-neutral-900">
+          <h2 className="font-bold text-lg mb-4 dark:text-white">
+            Account Security Overview
+          </h2>
+          <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
+            <div className="p-4 border border-gray-200 dark:border-neutral-700 rounded-lg">
+              <h3 className="font-medium dark:text-white mb-2">
+                Password Strength
+              </h3>
+              <div className="w-full bg-gray-200 dark:bg-neutral-700 rounded-full h-2">
+                <div className="bg-green-500 h-2 rounded-full w-3/4"></div>
+              </div>
+              <p className="text-sm text-neutral-600 dark:text-neutral-400 mt-2">
+                Strong
+              </p>
             </div>
 
-            <div className="text-sm font-medium flex items-center gap-14 mx-48">
-              <button
-                type="submit"
-                className="bg-brand p-1.5 w-full text-white mt-1 rounded-xs cursor-pointer"
-              >
-                Change
-              </button>
+            <div className="p-4 border border-gray-200 dark:border-neutral-700 rounded-lg">
+              <h3 className="font-medium dark:text-white mb-2">Last Login</h3>
+              <p className="text-sm dark:text-white">Today, 10:30 AM</p>
+              <p className="text-sm text-neutral-600 dark:text-neutral-400">
+                From Chrome on Windows
+              </p>
             </div>
-          </form>
-        </div>
-      </div>
-      <h2 className="font-bold text-sm  mb-3 mt-3">
-        Multi-factor Authentication
-      </h2>
-      <div>
-        <p className="text-xs text-neutral-500">
-          Each time you sign in to your account, you&#39;ll need your password
-          and a verification code.
-        </p>
-        <p className="text-xs text-brand2 font-semibold mt-3">
-          Two factor authentication options
-        </p>
-        <div>
-          <div className="flex items-center space-x-5 mt-3 ml-3">
-            <p className="text-xs text-neutral-500 font-semibold ">
-              Receive code via email
-            </p>
-            <div
-              onClick={() => setEmailCode(!emailCode)}
-              className={`bg-brand w-10 h-5 rounded-full flex items-center p-0.5 pb-[2.2px] cursor-pointer ${
-                emailCode ? " justify-end" : "bg-neutral-300"
-              }`}
-            >
-              <div className="bg-white w-4 h-4 rounded-full" />
+
+            <div className="p-4 border border-gray-200 dark:border-neutral-700 rounded-lg">
+              <h3 className="font-medium dark:text-white mb-2">
+                Active Sessions
+              </h3>
+              <p className="text-sm dark:text-white">1 active session</p>
+              <p className="text-sm text-neutral-600 dark:text-neutral-400">
+                Manage your sessions
+              </p>
             </div>
           </div>
         </div>

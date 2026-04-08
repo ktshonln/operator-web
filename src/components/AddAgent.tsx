@@ -77,7 +77,6 @@ const AddAgent = ({ companyId, userId, roles, rolePermissions }: Props) => {
     <div className="rounded-md border border-gray-200 dark:border-neutral-800 p-6 bg-white dark:bg-neutral-900">
       <form onSubmit={handleSubmit(onSubmit)} className="text-sm space-y-4">
         <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
-          <p className="text-sm font-semibold dark:text-white">Add new user</p>
           <div className="w-full sm:w-auto">
             <div className="ring ring-gray-200 p-0.5 rounded-sm dark:text-white">
               <Controller
@@ -101,128 +100,128 @@ const AddAgent = ({ companyId, userId, roles, rolePermissions }: Props) => {
             )}
           </div>
         </div>
-      {selectedRole && rolePermissions[selectedRole] && (
-        <div className="mb-4 rounded-md bg-gray-50 p-3 text-xs text-neutral-700 dark:bg-neutral-900 dark:text-neutral-300">
-          <p className="font-semibold mb-2">
-            Permissions for {camelCaseToTitle(selectedRole)}:
-          </p>
-          <div className="flex flex-wrap gap-2">
-            {rolePermissions[selectedRole].map((permission) => (
-              <span
-                key={permission}
-                className="rounded-full bg-brand/10 px-2.5 py-1 text-[11px] text-brand"
-              >
-                {permission}
-              </span>
-            ))}
+        {selectedRole && rolePermissions[selectedRole] && (
+          <div className="mb-4 rounded-md bg-gray-50 p-3 text-xs text-neutral-700 dark:bg-neutral-900 dark:text-neutral-300">
+            <p className="font-semibold mb-2">
+              Permissions for {camelCaseToTitle(selectedRole)}:
+            </p>
+            <div className="flex flex-wrap gap-2">
+              {rolePermissions[selectedRole].map((permission) => (
+                <span
+                  key={permission}
+                  className="rounded-full bg-brand/10 px-2.5 py-1 text-[11px] text-brand"
+                >
+                  {permission}
+                </span>
+              ))}
+            </div>
           </div>
-        </div>
-      )}
-      <label
-        htmlFor="firstName"
-        className="block mb-0.5 font-medium dark:text-white"
-      >
-        First Name <span className="text-red-500 text-base">*</span>
-      </label>
-      <div className="mb-5">
-        <div className="ring ring-gray-200 p-1 rounded-xs bg-white dark:text-white dark:bg-black">
-          <input
-            {...register("firstName")}
-            type="text"
-            id="firstName"
-            name="firstName"
-            className="outline-none w-full"
-          />
-        </div>
-        {errors.firstName && (
-          <p className="text-red-500 text-xs">{errors.firstName.message}</p>
         )}
-      </div>
-      <label
-        htmlFor="lastName"
-        className="block mb-0.5 font-medium dark:text-white"
-      >
-        Last Name <span className="text-red-500 text-base">*</span>
-      </label>
-      <div className="mb-5">
-        <div className="ring ring-gray-200 p-1 rounded-xs bg-white dark:text-white dark:bg-black">
-          <input
-            {...register("lastName")}
-            type="text"
-            id="lastName"
-            name="lastName"
-            className="outline-none w-full"
-          />
+        <label
+          htmlFor="firstName"
+          className="block mb-0.5 font-medium dark:text-white"
+        >
+          First Name <span className="text-red-500 text-base">*</span>
+        </label>
+        <div className="mb-5">
+          <div className="ring ring-gray-200 p-1 rounded-xs bg-white dark:text-white dark:bg-black">
+            <input
+              {...register("firstName")}
+              type="text"
+              id="firstName"
+              name="firstName"
+              className="outline-none w-full"
+            />
+          </div>
+          {errors.firstName && (
+            <p className="text-red-500 text-xs">{errors.firstName.message}</p>
+          )}
         </div>
-        {errors.lastName && (
-          <p className="text-red-500 text-xs">{errors.lastName.message}</p>
-        )}
-      </div>
-      <label
-        htmlFor="email"
-        className="block mb-0.5 font-medium dark:text-white"
-      >
-        Email <span className="text-red-500 text-base">*</span>
-      </label>
-      <div className=" mb-5">
-        <div className="ring ring-gray-200 p-1 rounded-xs bg-white dark:text-white dark:bg-black">
-          <input
-            {...register("email")}
-            type="email"
-            id="email"
-            name="email"
-            className="outline-none w-full"
-          />
+        <label
+          htmlFor="lastName"
+          className="block mb-0.5 font-medium dark:text-white"
+        >
+          Last Name <span className="text-red-500 text-base">*</span>
+        </label>
+        <div className="mb-5">
+          <div className="ring ring-gray-200 p-1 rounded-xs bg-white dark:text-white dark:bg-black">
+            <input
+              {...register("lastName")}
+              type="text"
+              id="lastName"
+              name="lastName"
+              className="outline-none w-full"
+            />
+          </div>
+          {errors.lastName && (
+            <p className="text-red-500 text-xs">{errors.lastName.message}</p>
+          )}
         </div>
-        {errors.email && (
-          <p className="text-red-500 text-xs">{errors.email.message}</p>
-        )}
-      </div>
-      <label
-        htmlFor="phoneNumber"
-        className="block mb-0.5 font-medium dark:text-white"
-      >
-        Phone Number <span className="text-red-500 text-base">*</span>
-      </label>
-      <div className="mb-5">
-        <div className="ring ring-gray-200 p-1 rounded-xs bg-white dark:text-white dark:bg-black">
-          <input
-            {...register("phoneNumber")}
-            type="text"
-            id="phoneNumber"
-            name="phoneNumber"
-            className="outline-none w-full"
-          />
+        <label
+          htmlFor="email"
+          className="block mb-0.5 font-medium dark:text-white"
+        >
+          Email <span className="text-red-500 text-base">*</span>
+        </label>
+        <div className=" mb-5">
+          <div className="ring ring-gray-200 p-1 rounded-xs bg-white dark:text-white dark:bg-black">
+            <input
+              {...register("email")}
+              type="email"
+              id="email"
+              name="email"
+              className="outline-none w-full"
+            />
+          </div>
+          {errors.email && (
+            <p className="text-red-500 text-xs">{errors.email.message}</p>
+          )}
         </div>
-        {errors.phoneNumber && (
-          <p className="text-red-500 text-xs">{errors.phoneNumber.message}</p>
-        )}
-      </div>
-      <label
-        htmlFor="branch"
-        className="block mb-0.5 font-medium dark:text-white"
-      >
-        Branch <span className="text-red-500 text-base">*</span>
-      </label>
-      <div className="mb-5">
-        <div className="ring ring-gray-200 p-1 rounded-xs bg-white dark:bg-black dark:text-white">
-          <Controller
-            name="branch"
-            control={control}
-            render={({ field }) => (
-              <DropDown
-                key={refreshKey + 1}
-                onSelect={field.onChange}
-                options={company?.branches ?? []}
-                style="v1"
-              />
-            )}
-          />
+        <label
+          htmlFor="phoneNumber"
+          className="block mb-0.5 font-medium dark:text-white"
+        >
+          Phone Number <span className="text-red-500 text-base">*</span>
+        </label>
+        <div className="mb-5">
+          <div className="ring ring-gray-200 p-1 rounded-xs bg-white dark:text-white dark:bg-black">
+            <input
+              {...register("phoneNumber")}
+              type="text"
+              id="phoneNumber"
+              name="phoneNumber"
+              className="outline-none w-full"
+            />
+          </div>
+          {errors.phoneNumber && (
+            <p className="text-red-500 text-xs">{errors.phoneNumber.message}</p>
+          )}
         </div>
-        {errors.branch && (
-          <p className="text-red-500 text-xs">{errors.branch.message}</p>
-        )}
-      </div>
+        <label
+          htmlFor="branch"
+          className="block mb-0.5 font-medium dark:text-white"
+        >
+          Branch <span className="text-red-500 text-base">*</span>
+        </label>
+        <div className="mb-5">
+          <div className="ring ring-gray-200 p-1 rounded-xs bg-white dark:bg-black dark:text-white">
+            <Controller
+              name="branch"
+              control={control}
+              render={({ field }) => (
+                <DropDown
+                  key={refreshKey + 1}
+                  onSelect={field.onChange}
+                  options={company?.branches ?? []}
+                  style="v1"
+                />
+              )}
+            />
+          </div>
+          {errors.branch && (
+            <p className="text-red-500 text-xs">{errors.branch.message}</p>
+          )}
+        </div>
         <div className="pt-4">
           <button
             type="submit"

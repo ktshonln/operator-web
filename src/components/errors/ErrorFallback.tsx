@@ -9,7 +9,7 @@ const ErrorFallback = ({ error, resetErrorBoundary }: FallbackProps) => {
   return (
     <div className="font-heebo">
       <div className="w-fit">
-        <img src="/logoOne.svg" className="w-16" alt="Katisha-logo" />
+        <img src="/logoOne.svg" className="w-32 ml-5 mt-2 pt-5" alt="Katisha-logo" />
       </div>
       <div className="fixed w-full mt-20 text-center">
         <p className="font-black text-red-500 text-7xl mb-3 w-fit mx-auto">

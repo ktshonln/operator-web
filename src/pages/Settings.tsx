@@ -103,13 +103,44 @@ function Settings() {
 
   const { data: agents, isLoading } = useAgents(companyId, agentQuery);
 
+  const getPageTitle = () => {
+    switch (activeTab) {
+      case "add":
+        return "Add New User";
+      case "roles":
+        return "Manage Roles & Permissions";
+      case "theme":
+        return "Theme Settings";
+      default:
+        return "General Settings";
+    }
+  };
+
+  const getPageDescription = () => {
+    switch (activeTab) {
+      case "add":
+        return "Create and invite new users to your organization";
+      case "roles":
+        return "Define roles and assign permissions to control access";
+      case "theme":
+        return "Customize the appearance of your application";
+      default:
+        return "Manage users, roles, and application settings";
+    }
+  };
+
   return (
     <div className="max-w-7xl mx-auto px-4 py-8">
       <SettingsNav />
 
       <div className="mt-6 flex flex-col gap-4 lg:flex-row">
         <div className="flex-1">
-          <h1 className="font-bold text-2xl mb-4">Manage users</h1>
+          <div className="mb-6">
+            <h1 className="font-bold text-2xl mb-2">{getPageTitle()}</h1>
+            <p className="text-neutral-600 dark:text-neutral-400">
+              {getPageDescription()}
+            </p>
+          </div>
           <div className="grid gap-6 lg:grid-cols-[minmax(400px,450px)_1fr]">
             <div className="space-y-4">
               {/* Tab Navigation */}
@@ -167,9 +198,6 @@ function Settings() {
                 )}
                 {activeTab === "theme" && (
                   <div className="rounded-md border border-gray-200 dark:border-neutral-800 p-6 bg-white dark:bg-neutral-900">
-                    <h2 className="font-bold text-lg mb-4 dark:text-white">
-                      Theme Settings
-                    </h2>
                     <p className="text-sm text-neutral-600 dark:text-neutral-400 mb-4">
                       Choose your preferred theme for the application.
                     </p>

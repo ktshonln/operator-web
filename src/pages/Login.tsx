@@ -66,7 +66,7 @@ const LoginPage = () => {
                   Email or Phone
                 </label>
                 <div>
-                  <div className="ring ring-gray-200 dark:ring-neutral-800 mb-5 p-2 rounded-xs bg-white">
+                  <div className="ring ring-gray-200 dark:ring-neutral-800 mb-5 p-2 rounded-xs">
                     <input
                       {...register("identifier")}
                       type="text"
