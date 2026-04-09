@@ -5,7 +5,7 @@ import { Link } from "react-router-dom";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useForm } from "react-hook-form";
 import { z } from "zod";
-import useLogin, { LoginDetails } from "../hooks/useLogin";
+import useLogin from "../hooks/useLogin";
 
 const schema = z.object({
   identifier: z.string().min(3, { message: "Please enter email or phone." }),

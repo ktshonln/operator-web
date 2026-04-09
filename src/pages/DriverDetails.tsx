@@ -12,10 +12,7 @@ import Modal from "../components/Modal";
 import EditDriver from "../components/EditDriver";
 import useDeleteDriver from "../hooks/useDeleteDriver";
 
-const tableData = [
-  { route: "Nyamagabe->Nyamasheke", departureTime: "12/09/2025 17:23" },
-  { route: "Nyamagabe->Nyamasheke", departureTime: "12/09/2025 17:23" },
-];
+
 
 function DriverDetails() {
   const [editDriver, setEditDriver] = useState(false);

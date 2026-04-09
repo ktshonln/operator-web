@@ -8,7 +8,7 @@ import useAgent from "../hooks/useAgent";
 function UserDetails() {
   const [access, setAccess] = useState(true); // Account access for the user/agent
   const { agentID } = useParams();
-  const { data, error, isLoading } = useAgent(
+  const { data } = useAgent(
     "comp_001",
     agentID ? agentID : "agent_xyz"
   );

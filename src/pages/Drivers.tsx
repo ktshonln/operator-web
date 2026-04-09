@@ -1,4 +1,3 @@
-import { AiOutlineSearch } from "react-icons/ai";
 import { useNavigate } from "react-router-dom";
 import { camelCaseToTitle } from "../utils/helpers";
 import { useState } from "react";

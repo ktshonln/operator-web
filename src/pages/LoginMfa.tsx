@@ -12,7 +12,7 @@ const LoginMfa = () => {
   const { mutate: verifyOtp, isPending: isVerifying } = useVerifyPhone();
   const { mutate: resendOtp, isPending: isResending } = useResendOtp();
   const [error, setError] = useState("");
-  const [fieldErrors, setFieldErrors] = useState<Record<string, string>>({});
+  // const [fieldErrors, setFieldErrors] = useState<Record<string, string>>({});
   const [otp, setOtp] = useState(["", "", "", "", "", ""]);
   const [timeLeft, setTimeLeft] = useState(60);
   const inputRefs = useRef<(HTMLInputElement | null)[]>([]);

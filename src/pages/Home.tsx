@@ -4,7 +4,6 @@ import { MdRoute } from "react-icons/md";
 import DonutChart from "../components/DonutChart";
 import Filter from "../components/Filter";
 import InsightCard from "../components/InsightCard";
-import SellTicket from "../components/SellTicket";
 import TableOne from "../components/TableOne";
 import TableTwo from "../components/TableTwo";
 import useAnalytics, { AnalyticsQuery } from "../hooks/useAnalytics";
@@ -35,7 +34,6 @@ function HomePage() {
 
   const {
     data: analytics,
-    error,
     isLoading: analyticsLoad,
   } = useAnalytics(user?.org_id ?? "", analyticsQuery);
   const { data: revAnalytics } = useRevenueAnalytics(
@@ -49,7 +47,6 @@ function HomePage() {
   const { data: peakTimes } = usePeakTimes(user?.org_id ?? "", analyticsQuery);
   const { data: tickets } = useTickets(ticketQuery);
 
-  const [sellTicket, setSellTicket] = useState(false);
   const [dest, setDest] = useState<number | null>(null);
   const navigate = useNavigate();
   const {
