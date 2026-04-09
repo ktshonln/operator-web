@@ -59,7 +59,7 @@ function Buses() {
             </tr>
           </thead>
           <tbody>
-            {buses?.map(
+            {buses?.pages.flat()?.map(
               (
                 {
                   busId,
@@ -71,7 +71,7 @@ function Buses() {
                 },
                 i
               ) => {
-                const driver = drivers?.find(
+                const driver = drivers?.pages.flat()?.find(
                   (driver) => driver.driverId === assignedDriverId
                 );
                 return (

@@ -38,12 +38,12 @@ type FormData = z.infer<typeof schema>;
 const EditBus = ({ effectTwo, companyId, bus }: Props) => {
   const { data: drivers } = useDrivers(companyId, {} as DriverQuery);
   if(!drivers) return
-  const currentDriver = drivers?.filter(
+  const currentDriver = drivers.pages.flat()?.filter(
     (driver) => driver.driverId === bus.assignedDriverId
   )[0];
   const driverOptions = [
     { id: "None", name: "None" },
-    ...(drivers?.map((d) => ({
+    ...(drivers?.pages.flat()?.map((d) => ({
       id: d.driverId,
       name: `${d.firstName} ${d.lastName}`,
     })) || [])

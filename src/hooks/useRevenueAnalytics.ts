@@ -24,6 +24,7 @@ const useRevenueAnalytics = (
           endDate: analyticsQuery.endDate,
         },
       }),
+      enabled: !!companyId && !!analyticsQuery.startDate && !!analyticsQuery.endDate,
   });
 
 export default useRevenueAnalytics;

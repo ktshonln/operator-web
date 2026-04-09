@@ -2,6 +2,7 @@ import { ReactNode } from "react";
 import { Navigate } from "react-router-dom";
 import { useAbility } from "../contexts/AbilityContext";
 import useUser from "../hooks/useUser";
+import { useToastStore } from "../stores/toastStore";
 
 interface AuthGuardProps {
   children: ReactNode;
@@ -13,6 +14,7 @@ interface AuthGuardProps {
 const AuthGuard = ({ children, action, subject, fallback }: AuthGuardProps) => {
   const ability = useAbility();
   const { user, loading } = useUser();
+  const showToast = useToastStore((state) => state.showToast);
 
   if (loading) {
     return <div>Loading...</div>;
@@ -23,6 +25,7 @@ const AuthGuard = ({ children, action, subject, fallback }: AuthGuardProps) => {
   }
 
   if (!ability.can(action as any, subject as any)) {
+    showToast("Permission denied", "error");
     return fallback || <Navigate to="/home" replace />;
   }
 

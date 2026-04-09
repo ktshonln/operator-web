@@ -6,7 +6,6 @@ import { FormData, schema } from "./DestinationManager";
 import useEditRoute from "../hooks/useEditRoute";
 import useDeleteRoute from "../hooks/useDeleteRoute";
 import { useState } from "react";
-import { z } from "zod";
 import { formatMoney } from "../utils/helpers";
 import { BiCheck, BiChevronDown } from "react-icons/bi";
 import { AiOutlineClose, AiOutlineDelete, AiTwotoneEdit } from "react-icons/ai";
@@ -26,8 +25,8 @@ const RouteForm = ({route: { routeId, route, price, intermediateStops }, company
       const [deleteRow, setDeleteRow] = useState<number | null>(null);
    
       const [mid, setMid] = useState<number | null>(null); // Show intermediate stops
-      const [dVal, setDval] = useState<string | null>(null); // Destination value
-      const [pVal, setPval] = useState<string | null>(null); // Price value
+      const [, setDval] = useState<string | null>(null); // Destination value
+      const [, setPval] = useState<string | null>(null); // Price value
                 const [midDVal, setMidDVal] = useState(''); // Intermediate stop destination value
             const [midPVal, setMidPVal] = useState(0); // Intermediate stop price value
       

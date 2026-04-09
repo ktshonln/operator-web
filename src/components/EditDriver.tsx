@@ -1,10 +1,8 @@
 import { zodResolver } from "@hookform/resolvers/zod";
 import { Controller, useForm } from "react-hook-form";
 import { z } from "zod";
-import { BusDetails } from "../hooks/useAddBus";
 import useBuses, { BusQuery } from "../hooks/useBuses";
-import useDrivers, { Driver } from "../hooks/useDrivers";
-import useEditBus from "../hooks/useEditBus";
+import { Driver } from "../hooks/useDrivers";
 import DropDown from "./DropDown";
 import Modal from "./Modal";
 import useEditDriver from "../hooks/useEditDriver";
@@ -36,12 +34,12 @@ type FormData = z.infer<typeof schema>;
 const EditDriver = ({ effectTwo, companyId, driver }: Props) => {
   const { data: buses } = useBuses(companyId, {} as BusQuery);
   if(!buses) return
-  const currentBus = buses?.find(
+  const currentBus = buses?.pages.flat()?.find(
     (bus) => bus.busId === driver.assignedBusId
   );
   const busOptions = [
     { id: "None", plateNumber: "None" },
-    ...(buses?.map((b) => ({
+    ...(buses?.pages.flat()?.map((b) => ({
       id: b.busId,
       plateNumber: b.plateNumber,
     })) || [])

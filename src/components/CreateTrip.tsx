@@ -2,9 +2,8 @@ import { BiCalendarAlt, BiTime } from "react-icons/bi";
 import DropDown from "./DropDown";
 import Modal from "./Modal";
 import { RiFlashlightLine } from "react-icons/ri";
-import { useEffect, useRef, useState } from "react";
+import { useEffect, useState } from "react";
 import { format } from "date-fns";
-import { TripQuery } from "../hooks/useTrips";
 import CustomDatePicker from "./CustomDatePicker";
 import useUser from "../hooks/useUser";
 import { camelCaseToTitle } from "../utils/helpers";
@@ -133,7 +132,7 @@ const CreateTrip = ({ effectTwo }: { effectTwo: () => void }) => {
 
   const busOptions = [
     { id: "None", plateNumber: "None" },
-    ...(buses?.map((b) => ({
+    ...(buses?.pages.flat()?.map((b) => ({
       id: b.busId,
       plateNumber: b.plateNumber,
     })) || []),

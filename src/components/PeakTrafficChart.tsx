@@ -5,9 +5,6 @@ import gsap from "gsap";
 import clsx from "clsx";
 import { PeakTimes } from "../hooks/usePeakTimes";
 
-type PeakHour = { hour: number; averageTickets: number };
-type PeakDay = { day: number; dayName: string; averageTickets: number };
-
 const dayNames = ["Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat"];
 const getCurrentHour = () => new Date().getHours();
 const getCurrentDay = () => new Date().getDay();
@@ -42,12 +39,12 @@ export default function PeakTrafficChart({
   // Prepare datasets
   const hoursData = Array.from({ length: 24 }, (_, h) => ({
     label: h === 0 ? "12a" : h < 12 ? `${h}a` : h === 12 ? "12p" : `${h - 12}p`,
-    value: peakHours.find((d) => d.hour === h)?.averageTickets || 0,
+    value: peakHours?.find((d) => d.hour === h)?.averageTickets || 0,
   }));
 
   const daysData = Array.from({ length: 7 }, (_, d) => ({
     label: dayNames[d],
-    value: peakDaysOfWeek.find((x) => x.day === d)?.averageTickets || 0,
+    value: peakDaysOfWeek?.find((x) => x.day === d)?.averageTickets || 0,
   }));
 
   const chartData = view === "hours" ? hoursData : daysData;

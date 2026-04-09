@@ -29,6 +29,7 @@ const useAnalytics = (companyId: string, analyticsQuery: AnalyticsQuery) =>
           endDate: analyticsQuery.endDate,
         },
       }),
+      enabled: !!companyId && !!analyticsQuery.startDate && !!analyticsQuery.endDate,
   });
 
 export default useAnalytics;

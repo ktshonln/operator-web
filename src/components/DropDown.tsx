@@ -1,10 +1,7 @@
 import { JSX, useEffect, useState } from "react";
 import { BiChevronDown } from "react-icons/bi";
 
-type Option = {
-  label: string;
-  value: string;
-};
+
 type BaseProps = {
   options: string[];
   label?: (choice:string)=>string // If the label should be different from the value

@@ -121,7 +121,7 @@ const schema = z
   });
 type FormData = z.infer<typeof schema>;
 
-const EditTrip = ({ effectTwo, companyId, trip }: Props) => {
+const EditTrip = ({ effectTwo , trip }: Props) => {
   const { user } = useUser();
   const resolvedCompanyId = user?.companyId ?? "";
   const { data: company } = useCompany(resolvedCompanyId);
@@ -157,7 +157,7 @@ const EditTrip = ({ effectTwo, companyId, trip }: Props) => {
 
   const busOptions = [
     { id: "None", plateNumber: "None" },
-    ...(buses?.map((b) => ({
+    ...(buses?.pages.flat()?.map((b) => ({
       id: b.busId,
       plateNumber: b.plateNumber,
     })) || []),

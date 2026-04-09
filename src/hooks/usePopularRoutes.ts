@@ -22,6 +22,7 @@ const usePopularRoutes = (companyId: string, analyticsQuery: AnalyticsQuery) =>
           endDate: analyticsQuery.endDate,
         },
       }),
+      enabled: !!companyId,
   });
 
 export default usePopularRoutes;

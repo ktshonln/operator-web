@@ -1,10 +1,7 @@
 import { useState } from "react";
-import { IntermediateStop, Route } from "../hooks/useRoutes";
-import { formatMoney } from "../utils/helpers";
 import { AiOutlineClose, AiOutlineDelete, AiTwotoneEdit } from "react-icons/ai";
 import { BiCheck } from "react-icons/bi";
-import { FieldErrors, UseFormHandleSubmit, UseFormRegister, UseFormReturn, UseFormTrigger } from "react-hook-form";
-import { z } from "zod";
+import { FieldErrors, UseFormRegister, UseFormTrigger } from "react-hook-form";
 import { FormData } from "./DestinationManager";
 
 interface Props {
@@ -19,8 +16,8 @@ interface Props {
 const IntermediateRouteForm = ({index,register, errors, remove, trigger,update}: Props) => {
        const [editMRow, setEditMRow] = useState<number | null>(null);
           const [deleteMRow, setDeleteMRow] = useState<number | null>(null);
-          const [midDVal, setMidDVal] = useState<string | null>(null); // Intermediate stop destination value
-      const [midPVal, setMidPVal] = useState<string | null>(null); // Intermediate stop price value
+          const [, setMidDVal] = useState<string | null>(null); // Intermediate stop destination value
+      const [, setMidPVal] = useState<string | null>(null); // Intermediate stop price value
 
       const handleConfirm = (i: number, e:  React.MouseEvent<SVGElement, MouseEvent>)=>{
         if(editMRow===i){

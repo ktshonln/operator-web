@@ -55,7 +55,7 @@ function Drivers() {
                 )
               )}
           </tr>
-          {drivers?.map(
+          {drivers?.pages.flat()?.map(
             (
               {
                 driverId,

@@ -19,9 +19,11 @@ import { useNavigate } from "react-router-dom";
 import { useMenuStore } from "../stores/menuStore";
 import { AiOutlineClose } from "react-icons/ai";
 import { LuPanelRightClose, LuPanelRightOpen } from "react-icons/lu";
+import Skeleton from "./Skeleton";
+import { useRequiredUser } from "../hooks/useRequiredUser";
 
 function HomePage() {
-  const { user } = useUser();
+  const user = useRequiredUser()
   const userLoad = user ? false : true;
   const { data: company } = useCompany(user?.org_id ?? "");
   console.log("COMPANY", company);
@@ -36,10 +38,12 @@ function HomePage() {
     data: analytics,
     isLoading: analyticsLoad,
   } = useAnalytics(user?.org_id ?? "", analyticsQuery);
-  const { data: revAnalytics } = useRevenueAnalytics(
+  const { data: revAns } = useRevenueAnalytics(
     user?.org_id ?? "",
     analyticsQuery
   );
+  const revAnalytics = Array.isArray(revAns) ? revAns : [];
+
   const { data: popularRoutes } = usePopularRoutes(
     user?.org_id ?? "",
     analyticsQuery
@@ -106,7 +110,7 @@ function HomePage() {
           />
           <InsightCard
             loading={userLoad || analyticsLoad}
-            metric={analytics?.totalRevenue.amount ?? 0}
+            metric={analytics?.totalRevenue?.amount ?? 0}
             custIcon="/RWFIcon.svg"
             Icon={BsTicket}
             title="Total Revenue"
@@ -165,7 +169,7 @@ function HomePage() {
             Top destinations
           </h2>
           <div className="border-1 border-neutral-200 dark:border-neutral-800 rounded-xl p-3 space-y-2 h-fit">
-            {popularRoutes?.slice(0, 5).map(({ routeName, rank }, i) => (
+            {(popularRoutes ?? [])?.slice(0, 5).map(({ routeName, rank }, i) => (
               <div
                 key={i}
                 onMouseEnter={() => setDest(i)}
@@ -184,7 +188,7 @@ function HomePage() {
           <h2 className="font-semibold text-brand2 text-sm mt-5 mb-5">
             Peak Times
           </h2>
-          {peakTimes && <PeakTrafficChart peakTimes={peakTimes} />}
+          {peakTimes && <PeakTrafficChart peakTimes={peakTimes ?? []} />}
         </div>
       </div>}
       {/* {sellTicket && <SellTicket  effectTwo={() => setSellTicket(false)} />} */}

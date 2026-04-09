@@ -44,7 +44,11 @@ function App() {
           />
 
           <Route path="/" element={<Layout />}>
-            <Route path="home" element={<HomePage />} />
+            <Route path="home" element={
+              <AuthGuard action="read" subject="Home">
+              <HomePage />
+              </AuthGuard>
+              } />
             <Route
               path="ticketing"
               element={

@@ -35,10 +35,10 @@ const AddBus = ({
   effectTwo: () => void;
   companyId: string;
 }) => {
-  const { data: drivers, isLoading:driversLoading } = useDrivers(companyId, {} as DriverQuery);
+  const { data: drivers } = useDrivers(companyId, {} as DriverQuery);
   const driverOptions = [
     { id: "None", name: "None" },
-    ...(drivers?.map((d) => ({
+    ...(drivers?.pages.flat()?.map((d) => ({
       id: d.driverId,
       name: `${d.firstName} ${d.lastName}`,
     })) || [])

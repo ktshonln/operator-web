@@ -20,9 +20,9 @@ const useAgents = (companyId: string,agentQuery: AgentQuery) =>
       }),
        initialPageParam: 1,
     staleTime: 10 * 1000,
-    placeholderData: (previousData, previousQuery) =>
+    placeholderData: (previousData, _previousQuery) =>
       previousData || { pages: [], pageParams: [] },
-    getNextPageParam: (lastPage, allPages) => {
+    getNextPageParam: (_lastPage, allPages) => {
       return allPages.length + 1;
     },
     enabled: !!companyId

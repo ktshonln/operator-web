@@ -1,9 +1,7 @@
 import { zodResolver } from "@hookform/resolvers/zod";
 import { Controller, useForm } from "react-hook-form";
 import { z } from "zod";
-import useAddBus, { BusDetails } from "../hooks/useAddBus";
 import useBuses, { BusQuery } from "../hooks/useBuses";
-import useDrivers from "../hooks/useDrivers";
 import DropDown from "./DropDown";
 import Modal from "./Modal";
 import useAddDriver, { DriverDetails } from "../hooks/useAddDriver";
@@ -31,10 +29,10 @@ const AddDriver = ({
   effectTwo: () => void;
   companyId: string;
 }) => {
-  const { data: buses, isLoading:busesLoading } = useBuses(companyId, {} as BusQuery);
+  const { data: buses } = useBuses(companyId, {} as BusQuery);
   const busOptions = [
     { id: "None", plateNumber: "None" },
-    ...(buses?.map((b) => ({
+    ...(buses?.pages.flat()?.map((b) => ({
       id: b.busId,
       plateNumber: b.plateNumber,
     })) || [])
