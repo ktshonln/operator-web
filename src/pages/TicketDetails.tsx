@@ -1,7 +1,6 @@
 import { AiFillPrinter, AiOutlineDownload } from "react-icons/ai";
 import { BiChevronDown } from "react-icons/bi";
-import { Link, useNavigate, useParams } from "react-router-dom";
-import Ticket from "../components/Ticket";
+import { useNavigate, useParams } from "react-router-dom";
 import useTicket from "../hooks/useTicket";
 import { formatMoney } from "../utils/helpers";
 import { format, isValid } from "date-fns";

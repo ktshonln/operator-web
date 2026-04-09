@@ -53,7 +53,7 @@ const useUpdateAgent = (companyId: string) => {
       queryClient.invalidateQueries({ queryKey: CACHE_KEY_AGENTS });
       showToast("User role updated successfully", "success");
     },
-    onError: (error, variables, context) => {
+    onError: (error, _variables, context) => {
       if (!context?.previousData) return;
       queryClient.setQueryData<InfiniteData<Agent[]>>(
         [CACHE_KEY_AGENTS],

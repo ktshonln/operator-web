@@ -32,7 +32,7 @@ const useEditTrip = (companyId: string, tripId: string) => {
       );
       return { previousTrips };
     },
-    onSuccess: (savedData, newData) => {
+    onSuccess: (savedData, _newData) => {
       // Invalidating cache for freshness
       queryClient.setQueryData<Trip[]>(CACHE_KEY_TRIPS, (trips) =>
         trips?.map((trip) => (trip.tripId === tripId ? savedData : trip))
@@ -42,7 +42,7 @@ const useEditTrip = (companyId: string, tripId: string) => {
       }); 
       showToast("Trip successfully updated!", "success");
     },
-    onError: (error, newData, context) => {
+    onError: (error, _newData, context) => {
       if (!context) return;
       queryClient.setQueryData<TripDetails[]>(
         CACHE_KEY_TRIPS,

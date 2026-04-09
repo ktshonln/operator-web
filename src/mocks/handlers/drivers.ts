@@ -1,11 +1,10 @@
 import { http, HttpResponse } from "msw";
-import { baseUrl } from "./utils";
 import { Driver } from "../../hooks/useDrivers";
+import { baseUrl } from "../../services/apiClient";
 
 let drivers = [
     {
       driverId: "driver_001",
-      userId: "user_op_201",
       firstName: "Gasana",
       lastName: "Innocent",
       licenseNumber: "DL123456",
@@ -15,7 +14,6 @@ let drivers = [
     },
     {
       driverId: "driver_002",
-      userId: "user_op_202",
       firstName: "John",
       lastName: "Driver",
       licenseNumber: "DL123456",
@@ -25,7 +23,6 @@ let drivers = [
     },
     {
       driverId: "driver_003",
-      userId: "user_op_203",
       firstName: "John",
       lastName: "Driver again",
       licenseNumber: "DL123456",

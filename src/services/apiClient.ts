@@ -1,5 +1,6 @@
 import axios, { AxiosRequestConfig } from "axios";
-import { baseUrl } from "../mocks/handlers/utils";
+
+export const baseUrl = import.meta.env.VITE_API_URL || '/api/v1';
 
 export const axiosInstance = axios.create({
   baseURL: baseUrl,

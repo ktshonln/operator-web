@@ -21,7 +21,7 @@ function DriverDetails() {
   const [editDriver, setEditDriver] = useState(false);
   const [deleteDriver, setDeleteDriver] = useState(false);
   const { user } = useUser();
-  const companyId = user.companyId;
+  const companyId = user?.companyId??'';
   const { driverId } = useParams<string>();
   if (!driverId) return <p>No driverId found</p>;
   const { data: driver } = useDriver(companyId, driverId);

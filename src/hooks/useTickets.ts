@@ -1,7 +1,7 @@
 import { useQuery } from "@tanstack/react-query";
 import APIClient from "../services/apiClient";
-import { Branch } from "../pages/ProfileSettings";
 import { Ticket } from "./useTicket";
+import { Branch } from "../components/Filter";
 
 const apiClient = new APIClient<TicketResponse>("/tickets");
 

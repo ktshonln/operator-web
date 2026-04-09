@@ -1,7 +1,6 @@
 import { http, HttpResponse } from "msw";
-import { baseUrl } from "./utils";
-import { Driver } from "../../hooks/useDrivers";
 import { Agent } from "../../hooks/useAgent";
+import { baseUrl } from "../../services/apiClient";
 
 let agents = [
   {

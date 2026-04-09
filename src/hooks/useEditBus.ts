@@ -27,7 +27,7 @@ const useEditBus = (companyId: string, busId: string) => {
       );
       return { previousBuses };
     },
-    onSuccess: (savedData, newData) => {
+    onSuccess: (savedData, _newData) => {
       // Invalidating cache for freshness
       queryClient.setQueryData<Bus[]>(CACHE_KEY_BUSES, (buses) =>
         buses?.map((bus) => (bus.busId === busId ? savedData : bus))
@@ -37,7 +37,7 @@ const useEditBus = (companyId: string, busId: string) => {
       }); // Invalidate single bus to get fresh data
       showToast("Bus successfully updated!", "success");
     },
-    onError: (error, newData, context) => {
+    onError: (error, _newData, context) => {
       if (!context) return;
       queryClient.setQueryData<BusDetails[]>(
         CACHE_KEY_BUSES,

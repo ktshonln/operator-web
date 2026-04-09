@@ -1,11 +1,8 @@
 import { format, isValid } from "date-fns";
 import { useState } from "react";
-import { RiBusFill } from "react-icons/ri";
 import { useNavigate, useParams } from "react-router-dom";
-import EditBus from "../components/EditBus";
 import WidgetLayout from "../components/layouts/WidgetLayout";
 import Modal from "../components/Modal";
-import useDeleteBus from "../hooks/useDeleteBus";
 import useDriver from "../hooks/useDriver";
 import useTrips, { TripQuery } from "../hooks/useTrips";
 import useUser from "../hooks/useUser";
@@ -21,7 +18,7 @@ function TripDetails() {
   const [editTrip, setEditTrip] = useState(false);
   const [deleteTrip, setDeleteTrip] = useState(false);
   const { user } = useUser();
-  const companyId = user.companyId;
+  const companyId = user?.companyId ?? '';
   const { tripId } = useParams<string>();
   if (!tripId) return <p>No routeId found</p>;
   const { data: trip } = useTrip(tripId);

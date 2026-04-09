@@ -1,9 +1,8 @@
 import { format } from "date-fns";
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useState } from "react";
 import { AiOutlineHistory } from "react-icons/ai";
 import { BiCalendarAlt } from "react-icons/bi";
 import { Link } from "react-router-dom";
-import CreateTrip from "../components/CreateTrip";
 import CustomDatePicker from "../components/CustomDatePicker";
 import DropDown from "../components/DropDown";
 import Modal from "../components/Modal";
@@ -20,7 +19,7 @@ import Skeleton from "./Skeleton";
 function Ticketing() {
   const { user, loading: userLoad } = useUser();
   const [tripQuery, setTripQuery] = useState<TripQuery>({} as TripQuery);
-  const { data: company, isLoading: companyLoad } = useCompany(user.companyId);
+  const { data: company, isLoading: companyLoad } = useCompany(user?.companyId ?? '');
   const { data: trips, isLoading:tripsLoad } = useTrips(tripQuery);
   const [viewList, setViewList] = useState(false);
   const [list, setList] = useState<Manifest>();
@@ -60,8 +59,8 @@ function Ticketing() {
       );
  
   useEffect(() => {
-    if (user.role !== "admin")
-      setTripQuery({ ...tripQuery, branch: user.branch }); // Only show the relevant branch for an agent
+    if (user?.role !== "admin")
+      setTripQuery({ ...tripQuery, branch: user?.branch }); // Only show the relevant branch for an agent
   }, [user]);
   
   return (
@@ -89,7 +88,7 @@ function Ticketing() {
 
       <div className="mt-3 mb-10 flex items-center justify-between">
         <div className="flex items-center gap-2 text-sm">
-          {user.role === "admin" ? (
+          {user?.role === "admin" ? (
             companyLoad ?<div className="w-full h-8 mb-2 rounded-md animate-pulse bg-neutral-200 dark:bg-neutral-900"/>:
             <DropDown
             style="v2"
@@ -99,7 +98,7 @@ function Ticketing() {
           ) : (
             <div className="border-1 border-neutral-200 dark:border-neutral-800 rounded-sm w-fit p-1 pl-10 pr-10 text-sm text-neutral-500">
               {userLoad && <Skeleton/>}
-              <p>{camelCaseToTitle(user.branch??"")}</p>
+              <p>{camelCaseToTitle(user?.branch??"")}</p>
             </div>
           )}
             {companyLoad && <Skeleton mb="mb-0" width="w-24"/>}

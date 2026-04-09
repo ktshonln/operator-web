@@ -16,7 +16,7 @@ function BusDetails() {
   const [editBus, setEditBus] = useState(false);
   const [deleteBus, setDeleteBus] = useState(false);
   const { user } = useUser();
-  const companyId = user.companyId;
+  const companyId = user?.companyId??'';
   const { busId } = useParams<string>();
   if (!busId) return <p>No busId found</p>;
   const { data: bus } = useBus(companyId, busId);

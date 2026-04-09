@@ -1,6 +1,5 @@
 import { parseExpiresIn } from "../../utils/helpers";
 
-export const baseUrl = "https://example.com";
 
 export const corsHeaders = {
   "Access-Control-Allow-Origin": "*",

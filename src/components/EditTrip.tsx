@@ -1,12 +1,9 @@
 import { zodResolver } from "@hookform/resolvers/zod";
 import { Controller, useForm } from "react-hook-form";
 import { z } from "zod";
-import { Bus } from "../hooks/useBus";
-import useDrivers, { DriverQuery } from "../hooks/useDrivers";
-import useEditBus from "../hooks/useEditBus";
 import DropDown from "./DropDown";
 import Modal from "./Modal";
-import { Trip, TripQuery } from "../hooks/useTrips";
+import { Trip } from "../hooks/useTrips";
 import useEditTrip from "../hooks/useEditTrip";
 import {
   ScheduleBlock,

@@ -1,5 +1,5 @@
 import { http, HttpResponse } from "msw";
-import { baseUrl } from "./utils";
+import { baseUrl } from "../../services/apiClient";
 
 export const handlers = [
   // Analytics

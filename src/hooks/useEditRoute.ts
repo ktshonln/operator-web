@@ -47,7 +47,7 @@ const useEditRoute = (companyId: string, routeId: string) => {
   });
       showToast("Route successfully updated!", "success");
     },
-    onError: (error, newData, context) => {
+    onError: (error, _newData, context) => {
       if (!context) return;
       queryClient.setQueryData<RouteDetails[]>(
         CACHE_KEY_ROUTES,

@@ -1,8 +1,8 @@
 import { useQuery as useInfiniteQuery } from "@tanstack/react-query";
-import { Branch } from "../pages/ProfileSettings";
 import APIClient from "../services/apiClient";
 import { Bus } from "./useBus";
 import { CACHE_KEY_BUSES } from "../utils/constants";
+import { Branch } from "../components/Filter";
 
 export interface BusQuery {
   branch: Branch | null;

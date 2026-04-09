@@ -24,12 +24,12 @@ const useEditDriver = (companyId: string, driverId: string) => {
             );
         return {previousDrivers}
     },
-    onSuccess: (savedData, newData) => { // Invalidating cache for freshness
+    onSuccess: (savedData, _newData) => { // Invalidating cache for freshness
         queryClient.setQueryData<Driver[]>(CACHE_KEY_DRIVERS,(drivers)=>drivers?.map((driver)=>driver.driverId===driverId ?savedData:driver))
         queryClient.invalidateQueries({ queryKey: ["company", companyId, "driver", driverId] }) // Invalidate single driver to get fresh data
       showToast("Driver successfully updated!", "success");
     },
-    onError: (error,newData, context) => {
+    onError: (error, _newData, context) => {
         if(!context) return
         queryClient.setQueryData<DriverDetails[]>(CACHE_KEY_DRIVERS, context.previousDrivers)
         showToast(error.message, "error")

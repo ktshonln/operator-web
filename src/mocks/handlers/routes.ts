@@ -1,5 +1,5 @@
 import { http, HttpResponse } from "msw";
-import { baseUrl } from "./utils";
+import { baseUrl } from "../../services/apiClient";
 import { Route } from "../../hooks/useRoutes";
 
 let routes =  [

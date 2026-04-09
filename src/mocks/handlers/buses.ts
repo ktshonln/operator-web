@@ -1,6 +1,6 @@
 import { http, HttpResponse } from "msw";
-import { baseUrl } from "./utils";
 import { Bus } from "../../hooks/useBus";
+import { baseUrl } from "../../services/apiClient";
 
 let buses =  [
   {

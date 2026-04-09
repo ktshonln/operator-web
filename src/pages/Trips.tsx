@@ -1,13 +1,9 @@
-import { BiCalendarAlt, BiCheck, BiChevronDown, BiTime } from "react-icons/bi";
-import DropDown from "../components/DropDown";
 import WidgetLayout from "../components/layouts/WidgetLayout";
 
 import { useEffect, useState } from "react";
-import { camelCaseToTitle, formatMoney } from "../utils/helpers";
-import { RiFlashlightLine } from "react-icons/ri";
+import { camelCaseToTitle } from "../utils/helpers";
 import { format } from "date-fns";
 import useTrips, { TripQuery } from "../hooks/useTrips";
-import CustomDatePicker from "../components/CustomDatePicker";
 import Filter from "../components/Filter";
 import { useNavigate } from "react-router-dom";
 import CreateTrip from "../components/CreateTrip";
@@ -25,15 +21,15 @@ function Trips() {
     } as TripQuery);
     const tableHeaders = ["tripId", "route", 'date'];
     const navigate = useNavigate();
-    const { data: company } = useCompany(user.companyId);
+    const { data: company } = useCompany(user?.companyId??"");
      useEffect(() => {
-                   if (user.role !== "admin")
-                     setTripQuery({ ...tripQuery, branch: user.branch }); // Only show the relevant branch for an agent
+                   if (user?.role !== "admin")
+                     setTripQuery({ ...tripQuery, branch: user?.branch }); // Only show the relevant branch for an agent
                  }, [user]);
   return (
     <div className="flex  space-x-3 pb-10 mr-5 dark:text-white">
       <div className=" ml-3 mt-5 grow ">
-      <Filter userRole={user.role} branches={company?.branches} onSelectFilter={(filter)=>{
+      <Filter userRole={user?.role} branches={company?.branches} onSelectFilter={(filter)=>{
         setTripQuery({
           ...tripQuery,
           startTime: filter.startDate,
@@ -86,10 +82,10 @@ function Trips() {
 
       </div>
   {
-    user.role === 'admin' &&
+    user?.role === 'admin' &&
 
       <WidgetLayout>
-   <DestinationManager companyId={user.companyId}/>
+   <DestinationManager companyId={user?.companyId??""}/>
       </WidgetLayout>
   }
             {createTrip && <CreateTrip effectTwo={() => setCreateTrip(false)} />}

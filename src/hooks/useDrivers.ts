@@ -1,7 +1,7 @@
 import { useQuery as useInfiniteQuery } from "@tanstack/react-query";
-import { Branch } from "../pages/ProfileSettings";
 import APIClient from "../services/apiClient";
 import { CACHE_KEY_DRIVERS } from "../utils/constants";
+import { Branch } from "../components/Filter";
 
 export interface DriverQuery {
   branch: Branch | null;

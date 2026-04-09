@@ -9,7 +9,7 @@ import {
   AdminActivationResponse,
 } from "../../hooks/useActivateOrganization";
 import { Role, LegacyUser, StaffUser } from "../../hooks/useUser";
-import { baseUrl } from "./utils";
+import { baseUrl } from "../../services/apiClient";
 
 interface AuthErrorResponse {
   error: "INVALID_CREDENTIALS" | "USER_NOT_FOUND";

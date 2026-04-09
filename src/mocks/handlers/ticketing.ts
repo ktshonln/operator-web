@@ -1,6 +1,5 @@
 import { http, HttpResponse } from "msw";
-import { baseUrl } from "./utils";
-
+import { baseUrl } from "../../services/apiClient";
 let tickets = [
           {
           ticketId: "tkt_91381",

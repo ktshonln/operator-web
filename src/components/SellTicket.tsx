@@ -41,8 +41,10 @@ const SellTicket = ({
   const [tNumber, setTnumber] = useState(0);
   const { data: trip } = useTrip(tripId);
   const {
-    user: { id: userId },
+    user
   } = useUser();
+
+  const userId = user?.id;
 
   const showToast = useToastStore((state) => state.showToast);
   const {
