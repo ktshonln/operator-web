@@ -104,7 +104,7 @@ const useAddRoute = (companyId: string) => {
       showToast("Successfully added a new route!", "success");
       navigate(`/trips`);
     },
-    onError: (error, newData, context) => {
+    onError: (error, _newData, context) => {
       if (!context) return;
       queryClient.setQueryData<Route[]>(
         CACHE_KEY_ROUTES,

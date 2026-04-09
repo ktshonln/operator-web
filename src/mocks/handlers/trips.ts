@@ -69,7 +69,7 @@ export const handlers = [
     const departureTime = url.searchParams.get("departureTime");
     const branch = url.searchParams.get("branch");
     const search = url.searchParams.get("search");
-    const status = url.searchParams.get("status");
+    // const status = url.searchParams.get("status");
 
     if (branch) {
       if(branch==='All branches') return HttpResponse.json(trips, { status: 200 });
@@ -189,7 +189,7 @@ export const handlers = [
     return HttpResponse.json({ message: "Invalid request" }, { status: 400 });
   }),
   // Intercept "GET /trip-schedules/{scheduleId}" requests...
-  http.get(`${baseUrl}/trip-schedules/:scheduleId`, ({ params }) => {
+  http.get(`${baseUrl}/trip-schedules/:scheduleId`, () => {
     // ...and respond to them using this JSON response.
     return HttpResponse.json(
       trips,

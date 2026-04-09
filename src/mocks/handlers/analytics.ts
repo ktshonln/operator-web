@@ -67,12 +67,12 @@ export const handlers = [
   // Intercept "GET /companies/{companyId}/analytics/ticket-sales" requests...
   http.get(
     `${baseUrl}/companies/:companyId/analytics/ticket-sales`,
-    ({ request }) => {
+    () => {
       // ...and respond to them using this JSON response.
-      const url = new URL(request.url);
+      /* const url = new URL(request.url);
       const startDate = url.searchParams.get("startDate");
       const endDate = url.searchParams.get("endDate");
-      const groupBy = url.searchParams.get("groupBy");
+      const groupBy = url.searchParams.get("groupBy"); */
       return HttpResponse.json(
         [
           {
@@ -98,12 +98,12 @@ export const handlers = [
   // Intercept "GET /companies/{companyId}/analytics/revenue" requests...
   http.get(
     `${baseUrl}/companies/:companyId/analytics/revenue`,
-    ({ request }) => {
+    () => {
       // ...and respond to them using this JSON response.
-      const url = new URL(request.url);
+      /* const url = new URL(request.url);
       const startDate = url.searchParams.get("startDate");
       const endDate = url.searchParams.get("endDate");
-      const groupBy = url.searchParams.get("groupBy");
+      const groupBy = url.searchParams.get("groupBy"); */
       return HttpResponse.json(
         [
           {
@@ -129,12 +129,12 @@ export const handlers = [
   // Intercept "GET /companies/{companyId}/analytics/popular-routes" requests...
   http.get(
     `${baseUrl}/companies/:companyId/analytics/popular-routes`,
-    ({ request }) => {
+    () => { //{ request }
       // ...and respond to them using this JSON response.
-      const url = new URL(request.url);
+      /* const url = new URL(request.url);
       const startDate = url.searchParams.get("startDate");
       const endDate = url.searchParams.get("endDate");
-      const groupBy = url.searchParams.get("groupBy");
+      const groupBy = url.searchParams.get("groupBy"); */
       return HttpResponse.json(
         [
           {
@@ -182,12 +182,12 @@ export const handlers = [
   // Intercept "GET /companies/{companyId}/analytics/peak-times" requests...
   http.get(
     `${baseUrl}/companies/:companyId/analytics/peak-times`,
-    ({ request }) => {
+    () => {
       // ...and respond to them using this JSON response.
-      const url = new URL(request.url);
+      /* const url = new URL(request.url);
       const startDate = url.searchParams.get("startDate");
       const endDate = url.searchParams.get("endDate");
-      const branch = url.searchParams.get("branch");
+      const branch = url.searchParams.get("branch"); */
       return HttpResponse.json(
         {
           peakHours: [

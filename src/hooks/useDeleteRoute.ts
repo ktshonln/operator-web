@@ -16,7 +16,7 @@ const useDeleteRoute = (companyId: string, routeId: string) => {
   const navigate = useNavigate();
   return useMutation<DeleteRouteResponse, Error>({
     mutationFn: () => apiClient.deleteRoute(companyId, routeId),
-    onSuccess: (savedData, newData) => {
+    onSuccess: (_savedData, _newData) => {
           // Invalidating cache for freshness
               queryClient.setQueryData<Route[]>(CACHE_KEY_ROUTES, (routes) =>
                 routes?.filter(route=>route.routeId!==routeId)

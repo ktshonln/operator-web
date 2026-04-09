@@ -13,7 +13,7 @@ import useCompany from "../hooks/useCompany";
 
 function Trips() {
   const {user} = useUser()
-  const [active, setActive] = useState(true);
+  // const [active, setActive] = useState(true);
     const [createTrip, setCreateTrip] = useState(false);
     const [tripQuery, setTripQuery] = useState<TripQuery>({} as TripQuery);
     const { data: trips, isLoading: tripsLoad } = useTrips({

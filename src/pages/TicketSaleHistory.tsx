@@ -10,7 +10,7 @@ import { format } from "date-fns";
 
 function TicketSaleHistory() {
   const [tripQuery, setTripQuery] = useState<TripQuery>({} as TripQuery);
-  const [ticketQuery, setTicketQuery] = useState<TicketQuery>({} as TicketQuery);
+  const [ticketQuery,] = useState<TicketQuery>({} as TicketQuery);
   const { data: tickets } = useTickets(ticketQuery);
    const [open, setOpen] = useState(false);
     const [val, setVal] = useState<Date | [Date, Date] | null>(null);

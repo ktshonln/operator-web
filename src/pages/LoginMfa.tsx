@@ -10,7 +10,7 @@ const LoginMfa = () => {
   const navigate = useNavigate();
   const { formData } = useRegStore();
   const { mutate: verifyOtp, isPending: isVerifying } = useVerifyPhone();
-  const { mutate: resendOtp, isPending: isResending } = useResendOtp();
+  const { mutate: resendOtp } = useResendOtp(); //isPending: isResending
   const [error, setError] = useState("");
   // const [fieldErrors, setFieldErrors] = useState<Record<string, string>>({});
   const [otp, setOtp] = useState(["", "", "", "", "", ""]);

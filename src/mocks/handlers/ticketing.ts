@@ -122,14 +122,14 @@ let tickets = [
 
 export const handlers = [
   // Intercept "GET /tickets" requests...
-  http.get(`${baseUrl}/tickets`, ({ request }) => {
+  http.get(`${baseUrl}/tickets`, () => {
     // ...and respond to them using this JSON response.
-    const url = new URL(request.url);
+  /*   const url = new URL(request.url);
     const startDate = url.searchParams.get("startDate");
     const endDate = url.searchParams.get("endDate");
     const passengerId = url.searchParams.get("passengerId");
     const agentId = url.searchParams.get("agentId");
-    const status = url.searchParams.get("status");
+    const status = url.searchParams.get("status"); */
 
     return HttpResponse.json(
       {

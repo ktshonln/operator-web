@@ -8,7 +8,7 @@ import {
   AdminActivationPayload,
   AdminActivationResponse,
 } from "../../hooks/useActivateOrganization";
-import { Role, LegacyUser, StaffUser } from "../../hooks/useUser";
+import { Role, StaffUser } from "../../hooks/useUser";
 import { baseUrl } from "../../services/apiClient";
 
 interface AuthErrorResponse {

@@ -5,16 +5,7 @@ interface Props {
     x?:boolean
 }
 
-const data = [100000, 100000, 100000, 100000, 100000];
-const data2 = [
-  { route: { origin: "Kigali", destination: "Huye" }, revenue: 100000 },
-  { route: { origin: "Kigali", destination: "Huye" }, revenue: 100000 },
-  { route: { origin: "Kigali", destination: "Huye" }, revenue: 100000 },
-  { route: { origin: "Kigali", destination: "Muhanga" }, revenue: 100000 },
-  { route: { origin: "Kigali", destination: "Muhanga" }, revenue: 100000 },
-  { route: { origin: "Kigali", destination: "Rubavu" }, revenue: 100000 },
-  { route: { origin: "Kigali", destination: "Rubavu" }, revenue: 100000 },
-];
+
 const data3 = [
   { routeId: "route1", routeName: "Kigali - Huye", revenue: '100000' },
   { routeId: "route2", routeName: "Kigali - Muhanga", revenue: '100000' },

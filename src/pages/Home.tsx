@@ -11,7 +11,7 @@ import usePeakTimes from "../hooks/usePeakTimes";
 import usePopularRoutes from "../hooks/usePopularRoutes";
 import useRevenueAnalytics from "../hooks/useRevenueAnalytics";
 import useTickets, { TicketQuery } from "../hooks/useTickets";
-import useUser, { Role } from "../hooks/useUser";
+import { Role } from "../hooks/useUser";
 import { camelCaseToTitle } from "../utils/helpers";
 import PeakTrafficChart from "../components/PeakTrafficChart";
 import useCompany from "../hooks/useCompany";
@@ -19,7 +19,6 @@ import { useNavigate } from "react-router-dom";
 import { useMenuStore } from "../stores/menuStore";
 import { AiOutlineClose } from "react-icons/ai";
 import { LuPanelRightClose, LuPanelRightOpen } from "react-icons/lu";
-import Skeleton from "./Skeleton";
 import { useRequiredUser } from "../hooks/useRequiredUser";
 
 function HomePage() {

@@ -76,7 +76,7 @@ const useAddAgent = (companyId: string) => {
   });
       showToast("Successfully added a new agent!", "success");
     },
-    onError: (error, newData, context) => {
+    onError: (error, _newData, context) => {
       if (!context) return;
       queryClient.setQueryData<Agent[]>(
         CACHE_KEY_AGENTS,
