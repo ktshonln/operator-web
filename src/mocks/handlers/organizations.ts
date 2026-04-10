@@ -103,7 +103,7 @@ export const handlers = [
 
   // Intercept "POST /organizations" requests...
   http.post(`${baseUrl}/organizations`, async ({ request }) => {
-    const newOrg = await request.json();
+    const newOrg = await request.json() as Record<string, unknown>;
     return HttpResponse.json(
       {
         ...newOrg,
@@ -118,7 +118,7 @@ export const handlers = [
 
   // Intercept "PUT /organizations/{orgId}" requests...
   http.put(`${baseUrl}/organizations/:orgId`, async ({ request, params }) => {
-    const updates = await request.json();
+    const updates = await request.json() as Record<string, unknown>;
     return HttpResponse.json(
       {
         ...updates,

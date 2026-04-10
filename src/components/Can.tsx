@@ -1,9 +1,10 @@
-import { useAbility } from "@casl/react";
+import { useAbility } from "../contexts/AbilityContext";
 import { ReactNode } from "react";
+import type { Actions, Subjects } from "../contexts/AbilityContext";
 
 interface CanProps {
-  I: string; // action
-  a: string; // subject
+  I: Actions; // action
+  a: Subjects; // subject
   children?: ReactNode;
 }
 

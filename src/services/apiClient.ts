@@ -119,14 +119,20 @@ class APIClient<TResponse> {
       .then((res) => res.data);
   };
 
-  post = <TRequest>(input: TRequest) => {
+  post = <TRequest>(input: TRequest, customEndpoint?: string) => {
+    const endpoint = customEndpoint || this.endpoint;
     return axiosInstance
-      .post<TResponse>(this.endpoint, input)
+      .post<TResponse>(endpoint, input)
       .then((res) => res.data);
   };
   put = <TRequest>(input: TRequest, id: string | number) => {
     return axiosInstance
       .put<TResponse>(`${this.endpoint}/${id}`, input)
+      .then((res) => res.data);
+  };
+  delete = (id: string | number) => {
+    return axiosInstance
+      .delete<TResponse>(`${this.endpoint}/${id}`)
       .then((res) => res.data);
   };
 
