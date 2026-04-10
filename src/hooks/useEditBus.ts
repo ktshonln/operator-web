@@ -9,31 +9,31 @@ interface EditBusContext {
   previousBuses: Bus[];
 }
 
-const apiClient = new APIClient<Bus>("/companies");
-const useEditBus = (companyId: string, busId: string) => {
+const apiClient = new APIClient<Bus>("/organizations");
+const useEditBus = (orgId: string, busId: string) => {
   const queryClient = useQueryClient();
   const showToast = useToastStore((state) => state.showToast);
   return useMutation<Bus, Error, BusDetails, EditBusContext>({
     mutationFn: (busDetails: BusDetails) =>
-      apiClient.editBus<BusDetails>(busDetails, companyId, busId),
+      apiClient.editBus<BusDetails>(busDetails, orgId, busId),
     onMutate: (newData) => {
       // Optimistic updates
       const previousBuses =
         queryClient.getQueryData<Bus[]>(CACHE_KEY_BUSES) || [];
       queryClient.setQueryData<Bus[]>(CACHE_KEY_BUSES, (buses) =>
         buses?.map((bus) =>
-          bus.busId === busId ? { ...bus, ...newData } : bus
-        )
+          bus.busId === busId ? { ...bus, ...newData } : bus,
+        ),
       );
       return { previousBuses };
     },
     onSuccess: (savedData, _newData) => {
       // Invalidating cache for freshness
       queryClient.setQueryData<Bus[]>(CACHE_KEY_BUSES, (buses) =>
-        buses?.map((bus) => (bus.busId === busId ? savedData : bus))
+        buses?.map((bus) => (bus.busId === busId ? savedData : bus)),
       );
       queryClient.invalidateQueries({
-        queryKey: ["company", companyId, "bus", busId],
+        queryKey: ["organization", orgId, "bus", busId],
       }); // Invalidate single bus to get fresh data
       showToast("Bus successfully updated!", "success");
     },
@@ -41,7 +41,7 @@ const useEditBus = (companyId: string, busId: string) => {
       if (!context) return;
       queryClient.setQueryData<BusDetails[]>(
         CACHE_KEY_BUSES,
-        context.previousBuses
+        context.previousBuses,
       );
       showToast(error.message, "error");
     },

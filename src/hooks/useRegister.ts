@@ -25,6 +25,7 @@ export interface OrganizationResponse {
   contact_phone: string;
   parent_org_id: string | null;
   created_at: string;
+  updated_at?: string;
   logo_url?: string;
 }
 

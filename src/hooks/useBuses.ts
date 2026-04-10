@@ -10,13 +10,13 @@ export interface BusQuery {
   searchText: string;
 }
 
-const apiClient = new APIClient<Bus[]>("/companies");
+const apiClient = new APIClient<Bus[]>("/organizations");
 
-const useBuses = (companyId: string, busQuery: BusQuery) =>
+const useBuses = (orgId: string, busQuery: BusQuery) =>
   useInfiniteQuery<Bus[], Error, InfiniteData<Bus[], number>>({
-    queryKey: [CACHE_KEY_BUSES, companyId, busQuery],
+    queryKey: [CACHE_KEY_BUSES, orgId, busQuery],
     queryFn: ({ pageParam = 1 }) =>
-      apiClient.getAllBuses(companyId, {
+      apiClient.getAllBuses(orgId, {
         params: {
           branch: busQuery.branch?.name,
           ordering: busQuery.sortOrder,
@@ -33,7 +33,7 @@ const useBuses = (companyId: string, busQuery: BusQuery) =>
       // Adjust this logic based on how your API signals the "end" (e.g., lastPage.next)
       return lastPage.length > 0 ? allPages.length + 1 : undefined;
     },
-    enabled: !!companyId
+    enabled: !!orgId,
   });
 
 export default useBuses;

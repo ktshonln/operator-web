@@ -12,23 +12,21 @@ import Modal from "../components/Modal";
 import EditDriver from "../components/EditDriver";
 import useDeleteDriver from "../hooks/useDeleteDriver";
 
-
-
 function DriverDetails() {
   const [editDriver, setEditDriver] = useState(false);
   const [deleteDriver, setDeleteDriver] = useState(false);
   const { user } = useUser();
-  const companyId = user?.companyId??'';
+  const orgId = user?.org_id ?? "";
   const { driverId } = useParams<string>();
   if (!driverId) return <p>No driverId found</p>;
-  const { data: driver } = useDriver(companyId, driverId);
-  const { data: bus } = useBus(companyId, driver?.assignedBusId ?? "");
+  const { data: driver } = useDriver(orgId, driverId);
+  const { data: bus } = useBus(orgId, driver?.assignedBusId ?? "");
   const { data: trips, isLoading: tripsLoad } = useTrips({
     driverId: driverId,
   } as TripQuery);
   const tableHeaders = ["route", "departureTime"];
   const navigate = useNavigate();
-  const deleteD = useDeleteDriver(companyId, driver?.driverId ?? "");
+  const deleteD = useDeleteDriver(orgId, driver?.driverId ?? "");
 
   return (
     <div className="flex  space-x-3">
@@ -50,7 +48,10 @@ function DriverDetails() {
           >
             Edit
           </button>
-          <button onClick={() => setDeleteDriver(true)} className="bg-[#FF6666] text-white p-1.5 w-20 mt-10 rounded-sm cursor-pointer active:scale-95 hover:brightness-95">
+          <button
+            onClick={() => setDeleteDriver(true)}
+            className="bg-[#FF6666] text-white p-1.5 w-20 mt-10 rounded-sm cursor-pointer active:scale-95 hover:brightness-95"
+          >
             Delete
           </button>
         </div>
@@ -101,19 +102,19 @@ function DriverDetails() {
                 <tr className="gap-2">
                   {tableHeaders.map(
                     (
-                      header // if some unnecessary headers are present, we can filter them out, e.g: with [includes]
+                      header, // if some unnecessary headers are present, we can filter them out, e.g: with [includes]
                     ) => (
                       <th className="bg-gray-100  text-start text-xs p-1 pb-4 pr-3 pl-3">
                         {camelCaseToTitle(header).toLocaleUpperCase()}
                       </th>
-                    )
+                    ),
                   )}
                 </tr>
               </thead>
               <tbody>
-                {trips?.map(({tripId, route, departureDateAndTime }, i) => (
+                {trips?.map(({ tripId, route, departureDateAndTime }, i) => (
                   <tr
-                    key={tripId +i}
+                    key={tripId + i}
                     onClick={() => {
                       navigate(`/trips/${tripId}`);
                     }}
@@ -122,7 +123,9 @@ function DriverDetails() {
                     <td className="p-3">
                       {route.start} {`->`} {route.end}
                     </td>
-                    <td className="p-3">{format(departureDateAndTime, "PPpp")}</td>
+                    <td className="p-3">
+                      {format(departureDateAndTime, "PPpp")}
+                    </td>
                   </tr>
                 ))}
               </tbody>
@@ -132,7 +135,7 @@ function DriverDetails() {
       </WidgetLayout>
       {editDriver && driver && (
         <EditDriver
-          companyId={companyId}
+          companyId={orgId}
           driver={driver}
           effectTwo={() => setEditDriver(false)}
         />

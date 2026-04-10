@@ -11,8 +11,8 @@ function Buses() {
   const [addBus, setAddBus] = useState(false);
   const [busQuery, setBusQuery] = useState<BusQuery>({} as BusQuery);
   const { user } = useUser();
-  const companyId = user?.companyId ?? '';
-  const { data: buses } = useBuses(companyId, {} as BusQuery);
+  const orgId = user?.org_id ?? "";
+  const { data: buses } = useBuses(orgId, {} as BusQuery);
   const tableHeaders = [
     "busId",
     "busType",
@@ -22,7 +22,7 @@ function Buses() {
     "status",
   ];
   const navigate = useNavigate();
-  const { data: drivers } = useDrivers(companyId, {} as BusQuery);
+  const { data: drivers } = useDrivers(orgId, {} as BusQuery);
 
   return (
     <div className="mt-5 m-5 ml-3">
@@ -49,56 +49,58 @@ function Buses() {
                 .filter((h) => h !== "busId")
                 .map(
                   (
-                    header // if some unnecessary headers are present, we can filter them out, e.g: with [includes]
+                    header, // if some unnecessary headers are present, we can filter them out, e.g: with [includes]
                   ) => (
                     <th className="bg-gray-100   text-start p-1 pb-4 pr-3 pl-3">
                       {camelCaseToTitle(header).toLocaleUpperCase()}
                     </th>
-                  )
+                  ),
                 )}
             </tr>
           </thead>
           <tbody>
-            {buses?.pages.flat()?.map(
-              (
-                {
-                  busId,
-                  brand,
-                  plateNumber,
-                  assignedDriverId,
-                  seatingCapacity,
-                  status,
+            {buses?.pages
+              .flat()
+              ?.map(
+                (
+                  {
+                    busId,
+                    brand,
+                    plateNumber,
+                    assignedDriverId,
+                    seatingCapacity,
+                    status,
+                  },
+                  i,
+                ) => {
+                  const driver = drivers?.pages
+                    .flat()
+                    ?.find((driver) => driver.driverId === assignedDriverId);
+                  return (
+                    <tr
+                      key={busId + i}
+                      onClick={() => {
+                        navigate(`/fleets/buses/${busId}`);
+                      }}
+                      className={`even:bg-gray-100 text-neutral-500 hover:bg-gray-200 cursor-pointer`}
+                    >
+                      <td className="p-3">{i + 1}</td>
+                      <td className="p-3">{brand}</td>
+                      <td className="p-3">{plateNumber}</td>
+                      <td className="p-3">{seatingCapacity}</td>
+                      <td className="p-3">
+                        {driver?.firstName} {driver?.lastName}
+                      </td>
+                      <td className="p-3">{status}</td>
+                    </tr>
+                  );
                 },
-                i
-              ) => {
-                const driver = drivers?.pages.flat()?.find(
-                  (driver) => driver.driverId === assignedDriverId
-                );
-                return (
-                  <tr
-                    key={busId + i}
-                    onClick={() => {
-                      navigate(`/fleets/buses/${busId}`);
-                    }}
-                    className={`even:bg-gray-100 text-neutral-500 hover:bg-gray-200 cursor-pointer`}
-                  >
-                    <td className="p-3">{i + 1}</td>
-                    <td className="p-3">{brand}</td>
-                    <td className="p-3">{plateNumber}</td>
-                    <td className="p-3">{seatingCapacity}</td>
-                    <td className="p-3">
-                      {driver?.firstName} {driver?.lastName}
-                    </td>
-                    <td className="p-3">{status}</td>
-                  </tr>
-                );
-              }
-            )}
+              )}
           </tbody>
         </table>
       </div>
       {addBus && (
-        <AddBus companyId={companyId} effectTwo={() => setAddBus(false)} />
+        <AddBus companyId={orgId} effectTwo={() => setAddBus(false)} />
       )}
     </div>
   );

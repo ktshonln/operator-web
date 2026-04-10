@@ -17,16 +17,16 @@ export interface Manifest {
       destination: string;
       timeTaken: string;
       status: string;
-    }
+    },
   ];
 }
 
-const apiClient = new APIClient<Manifest>("/companies");
+const apiClient = new APIClient<Manifest>("/organizations");
 
-const useManifest = (companyId: string, tripId: string) =>
+const useManifest = (orgId: string, tripId: string) =>
   useQuery<Manifest, Error>({
-    queryKey: ["companies", companyId, "trip", tripId],
-    queryFn: () => apiClient.getManifest(companyId, tripId),
+    queryKey: ["organizations", orgId, "trip", tripId],
+    queryFn: () => apiClient.getManifest(orgId, tripId),
   });
 
 export default useManifest;

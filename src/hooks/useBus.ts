@@ -14,12 +14,12 @@ export interface Bus {
   scheduleId: string; // schedules of the bus
 }
 
-const apiClient = new APIClient<Bus>("/companies");
+const apiClient = new APIClient<Bus>("/organizations");
 
-const useBus = (companyId: string, busId: string) =>
+const useBus = (orgId: string, busId: string) =>
   useQuery<Bus, Error>({
-    queryKey: ["company", companyId, "bus", busId],
-    queryFn: () => apiClient.getBus(companyId, busId),
+    queryKey: ["organization", orgId, "bus", busId],
+    queryFn: () => apiClient.getBus(orgId, busId),
   });
 
 export default useBus;

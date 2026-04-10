@@ -1,4 +1,8 @@
-import { InfiniteData, useMutation, useQueryClient } from "@tanstack/react-query";
+import {
+  InfiniteData,
+  useMutation,
+  useQueryClient,
+} from "@tanstack/react-query";
 import { useNavigate } from "react-router-dom";
 import APIClient from "../services/apiClient";
 import { useToastStore } from "../stores/toastStore";
@@ -20,46 +24,48 @@ interface EditRouteContext {
   previousRoutes: Route[];
 }
 
-const apiClient = new APIClient<Route>("/companies");
-const useAddRoute = (companyId: string) => {
+const apiClient = new APIClient<Route>("/organizations");
+const useAddRoute = (orgId: string) => {
   const queryClient = useQueryClient();
   const showToast = useToastStore((state) => state.showToast);
   const navigate = useNavigate();
   return useMutation<Route, Error, RouteDetails, EditRouteContext>({
     mutationFn: (routeDetails: RouteDetails) =>
-      apiClient.addRoute<RouteDetails>(routeDetails, companyId),
+      apiClient.addRoute<RouteDetails>(routeDetails, orgId),
     onMutate: (newData) => {
-        // Optimistic updates
-        const previousData = queryClient.getQueryData<InfiniteData<Route[]>>([CACHE_KEY_ROUTES]);
-        // Create optimistic route object
+      // Optimistic updates
+      const previousData = queryClient.getQueryData<InfiniteData<Route[]>>([
+        CACHE_KEY_ROUTES,
+      ]);
+      // Create optimistic route object
       const optimisticRoute: Route = {
         routeId: `temp-${Date.now()}`,
         route: {
-          startId: 'temp-start',
+          startId: "temp-start",
           start: newData.route.start,
-          endId: 'temp-end',
+          endId: "temp-end",
           end: newData.route.end,
         },
         price: newData.price,
-        intermediateStops: (newData.intermediateStops || []).map(stop => ({
-    stopId: `temp-stop-${Date.now()}`, // Generate temporary ID
-    name: stop.name,
-    price: stop.price
-  })),
+        intermediateStops: (newData.intermediateStops || []).map((stop) => ({
+          stopId: `temp-stop-${Date.now()}`, // Generate temporary ID
+          name: stop.name,
+          price: stop.price,
+        })),
       };
 
       // Update cache for infinite query
       queryClient.setQueryData<InfiniteData<Route[]>>(
         [CACHE_KEY_ROUTES],
         (oldData) => ({
-          pages: oldData?.pages?.length 
-            ? [[optimisticRoute], ...oldData.pages] 
+          pages: oldData?.pages?.length
+            ? [[optimisticRoute], ...oldData.pages]
             : [[optimisticRoute]],
-          pageParams: oldData?.pageParams || [1]
-        })
+          pageParams: oldData?.pageParams || [1],
+        }),
       );
 
-     /*  const previousRoutes =
+      /*  const previousRoutes =
         queryClient.getQueryData<Route[]>(CACHE_KEY_ROUTES) || [];
       queryClient.setQueryData<Route[]>(CACHE_KEY_ROUTES, (routes) => routes?.map(route=>({
          ...route,  price: newData.price,
@@ -75,32 +81,37 @@ const useAddRoute = (companyId: string) => {
       return { previousRoutes: previousData?.pages?.flat() || [] };
     },
     onSuccess: (savedRoute) => {
-        queryClient.setQueryData<InfiniteData<Route[]>>(
-    [CACHE_KEY_ROUTES],
-    (oldData) => ({
-      pages: oldData?.pages?.map(page => 
-        page.map(route => {
-          // Find matching temp route
-          if (route.routeId === savedRoute.routeId) {
-            return {
-              ...savedRoute,
-              intermediateStops: savedRoute.intermediateStops.map((serverStop, index) => ({
-                ...serverStop,
-                // Preserve temp ID if server ID missing (fallback)
-                stopId: serverStop.stopId || route.intermediateStops[index]?.stopId
-              }))
-            };
-          }
-          return route;
-        })
-      ) || [],
-      pageParams: oldData?.pageParams || []
-    })
-  );
-  queryClient.invalidateQueries({
-    queryKey: [CACHE_KEY_ROUTES],
-    refetchType: 'active',
-  });
+      queryClient.setQueryData<InfiniteData<Route[]>>(
+        [CACHE_KEY_ROUTES],
+        (oldData) => ({
+          pages:
+            oldData?.pages?.map((page) =>
+              page.map((route) => {
+                // Find matching temp route
+                if (route.routeId === savedRoute.routeId) {
+                  return {
+                    ...savedRoute,
+                    intermediateStops: savedRoute.intermediateStops.map(
+                      (serverStop, index) => ({
+                        ...serverStop,
+                        // Preserve temp ID if server ID missing (fallback)
+                        stopId:
+                          serverStop.stopId ||
+                          route.intermediateStops[index]?.stopId,
+                      }),
+                    ),
+                  };
+                }
+                return route;
+              }),
+            ) || [],
+          pageParams: oldData?.pageParams || [],
+        }),
+      );
+      queryClient.invalidateQueries({
+        queryKey: [CACHE_KEY_ROUTES],
+        refetchType: "active",
+      });
       showToast("Successfully added a new route!", "success");
       navigate(`/trips`);
     },
@@ -108,7 +119,7 @@ const useAddRoute = (companyId: string) => {
       if (!context) return;
       queryClient.setQueryData<Route[]>(
         CACHE_KEY_ROUTES,
-        context.previousRoutes
+        context.previousRoutes,
       );
       showToast(error.message, "error");
     },

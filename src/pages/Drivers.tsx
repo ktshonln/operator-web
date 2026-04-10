@@ -9,11 +9,11 @@ import AddDriver from "../components/AddDriver";
 function Drivers() {
   const [addDriver, setAddDriver] = useState(false);
   const [driverQuery, setDriverQuery] = useState<DriverQuery>(
-    {} as DriverQuery
+    {} as DriverQuery,
   );
   const { user } = useUser();
-  const companyId = user?.companyId ?? '';
-  const { data: drivers } = useDrivers(companyId, {} as DriverQuery);
+  const orgId = user?.org_id ?? "";
+  const { data: drivers } = useDrivers(orgId, {} as DriverQuery);
   const tableHeaders = [
     "driverId",
     "name",
@@ -47,50 +47,49 @@ function Drivers() {
               .filter((h) => h !== "driverId")
               .map(
                 (
-                  header // if some unnecessary headers are present, we can filter them out, e.g: with [includes]
+                  header, // if some unnecessary headers are present, we can filter them out, e.g: with [includes]
                 ) => (
                   <th className="bg-gray-100   text-start p-1 pb-4 pr-3 pl-3">
                     {camelCaseToTitle(header).toLocaleUpperCase()}
                   </th>
-                )
+                ),
               )}
           </tr>
-          {drivers?.pages.flat()?.map(
-            (
-              {
-                driverId,
-                firstName,
-                lastName,
-                licenseNumber,
-                phoneNumber: contactPhone,
-                status,
-              },
-              i
-            ) => (
-              <tr
-                key={i}
-                onClick={() => {
-                  navigate(`/fleets/drivers/${driverId}`);
-                }}
-                className={`odd:bg-gray-100 text-neutral-600 hover:bg-gray-200 cursor-pointer`}
-              >
-                <td className="p-3">{i + 1}</td>
-                <td className="p-3">
-                  {firstName} {lastName}
-                </td>
-                <td className="p-3">{licenseNumber}</td>
-                <td className="p-3">{contactPhone}</td>
-                <td className="p-3">{status}</td>
-              </tr>
-            )
-          )}
+          {drivers?.pages
+            .flat()
+            ?.map(
+              (
+                {
+                  driverId,
+                  firstName,
+                  lastName,
+                  licenseNumber,
+                  phoneNumber: contactPhone,
+                  status,
+                },
+                i,
+              ) => (
+                <tr
+                  key={i}
+                  onClick={() => {
+                    navigate(`/fleets/drivers/${driverId}`);
+                  }}
+                  className={`odd:bg-gray-100 text-neutral-600 hover:bg-gray-200 cursor-pointer`}
+                >
+                  <td className="p-3">{i + 1}</td>
+                  <td className="p-3">
+                    {firstName} {lastName}
+                  </td>
+                  <td className="p-3">{licenseNumber}</td>
+                  <td className="p-3">{contactPhone}</td>
+                  <td className="p-3">{status}</td>
+                </tr>
+              ),
+            )}
         </table>
       </div>
       {addDriver && (
-        <AddDriver
-          companyId={companyId}
-          effectTwo={() => setAddDriver(false)}
-        />
+        <AddDriver companyId={orgId} effectTwo={() => setAddDriver(false)} />
       )}
     </div>
   );

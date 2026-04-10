@@ -19,7 +19,6 @@ const LoginPage = () => {
   const {
     register,
     handleSubmit,
-    resetField,
     formState: { errors },
   } = useForm<FormData>({ resolver: zodResolver(schema) });
 
@@ -31,7 +30,6 @@ const LoginPage = () => {
       password: data.password,
       device_name: "web",
     });
-    resetField("password");
   };
   return (
     <div className="relative bg-[#0A4370] font-heebo">

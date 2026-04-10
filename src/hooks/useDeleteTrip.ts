@@ -7,12 +7,12 @@ interface DeleteTripResponse {
   tripId: string;
 }
 
-const apiClient = new APIClient<DeleteTripResponse>("/companies");
-const useDeleteTrip = (companyId: string, tripId: string) => {
+const apiClient = new APIClient<DeleteTripResponse>("/organizations");
+const useDeleteTrip = (orgId: string, tripId: string) => {
   const showToast = useToastStore((state) => state.showToast);
   const navigate = useNavigate();
   return useMutation<DeleteTripResponse, Error>({
-    mutationFn: () => apiClient.deleteTrip(companyId, tripId),
+    mutationFn: () => apiClient.deleteTrip(orgId, tripId),
     onSuccess: () => {
       showToast("Trip deleted successfully!", "success");
       navigate(`/trips`);

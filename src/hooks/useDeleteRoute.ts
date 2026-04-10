@@ -9,25 +9,25 @@ interface DeleteRouteResponse {
   routeId: string;
 }
 
-const apiClient = new APIClient<DeleteRouteResponse>("/companies");
-const useDeleteRoute = (companyId: string, routeId: string) => {
-     const queryClient = useQueryClient();
+const apiClient = new APIClient<DeleteRouteResponse>("/organizations");
+const useDeleteRoute = (orgId: string, routeId: string) => {
+  const queryClient = useQueryClient();
   const showToast = useToastStore((state) => state.showToast);
   const navigate = useNavigate();
   return useMutation<DeleteRouteResponse, Error>({
-    mutationFn: () => apiClient.deleteRoute(companyId, routeId),
+    mutationFn: () => apiClient.deleteRoute(orgId, routeId),
     onSuccess: (_savedData, _newData) => {
-          // Invalidating cache for freshness
-              queryClient.setQueryData<Route[]>(CACHE_KEY_ROUTES, (routes) =>
-                routes?.filter(route=>route.routeId!==routeId)
-              );
-              queryClient.invalidateQueries({
-                queryKey: ["company", companyId, "route", routeId],
-              }); // Invalidate single route to get fresh data
-           queryClient.invalidateQueries({
-    queryKey: [CACHE_KEY_ROUTES],
-    refetchType: 'active',
-  });
+      // Invalidating cache for freshness
+      queryClient.setQueryData<Route[]>(CACHE_KEY_ROUTES, (routes) =>
+        routes?.filter((route) => route.routeId !== routeId),
+      );
+      queryClient.invalidateQueries({
+        queryKey: ["organization", orgId, "route", routeId],
+      }); // Invalidate single route to get fresh data
+      queryClient.invalidateQueries({
+        queryKey: [CACHE_KEY_ROUTES],
+        refetchType: "active",
+      });
       showToast("Route deleted successfully!", "success");
       navigate(`/trips`);
     },

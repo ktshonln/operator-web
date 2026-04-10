@@ -1,21 +1,21 @@
 import { BsTicketFill } from "react-icons/bs";
 import Footer from "../components/Footer";
-import { Link, useNavigate } from "react-router-dom";
+import { Link, useNavigate, useSearchParams } from "react-router-dom";
 import { useState, useEffect, useRef } from "react";
-import { useVerifyPhone, useResendOtp } from "../hooks/useAuth";
-import { useRegStore } from "../stores/regStore";
-import { FullSchema } from "./Register";
+import useVerify2FA from "../hooks/useVerify2FA";
 
 const LoginMfa = () => {
   const navigate = useNavigate();
-  const { formData } = useRegStore();
-  const { mutate: verifyOtp, isPending: isVerifying } = useVerifyPhone();
-  const { mutate: resendOtp } = useResendOtp(); //isPending: isResending
+  const [searchParams] = useSearchParams();
+  const expiresIn = searchParams.get("expires_in");
+  const userIdPending = localStorage.getItem("user_id_pending_2fa");
   const [error, setError] = useState("");
-  // const [fieldErrors, setFieldErrors] = useState<Record<string, string>>({});
   const [otp, setOtp] = useState(["", "", "", "", "", ""]);
-  const [timeLeft, setTimeLeft] = useState(60);
+  const [timeLeft, setTimeLeft] = useState(
+    expiresIn ? parseInt(expiresIn) : 300,
+  );
   const inputRefs = useRef<(HTMLInputElement | null)[]>([]);
+  const verify2FA = useVerify2FA();
 
   useEffect(() => {
     if (timeLeft > 0) {
@@ -23,10 +23,6 @@ const LoginMfa = () => {
       return () => clearTimeout(timerId);
     }
   }, [timeLeft]);
-
-  if (!formData) {
-    navigate("/register");
-  }
 
   const handleChange = (index: number, value: string) => {
     if (isNaN(Number(value))) return;
@@ -51,40 +47,27 @@ const LoginMfa = () => {
 
   const handleResend = () => {
     if (timeLeft === 0) {
-      setTimeLeft(60);
-      // Logic to resend OTP
-      if (formData.contact_phone) {
-        resendOtp(
-          { phone_number: formData.contact_phone },
-          {
-            onSuccess: () => setTimeLeft(60),
-          },
-        );
-      }
+      setTimeLeft(300);
+      // TODO: Implement resend OTP for 2FA
     }
   };
 
-  if (!formData.userId) {
-    navigate("/register");
-  }
-
   const handleVerify = (e: React.FormEvent) => {
     e.preventDefault();
-    if (!otp || otp.length < 6) {
+    if (!otp || otp.join("").length < 6) {
       setError("* 6-digit OTP required");
       return;
     }
-    setError("");
-    const finalData = { ...formData, otp: otp.join("") };
-    const result = FullSchema.safeParse(finalData);
-    if (result.success && formData.userId) {
-      verifyOtp(
-        { user_id: formData.userId, otp: otp.join("") },
-        {
-          onSuccess: () => navigate("/register/success"),
-        },
-      );
+    if (!userIdPending) {
+      setError("Session expired. Please login again.");
+      navigate("/login");
+      return;
     }
+    setError("");
+    verify2FA.mutate({
+      user_id: userIdPending,
+      otp: otp.join(""),
+    });
   };
 
   return (
@@ -109,8 +92,7 @@ const LoginMfa = () => {
               <form onSubmit={handleVerify} className="text-xs">
                 <p className="text-sm font-bold">Enter verification code</p>
                 <p className="font-medium">
-                  We've sent a code to{" "}
-                  <span className="text-brand2">{formData.contact_phone}</span>
+                  We've sent a code to your registered phone number
                 </p>
 
                 <div className="relative mt-14 mb-14 flex items-center gap-x-3 justify-between text-xl">
@@ -127,12 +109,13 @@ const LoginMfa = () => {
                       onChange={(e) => handleChange(index, e.target.value)}
                       onKeyDown={(e) => handleKeyDown(index, e)}
                       autoFocus={index === 0}
-                      className="ring ring-gray-200 text-center w-10 sm:w-12 h-10 sm:h-12 p-2 rounded-xs bg-white outline-none [appearance:textfield] [&::-webkit-inner-spin-button]:appearance-none [&::-webkit-outer-spin-button]:appearance-none focus:ring-brand"
+                      disabled={verify2FA.isPending}
+                      className="ring ring-gray-200 text-center w-10 sm:w-12 h-10 sm:h-12 p-2 rounded-xs bg-white outline-none [appearance:textfield] [&::-webkit-inner-spin-button]:appearance-none [&::-webkit-outer-spin-button]:appearance-none focus:ring-brand disabled:opacity-50"
                     />
                   ))}
-                  {error && (
+                  {(error || verify2FA.error) && (
                     <div className=" absolute bottom-[-20px] left-0 text-red-500 text-xs">
-                      {error}
+                      {error || verify2FA.error?.message}
                     </div>
                   )}
                 </div>
@@ -153,15 +136,17 @@ const LoginMfa = () => {
                 </p>
                 <div className="mt-3 flex items-center space-x-5">
                   <button
-                    disabled={isVerifying}
                     type="submit"
-                    className="bg-[#0A4370] p-2 w-full text-white rounded-sm cursor-pointer hover:text-[#0A4370] hover:bg-white hover:ring hover:ring-[#0A4370] active:scale-95"
+                    disabled={verify2FA.isPending}
+                    className="bg-[#0A4370] p-2 w-full text-white rounded-sm cursor-pointer hover:text-[#0A4370] hover:bg-white hover:ring hover:ring-[#0A4370] active:scale-95 disabled:opacity-50 disabled:cursor-not-allowed"
                   >
-                    {isVerifying ? "Verifying..." : "VERIFY"}
+                    {verify2FA.isPending ? "VERIFYING..." : "VERIFY"}
                   </button>
                   <button
                     type="button"
-                    className="ring ring-gray-300 p-2 w-full text-neutral-500 rounded-sm cursor-pointer hover:bg-neutral-400 hover:text-white active:scale-95"
+                    onClick={() => navigate(-1)}
+                    disabled={verify2FA.isPending}
+                    className="ring ring-gray-300 p-2 w-full text-neutral-500 rounded-sm cursor-pointer hover:bg-neutral-400 hover:text-white active:scale-95 disabled:opacity-50 disabled:cursor-not-allowed"
                   >
                     CANCEL
                   </button>

@@ -16,17 +16,17 @@ function BusDetails() {
   const [editBus, setEditBus] = useState(false);
   const [deleteBus, setDeleteBus] = useState(false);
   const { user } = useUser();
-  const companyId = user?.companyId??'';
+  const orgId = user?.org_id ?? "";
   const { busId } = useParams<string>();
   if (!busId) return <p>No busId found</p>;
-  const { data: bus } = useBus(companyId, busId);
-  const { data: driver } = useDriver(companyId, bus?.assignedDriverId ?? "");
+  const { data: bus } = useBus(orgId, busId);
+  const { data: driver } = useDriver(orgId, bus?.assignedDriverId ?? "");
   const { data: trips, isLoading: tripsLoad } = useTrips({
     busId: busId,
   } as TripQuery);
   const tableHeaders = ["route", "departureTime"];
   const navigate = useNavigate();
-  const deleteB = useDeleteBus(companyId, bus?.busId ?? "");
+  const deleteB = useDeleteBus(orgId, bus?.busId ?? "");
   return (
     <div className="flex  space-x-3">
       <div className=" ml-3 mr-10 mt-5 grow">
@@ -69,7 +69,10 @@ function BusDetails() {
             Model: <span className="text-black font-normal">{bus?.model}</span>
           </p>
           <p className="text-neutral-400 font-semibold flex justify-between">
-            Seating Capacity: <span className="text-black font-normal">{bus?.seatingCapacity}</span>
+            Seating Capacity:{" "}
+            <span className="text-black font-normal">
+              {bus?.seatingCapacity}
+            </span>
           </p>
           <p className="text-neutral-400 font-semibold flex justify-between">
             Plate Number:{" "}
@@ -106,17 +109,17 @@ function BusDetails() {
                 <tr className="gap-2">
                   {tableHeaders.map(
                     (
-                      header // if some unnecessary headers are present, we can filter them out, e.g: with [includes]
+                      header, // if some unnecessary headers are present, we can filter them out, e.g: with [includes]
                     ) => (
                       <th className="bg-gray-100  text-start text-xs p-1 pb-4 pr-3 pl-3">
                         {camelCaseToTitle(header).toLocaleUpperCase()}
                       </th>
-                    )
+                    ),
                   )}
                 </tr>
               </thead>
               <tbody>
-                {trips?.map(({ tripId,route, departureDateAndTime }, i) => (
+                {trips?.map(({ tripId, route, departureDateAndTime }, i) => (
                   <tr
                     key={tripId + i}
                     onClick={() => {
@@ -127,7 +130,9 @@ function BusDetails() {
                     <td className="p-3">
                       {route.start} {`->`} {route.end}
                     </td>
-                    <td className="p-3">{format(departureDateAndTime, "PPpp")}</td>
+                    <td className="p-3">
+                      {format(departureDateAndTime, "PPpp")}
+                    </td>
                   </tr>
                 ))}
               </tbody>
@@ -142,7 +147,7 @@ function BusDetails() {
       </WidgetLayout>
       {editBus && bus && (
         <EditBus
-          companyId={companyId}
+          companyId={orgId}
           bus={bus}
           effectTwo={() => setEditBus(false)}
         />

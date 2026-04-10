@@ -263,7 +263,7 @@ function Settings() {
                                   onClick={() => {
                                     navigate(`/settings/user/${userId}`);
                                   }}
-                                  className="hover:bg-gray-50 dark:hover:bg-neutral-900 cursor-pointer"
+                                  className="hover:bg-gray-50 dark:text-white dark:hover:bg-neutral-900 cursor-pointer"
                                 >
                                   <td className="px-3 py-3">{rowIndex + 1}</td>
                                   <td className="px-3 py-3">

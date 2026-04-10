@@ -131,7 +131,7 @@ useEffect(() => {
                         top: mousePos.y,
                         transform: 'translate(-50%, -120%)',
                         whiteSpace: 'nowrap',
-                        zIndex: 10,
+                        zIndex: 50,
                     }}
                 >
                     <div className="font-bold">{values[hoveredIndex].routeName}</div>

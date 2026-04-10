@@ -20,13 +20,13 @@ export interface Route {
   intermediateStops: IntermediateStop[];
 }
 
-const apiClient = new APIClient<Route[]>("/companies");
+const apiClient = new APIClient<Route[]>("/organizations");
 
-const useRoutes = (companyId: string,routeQuery: RouteQuery) =>
+const useRoutes = (orgId: string, routeQuery: RouteQuery) =>
   useInfiniteQuery<Route[], Error, InfiniteData<Route[], number>>({
     queryKey: [CACHE_KEY_ROUTES, routeQuery],
     queryFn: ({ pageParam = 1 }) =>
-      apiClient.getAllRoutes(companyId,{
+      apiClient.getAllRoutes(orgId, {
         params: {
           branch: routeQuery.branch,
           search: routeQuery.searchText,
@@ -40,7 +40,7 @@ const useRoutes = (companyId: string,routeQuery: RouteQuery) =>
     getNextPageParam: (_lastPage, allPages) => {
       return allPages.length + 1;
     },
-    enabled: !!companyId
+    enabled: !!orgId,
   });
 
 export default useRoutes;

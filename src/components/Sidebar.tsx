@@ -1,6 +1,6 @@
 import { BiHomeAlt, BiSolidUserCircle, BiTrip } from "react-icons/bi";
 import SidebarItem from "./SidebarItem";
-import { BsTicket } from "react-icons/bs";
+import { BsTicket, BsBuilding } from "react-icons/bs";
 import { RiBusFill } from "react-icons/ri";
 import { FaChartLine } from "react-icons/fa6";
 import { FiSettings } from "react-icons/fi";
@@ -24,6 +24,12 @@ const Sidebar = () => {
     subject: string;
   }[] = [
     { link: "/home", icon: BiHomeAlt, action: "read", subject: "all" },
+    {
+      link: "/organizations",
+      icon: BsBuilding,
+      action: "read",
+      subject: "Organization",
+    },
     { link: "/ticketing", icon: BsTicket, action: "read", subject: "Ticket" },
     {
       link: "/fleets",
@@ -100,7 +106,7 @@ const Sidebar = () => {
             </div>
           </div>
           <div
-            onClick={() => logout()}
+            onClick={() => logout.mutate()}
             className="flex items-center group gap-3 ml-3 text-neutral-500 mt-3 hover:text-black dark:hover:text-white cursor-pointer active:scale-95"
           >
             <HiOutlineLogout className="group-active:translate-x-2" size={18} />

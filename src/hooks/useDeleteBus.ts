@@ -7,12 +7,12 @@ interface DeleteBusResponse {
   busId: string;
 }
 
-const apiClient = new APIClient<DeleteBusResponse>("/companies");
-const useDeleteBus = (companyId: string, busId: string) => {
+const apiClient = new APIClient<DeleteBusResponse>("/organizations");
+const useDeleteBus = (orgId: string, busId: string) => {
   const showToast = useToastStore((state) => state.showToast);
   const navigate = useNavigate();
   return useMutation<DeleteBusResponse, Error>({
-    mutationFn: () => apiClient.deleteBus(companyId, busId),
+    mutationFn: () => apiClient.deleteBus(orgId, busId),
     onSuccess: () => {
       showToast("Bus deleted successfully!", "success");
       navigate(`/fleets/buses`);

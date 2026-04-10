@@ -19,11 +19,9 @@ export const schema = z.object({
   intermediateStops: z
     .array(
       z.object({
-        name: z
-          .string()
-          .min(1, { message: "Please enter a valid stop name." }),
+        name: z.string().min(1, { message: "Please enter a valid stop name." }),
         price: z.number().min(0.01, { message: "Please enter a valid price." }),
-      })
+      }),
     )
     .optional(),
 });
@@ -32,11 +30,14 @@ export type FormData = z.infer<typeof schema>;
 const DestinationManager = ({ companyId }: { companyId: string }) => {
   const { data: company } = useCompany(companyId);
   const [routeQuery, setRouteQuery] = useState<RouteQuery>({} as RouteQuery);
-  const {data: routes, isLoading: routesLoading} = useRoutes(company?.companyId??'', routeQuery)
+  const { data: routes, isLoading: routesLoading } = useRoutes(
+    company?.id ?? "",
+    routeQuery,
+  );
   const [selectBranch, setSelectBranch] = useState<string>(""); // The currently selected branch
 
   useEffect(() => {
-    setSelectBranch(company?.branches[0] ?? "");
+    setSelectBranch(company?.branches?.[0] ?? "");
   }, [company]);
 
   const values = {
@@ -60,17 +61,15 @@ const DestinationManager = ({ companyId }: { companyId: string }) => {
     console.log("Added!", data);
     addRoute.mutate(data);
     resetField("route.end");
-    resetField('price')
+    resetField("price");
   };
-// if (!routes?.pages) return <p>Loading..</p>;
+  // if (!routes?.pages) return <p>Loading..</p>;
 
   /* const {
     register: registerEdit,
     handleSubmit: handleSubmitEdit,
     formState: { errors: errorsEdit },
   } = useForm<FormData>({ resolver: zodResolver(schema) }); */
-
- 
 
   return (
     <div className="mr-10 w-full">
@@ -113,15 +112,19 @@ const DestinationManager = ({ companyId }: { companyId: string }) => {
             </tr>
           </thead>
           <tbody>
-         {
-            routes?.pages?.map((page, index)=>
-                <React.Fragment key={index}>
-                       {page.map((route, i) => 
-                    <RouteForm key={route.routeId} route={route} companyId={companyId} routesLoading={routesLoading} i={i}/>
-                    )}
-                </React.Fragment>
-            )
-         }
+            {routes?.pages?.map((page, index) => (
+              <React.Fragment key={index}>
+                {page.map((route, i) => (
+                  <RouteForm
+                    key={route.routeId}
+                    route={route}
+                    companyId={companyId}
+                    routesLoading={routesLoading}
+                    i={i}
+                  />
+                ))}
+              </React.Fragment>
+            ))}
             <tr>
               <td className="pl-4" colSpan={2}>
                 <form
@@ -171,4 +174,3 @@ const DestinationManager = ({ companyId }: { companyId: string }) => {
 };
 
 export default DestinationManager;
-

@@ -19,13 +19,13 @@ export interface Driver {
   status: string;
 }
 
-const apiClient = new APIClient<Driver[]>("/companies");
+const apiClient = new APIClient<Driver[]>("/organizations");
 
-const useDrivers = (companyId: string, busQuery: DriverQuery) =>
+const useDrivers = (orgId: string, busQuery: DriverQuery) =>
   useInfiniteQuery<Driver[], Error>({
     queryKey: [CACHE_KEY_DRIVERS, busQuery],
     queryFn: ({ pageParam = 1 }) =>
-      apiClient.getAllDrivers(companyId, {
+      apiClient.getAllDrivers(orgId, {
         params: {
           branch: busQuery.branch?.name,
           ordering: busQuery.sortOrder,
@@ -42,7 +42,7 @@ const useDrivers = (companyId: string, busQuery: DriverQuery) =>
       // Adjust this logic based on how your API signals the "end" (e.g., lastPage.next)
       return lastPage.length > 0 ? allPages.length + 1 : undefined;
     },
-    enabled: !!companyId,
+    enabled: !!orgId,
   });
 
 export default useDrivers;

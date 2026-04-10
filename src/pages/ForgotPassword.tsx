@@ -5,9 +5,13 @@ import { useState } from "react";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useForm } from "react-hook-form";
 import { z } from "zod";
+import { useToastStore } from "../stores/toastStore";
+import authService from "../services/authService";
 
 const schema = z.object({
-  contact: z.string().min(1, { message: "Please enter your email or phone number." }),
+  identifier: z
+    .string()
+    .min(1, { message: "Please enter your email or phone number." }),
 });
 
 type FormData = z.infer<typeof schema>;
@@ -15,6 +19,7 @@ type FormData = z.infer<typeof schema>;
 const ForgotPassword = () => {
   const [isPending, setIsPending] = useState(false);
   const navigate = useNavigate();
+  const showToast = useToastStore((state) => state.showToast);
   const {
     register,
     handleSubmit,
@@ -23,12 +28,21 @@ const ForgotPassword = () => {
 
   const onSubmit = async (data: FormData) => {
     setIsPending(true);
-    console.log("Submitting forgot password for:", data);
-    // Simulate API call
-    setTimeout(() => {
+    try {
+      const response = await authService.forgotPassword({
+        identifier: data.identifier,
+      });
+      // Response from API should have expires_in
+      const expiresIn = response?.expires_in || 300;
+      showToast("Verification code sent", "success");
+      navigate(
+        `/verify-password-reset?identifier=${encodeURIComponent(data.identifier)}&expires_in=${expiresIn}`,
+      );
+    } catch (error: any) {
+      showToast(error.message || "Failed to send verification code", "error");
+    } finally {
       setIsPending(false);
-      navigate("/login-mfa"); // Redirect to OTP verification
-    }, 1500);
+    }
   };
 
   return (
@@ -50,39 +64,43 @@ const ForgotPassword = () => {
               alt="Katisha-logo"
             />
             <div className="m-12 mt-0">
-              <h1 className="text-2xl font-bold text-[#0A4370] dark:text-blue-400 mb-2">Forgot Password</h1>
+              <h1 className="text-2xl font-bold text-[#0A4370] dark:text-brand mb-2">
+                Forgot Password
+              </h1>
               <p className="text-[#6A717D] text-sm mb-8">
-                Enter your email or phone number and we'll send you a verification code to reset your password.
+                Enter the email or phone number associated with your account and
+                we'll send you a verification code to reset your password.
               </p>
-              
+
               <form onSubmit={handleSubmit(onSubmit)} className="text-xs">
                 <label
-                  htmlFor="contact"
-                  className="text-[#6A717D] block mb-0.5 text-xs"
+                  htmlFor="identifier"
+                  className="text-[#6A717D] block mb-0.5 text-xs font-medium"
                 >
                   Email or Phone Number
                 </label>
                 <div>
                   <div className="ring ring-gray-200 dark:ring-neutral-800 mb-5 p-2 rounded-xs bg-white dark:bg-neutral-900">
                     <input
-                      {...register("contact")}
+                      {...register("identifier")}
                       type="text"
-                      id="contact"
-                      name="contact"
-                      placeholder="e.g. user@example.com or +250..."
-                      className=" outline-none w-full bg-transparent"
+                      id="identifier"
+                      name="identifier"
+                      placeholder="e.g. user@example.com or +250780000001"
+                      className=" outline-none w-full bg-transparent dark:text-white"
+                      disabled={isPending}
                     />
                   </div>
-                  {errors.contact && (
+                  {errors.identifier && (
                     <p className="text-red-500 text-xs -mt-3 mb-3">
-                      {errors.contact.message}
+                      {errors.identifier.message}
                     </p>
                   )}
                 </div>
-                
+
                 <button
                   disabled={isPending}
-                  className="bg-[#0A4370] p-2 w-full text-white mt-5 rounded-sm cursor-pointer hover:text-[#0A4370] hover:bg-white dark:hover:bg-black hover:ring hover:ring-[#0A4370] active:scale-95 disabled:active:scale-none disabled:hover:ring-0 disabled:opacity-50 disabled:hover:bg-[#0A4370] disabled:hover:text-white disabled:cursor-not-allowed"
+                  className="bg-[#0A4370] p-2 w-full text-white mt-5 rounded-sm cursor-pointer hover:text-[#0A4370] hover:bg-white dark:hover:bg-neutral-800 hover:ring hover:ring-[#0A4370] active:scale-95 disabled:active:scale-none disabled:hover:ring-0 disabled:opacity-50 disabled:hover:bg-[#0A4370] disabled:hover:text-white disabled:cursor-not-allowed"
                 >
                   {isPending ? "SENDING..." : "SEND VERIFICATION CODE"}
                 </button>
@@ -103,8 +121,8 @@ const ForgotPassword = () => {
               fill="none"
             >
               <path
-                fill-rule="evenodd"
-                clip-rule="evenodd"
+                fillRule="evenodd"
+                clipRule="evenodd"
                 d="M741.484 799.46L242.072 704.401C221.487 700.483 204.448 686.093 197.13 666.446L4.39013 149.048C-3.0883 128.973 0.699696 106.42 14.3287 89.8773L88.3733 0H813C826.807 0 838 11.1929 838 25V774.46C838 788.267 826.807 799.46 813 799.46H741.484Z"
                 fill="#0A4370"
               />
@@ -117,7 +135,8 @@ const ForgotPassword = () => {
           <BsTicketFill className="absolute lg:w-18 lg:h-18 rotate-45 top-64 right-2 fill-[#6A717D]/25" />
           <BsTicketFill className="absolute lg:w-7 lg:h-7 rotate-[30deg] bottom-20 right-52 fill-[#6A717D]/25" />
           <p className="absolute md:bottom-3/4 lg:bottom-80 xl:bottom-1/2 top-5 md:top-auto -right-5 sm:-right-3 md:right-0 font-semibold md:text-lg lg:text-2xl  text-white max-w-40 md:max-w-52 lg:max-w-96 xl:max-w-[450px]">
-            Making travel simpler, smarter, and more convenient for everyone.{" "}
+            Making travel simpler, smarter, and more convenient for
+            everyone.{" "}
           </p>
         </div>
         <Footer />

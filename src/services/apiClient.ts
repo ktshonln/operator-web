@@ -1,11 +1,106 @@
-import axios, { AxiosRequestConfig } from "axios";
+import axios, { AxiosRequestConfig, AxiosError } from "axios";
 
-export const baseUrl = import.meta.env.VITE_API_URL || '/api/v1';
+export const baseUrl = import.meta.env.VITE_API_URL || "/api/v1";
 
 export const axiosInstance = axios.create({
   baseURL: baseUrl,
   withCredentials: true,
 });
+
+// Add response interceptor to handle token refresh
+let isRefreshing = false;
+let failedQueue: Array<{
+  resolve: (value?: any) => void;
+  reject: (reason?: any) => void;
+}> = [];
+
+const processQueue = (error: any, token?: string) => {
+  failedQueue.forEach((prom) => {
+    if (error) {
+      prom.reject(error);
+    } else {
+      prom.resolve(token);
+    }
+  });
+
+  isRefreshing = false;
+  failedQueue = [];
+};
+
+axiosInstance.interceptors.response.use(
+  (response) => response,
+  async (error: AxiosError) => {
+    const originalRequest = error.config as any;
+
+    // Skip interceptor for auth endpoints (login, refresh, etc.)
+    if (originalRequest?.url?.includes("/auth/")) {
+      return Promise.reject(error);
+    }
+
+    // Check if error is 401 and not already a refresh attempt
+    if (error.response?.status === 401 && !originalRequest._retry) {
+      if (isRefreshing) {
+        return new Promise((resolve, reject) => {
+          failedQueue.push({ resolve, reject });
+        }).then((token) => {
+          originalRequest.headers.Authorization = `Bearer ${token}`;
+          return axiosInstance(originalRequest);
+        });
+      }
+
+      originalRequest._retry = true;
+      isRefreshing = true;
+
+      try {
+        const refreshToken = localStorage.getItem("refresh_token");
+        if (!refreshToken) {
+          throw new Error("No refresh token available");
+        }
+
+        // Call refresh endpoint
+        const response = await axiosInstance.post("/auth/refresh", {});
+        const { tokens, user } = response.data;
+
+        localStorage.setItem("access_token", tokens.access_token);
+        localStorage.setItem("refresh_token", tokens.refresh_token);
+        localStorage.setItem("user", JSON.stringify(user));
+
+        axiosInstance.defaults.headers.common.Authorization = `Bearer ${tokens.access_token}`;
+        originalRequest.headers.Authorization = `Bearer ${tokens.access_token}`;
+
+        processQueue(null, tokens.access_token);
+        return axiosInstance(originalRequest);
+      } catch (err) {
+        // Refresh failed, clear auth and redirect to login
+        localStorage.removeItem("access_token");
+        localStorage.removeItem("refresh_token");
+        localStorage.removeItem("user");
+        processQueue(err);
+        // Redirect to login - note: in a real app you'd use React Router's navigate
+        window.location.href = "/login";
+        return Promise.reject(err);
+      }
+    }
+
+    return Promise.reject(error);
+  },
+);
+
+// Helper function to extract error message from axios error
+const extractErrorMessage = (error: any): string => {
+  if (error.response && error.response.data) {
+    // Check for nested error structure first (like { error: { message: "..." } })
+    if (error.response.data.error && error.response.data.error.message) {
+      return error.response.data.error.message;
+    }
+    // Check for direct message
+    else if (error.response.data.message) {
+      return error.response.data.message;
+    }
+  }
+  // Fallback to axios default message or generic message
+  return error.message || "An error occurred";
+};
 
 class APIClient<TResponse> {
   endpoint: string;
@@ -208,16 +303,7 @@ class APIClient<TResponse> {
       .post<TResponse>(this.endpoint, userData)
       .then((res) => res.data)
       .catch((error) => {
-        if (
-          error.response &&
-          error.response.data &&
-          error.response.data.message
-        ) {
-          // Server responded with a message
-          throw new Error(error.response.data.message);
-        } else {
-          throw new Error(error.message);
-        }
+        throw new Error(extractErrorMessage(error));
       });
   };
 
@@ -226,7 +312,10 @@ class APIClient<TResponse> {
       .post<{
         uploadUrl: string;
         fileUrl: string;
-      }>("/api/v1/uploads/presigned-url", { file_name: fileName, content_type: contentType })
+      }>("/api/v1/uploads/presigned-url", {
+        file_name: fileName,
+        content_type: contentType,
+      })
       .then((res) => res.data);
   };
 

@@ -17,14 +17,14 @@ interface EditAgentContext {
   previousData?: InfiniteData<Agent[]>;
 }
 
-const useUpdateAgent = (companyId: string) => {
+const useUpdateAgent = (orgId: string) => {
   const queryClient = useQueryClient();
   const showToast = useToastStore((state) => state.showToast);
 
   return useMutation<Agent, Error, UpdateAgentRoleInput, EditAgentContext>({
     mutationFn: ({ userId, role }) =>
       axiosInstance
-        .put<Agent>(`/companies/${companyId}/agents/${userId}`, { role })
+        .put<Agent>(`/organizations/${orgId}/agents/${userId}`, { role })
         .then((res) => res.data),
     onMutate: async ({ userId, role }) => {
       await queryClient.cancelQueries({ queryKey: CACHE_KEY_AGENTS });

@@ -4,13 +4,13 @@ import { Agent } from "./useAgent";
 import APIClient from "../services/apiClient";
 import { CACHE_KEY_AGENTS } from "../utils/constants";
 
-const apiClient = new APIClient<Agent[]>("/companies");
+const apiClient = new APIClient<Agent[]>("/organizations");
 
-const useAgents = (companyId: string,agentQuery: AgentQuery) =>
+const useAgents = (orgId: string, agentQuery: AgentQuery) =>
   useInfiniteQuery<Agent[], Error, InfiniteData<Agent[], number>>({
     queryKey: [CACHE_KEY_AGENTS, agentQuery],
     queryFn: ({ pageParam = 1 }) =>
-      apiClient.getAllAgents(companyId,{
+      apiClient.getAllAgents(orgId, {
         params: {
           branch: agentQuery.branch?.name,
           ordering: agentQuery.sortOrder,
@@ -18,14 +18,14 @@ const useAgents = (companyId: string,agentQuery: AgentQuery) =>
           page: pageParam,
         },
       }),
-       initialPageParam: 1,
+    initialPageParam: 1,
     staleTime: 10 * 1000,
     placeholderData: (previousData, _previousQuery) =>
       previousData || { pages: [], pageParams: [] },
     getNextPageParam: (_lastPage, allPages) => {
       return allPages.length + 1;
     },
-    enabled: !!companyId
+    enabled: !!orgId,
   });
 
 export default useAgents;

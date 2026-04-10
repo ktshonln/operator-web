@@ -2,7 +2,7 @@ import { useQuery } from "@tanstack/react-query";
 import APIClient from "../services/apiClient";
 import { AnalyticsQuery } from "./useAnalytics";
 
-const apiClient = new APIClient<RevenueAnalytics[]>("/companies");
+const apiClient = new APIClient<RevenueAnalytics[]>("/organizations");
 
 export interface RevenueAnalytics {
   routeId: string;
@@ -10,21 +10,18 @@ export interface RevenueAnalytics {
   revenue: string;
 }
 
-const useRevenueAnalytics = (
-  companyId: string,
-  analyticsQuery: AnalyticsQuery
-) =>
+const useRevenueAnalytics = (orgId: string, analyticsQuery: AnalyticsQuery) =>
   useQuery<RevenueAnalytics[], Error>({
     queryKey: ["revenueAnalytics", analyticsQuery],
     queryFn: () =>
-      apiClient.getRevenueAnalytics(companyId, {
+      apiClient.getRevenueAnalytics(orgId, {
         params: {
           branchId: analyticsQuery.branch,
           startDate: analyticsQuery.startDate,
           endDate: analyticsQuery.endDate,
         },
       }),
-      enabled: !!companyId && !!analyticsQuery.startDate && !!analyticsQuery.endDate,
+    enabled: !!orgId && !!analyticsQuery.startDate && !!analyticsQuery.endDate,
   });
 
 export default useRevenueAnalytics;

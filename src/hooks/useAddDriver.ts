@@ -12,13 +12,13 @@ export interface DriverDetails {
   assignedBusId: string;
 }
 
-const apiClient = new APIClient<Driver>("/companies");
-const useAddDriver = (companyId: string) => {
+const apiClient = new APIClient<Driver>("/organizations");
+const useAddDriver = (orgId: string) => {
   const showToast = useToastStore((state) => state.showToast);
   const navigate = useNavigate();
   return useMutation<Driver, Error, DriverDetails>({
     mutationFn: (driverDetails: DriverDetails) =>
-      apiClient.addDriver<DriverDetails>(driverDetails, companyId),
+      apiClient.addDriver<DriverDetails>(driverDetails, orgId),
     onSuccess: (savedData) => {
       showToast("Successfully added a new driver!", "success");
       navigate(`/fleets/drivers/${savedData.driverId}`);

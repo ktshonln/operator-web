@@ -1,5 +1,10 @@
 import { http, HttpResponse } from "msw";
-import { LoginDetails, LoginResponse, LoginUser } from "../../hooks/useLogin";
+import {
+  LoginDetails,
+  LoginResponse,
+  Login2FAResponse,
+  AuthUser,
+} from "../../hooks/useLogin";
 import {
   OrganizationRegistrationPayload,
   OrganizationResponse,
@@ -8,13 +13,10 @@ import {
   AdminActivationPayload,
   AdminActivationResponse,
 } from "../../hooks/useActivateOrganization";
-import { Role, StaffUser } from "../../hooks/useUser";
+import { StaffUser } from "../../hooks/useUser";
 import { baseUrl } from "../../services/apiClient";
-
-interface AuthErrorResponse {
-  error: "INVALID_CREDENTIALS" | "USER_NOT_FOUND";
-  message: string;
-}
+import { Verify2FAPayload } from "../../services/authService";
+import { VerifyLoginPayload } from "../../hooks/useVerifyLogin";
 
 const allUsers = new Map<string, any>([
   [
@@ -129,8 +131,142 @@ export const handlers = [
     );
   }),
 
+  // Get current user's organization
+  http.get(`${baseUrl}/organizations/me`, () => {
+    // Mock: return the first organization or create a default one
+    const firstOrg = Array.from(organizations.values())[0];
+    if (firstOrg) {
+      return HttpResponse.json(firstOrg, { status: 200 });
+    }
+
+    // Create a default organization if none exists
+    const defaultOrg: OrganizationResponse = {
+      id: "org_default",
+      name: "Default Organization",
+      slug: "default-org",
+      org_type: "company",
+      status: "active",
+      contact_email: "admin@default.com",
+      contact_phone: "+250780000001",
+      parent_org_id: null,
+      created_at: new Date().toISOString(),
+      logo_url: "",
+    };
+
+    return HttpResponse.json(defaultOrg, { status: 200 });
+  }),
+
+  // Get all organizations (admin only)
+  http.get(`${baseUrl}/organizations`, ({ request }) => {
+    const url = new URL(request.url);
+    const status = url.searchParams.get("status") as any;
+    const org_type = url.searchParams.get("org_type") as any;
+
+    let orgs = Array.from(organizations.values());
+
+    if (status) {
+      orgs = orgs.filter((org) => org.status === status);
+    }
+    if (org_type) {
+      orgs = orgs.filter((org) => org.org_type === org_type);
+    }
+
+    return HttpResponse.json(orgs, { status: 200 });
+  }),
+
+  // Get organization by ID
+  http.get(`${baseUrl}/organizations/:id`, ({ params }) => {
+    const id = String(params.id);
+    const org = organizations.get(id);
+
+    if (!org) {
+      return HttpResponse.json(
+        { error: { code: "NOT_FOUND", message: "Organization not found" } },
+        { status: 404 },
+      );
+    }
+
+    return HttpResponse.json(org, { status: 200 });
+  }),
+
+  // Update organization
+  http.patch(`${baseUrl}/organizations/:id`, async ({ params, request }) => {
+    const id = String(params.id);
+    const updates = (await request.json()) as Record<string, unknown>;
+
+    const org = organizations.get(id);
+    if (!org) {
+      return HttpResponse.json(
+        { error: { code: "NOT_FOUND", message: "Organization not found" } },
+        { status: 404 },
+      );
+    }
+
+    const updatedOrg = {
+      ...org,
+      ...updates,
+      updated_at: new Date().toISOString(),
+    };
+    organizations.set(id, updatedOrg as OrganizationResponse);
+
+    return HttpResponse.json(updatedOrg, { status: 200 });
+  }),
+
+  // Delete organization
+  http.delete(`${baseUrl}/organizations/:id`, ({ params }) => {
+    const id = String(params.id);
+    const org = organizations.get(id);
+
+    if (!org) {
+      return HttpResponse.json(
+        { error: { code: "NOT_FOUND", message: "Organization not found" } },
+        { status: 404 },
+      );
+    }
+
+    organizations.delete(id);
+    return HttpResponse.json(
+      { message: "Organization deleted" },
+      { status: 204 },
+    );
+  }),
+
+  // Approve/reject organization
+  http.post(
+    `${baseUrl}/organizations/:id/approve`,
+    async ({ params, request }) => {
+      const id = String(params.id);
+      const body = (await request.json()) as Record<string, unknown>;
+      const action = String(body.action ?? "");
+
+      const org = organizations.get(id);
+      if (!org) {
+        return HttpResponse.json(
+          { error: { code: "NOT_FOUND", message: "Organization not found" } },
+          { status: 404 },
+        );
+      }
+
+      if (action === "approve") {
+        org.status = "active";
+      } else if (action === "reject") {
+        org.status = "suspended";
+      }
+
+      org.updated_at = new Date().toISOString();
+
+      return HttpResponse.json(
+        {
+          message: `Organization ${action}d successfully`,
+          organization: org,
+        },
+        { status: 200 },
+      );
+    },
+  ),
+
   // Login
-  http.post<never, LoginDetails, LoginResponse | AuthErrorResponse>(
+  http.post<never, LoginDetails, LoginResponse | Login2FAResponse>(
     `${baseUrl}/auth/login`,
     async ({ request }) => {
       const { identifier, password } = await request.json();
@@ -138,25 +274,36 @@ export const handlers = [
       if (!result) {
         return HttpResponse.json(
           {
-            error: "INVALID_CREDENTIALS",
-            message: "Incorrect credentials.",
-          },
+            error: {
+              code: "INVALID_CREDENTIALS",
+              message: "Incorrect credentials.",
+            },
+          } as any,
           { status: 401 },
         );
       }
 
-      const user: LoginUser = {
+      const user: AuthUser = {
         id: result.id,
-        firstName: result.firstName,
-        lastName: result.lastName,
-        userType: result.userType,
-        companyId: result.companyId,
-        role: result.role as Role,
-        branch: result.branch,
+        first_name: result.firstName,
+        last_name: result.lastName,
+        user_type: "staff",
+        avatar_path: null,
+        org_id: result.companyId,
+        roles: [result.role],
+        status: "active",
+        two_factor_enabled: false,
+        permissions: [{ action: "manage", subject: "all", conditions: null }],
       };
 
       return HttpResponse.json(
-        { user },
+        {
+          user,
+          tokens: {
+            access_token: "fake-jwt-access-token-ttl-15min",
+            refresh_token: "fake-jwt-refresh-token-ttl-long",
+          },
+        },
         {
           status: 200,
           headers: {
@@ -230,4 +377,260 @@ export const handlers = [
       { status: 200 },
     );
   }),
+
+  // Verify 2FA OTP
+  http.post<never, Verify2FAPayload>(
+    `${baseUrl}/auth/verify-2fa`,
+    async ({ request }) => {
+      const { user_id, otp } = await request.json();
+
+      // Validate OTP (mock: accept "123456")
+      if (otp !== "123456") {
+        return HttpResponse.json(
+          {
+            error: {
+              code: "OTP_INVALID",
+              message: "The OTP you entered is invalid",
+            },
+          } as any,
+          { status: 400 },
+        );
+      }
+
+      // Mock user lookup by ID
+      let user: AuthUser | null = null;
+      for (const [id, userData] of allUsers.entries()) {
+        if (id === user_id) {
+          user = {
+            id,
+            first_name: userData.firstName,
+            last_name: userData.lastName,
+            user_type: "staff",
+            avatar_path: null,
+            org_id: userData.companyId,
+            roles: [userData.role],
+            status: "active",
+            two_factor_enabled: true,
+            permissions: [
+              { action: "manage", subject: "all", conditions: null },
+            ],
+          };
+          break;
+        }
+      }
+
+      if (!user) {
+        return HttpResponse.json(
+          {
+            error: {
+              code: "USER_NOT_FOUND",
+              message: "User not found",
+            },
+          } as any,
+          { status: 404 },
+        );
+      }
+
+      return HttpResponse.json(
+        {
+          user,
+          tokens: {
+            access_token: "fake-jwt-access-token-ttl-15min",
+            refresh_token: "fake-jwt-refresh-token-ttl-long",
+          },
+        },
+        { status: 200 },
+      );
+    },
+  ),
+
+  // Verify account (for pending verification accounts)
+  http.post<never, VerifyLoginPayload>(
+    `${baseUrl}/auth/verify-login`,
+    async ({ request }) => {
+      const { user_id, otp } = await request.json();
+
+      // Validate OTP (mock: accept "123456")
+      if (otp !== "123456") {
+        return HttpResponse.json(
+          {
+            error: {
+              code: "OTP_INVALID",
+              message: "The OTP you entered is invalid",
+            },
+          } as any,
+          { status: 400 },
+        );
+      }
+
+      // Mock user lookup by ID
+      let user: AuthUser | null = null;
+      for (const [id, userData] of allUsers.entries()) {
+        if (id === user_id) {
+          user = {
+            id,
+            first_name: userData.firstName,
+            last_name: userData.lastName,
+            user_type: "staff",
+            avatar_path: null,
+            org_id: userData.companyId,
+            roles: [userData.role],
+            status: "active",
+            two_factor_enabled: false,
+            permissions: [
+              { action: "manage", subject: "all", conditions: null },
+            ],
+          };
+          break;
+        }
+      }
+
+      if (!user) {
+        return HttpResponse.json(
+          {
+            error: {
+              code: "USER_NOT_FOUND",
+              message: "User not found",
+            },
+          } as any,
+          { status: 404 },
+        );
+      }
+
+      return HttpResponse.json(
+        {
+          user,
+          tokens: {
+            access_token: "fake-jwt-access-token-ttl-15min",
+            refresh_token: "fake-jwt-refresh-token-ttl-long",
+          },
+        },
+        { status: 200 },
+      );
+    },
+  ),
+
+  // Refresh token
+  http.post(`${baseUrl}/auth/refresh`, () => {
+    const firstUser = Array.from(allUsers.values())[0] as any;
+    if (!firstUser) {
+      return HttpResponse.json(
+        {
+          error: {
+            code: "UNAUTHORIZED",
+            message: "Invalid or expired refresh token",
+          },
+        } as any,
+        { status: 401 },
+      );
+    }
+
+    const user: AuthUser = {
+      id: "user_auth_456",
+      first_name: firstUser.firstName,
+      last_name: firstUser.lastName,
+      user_type: "staff",
+      avatar_path: null,
+      org_id: firstUser.companyId,
+      roles: [firstUser.role],
+      status: "active",
+      two_factor_enabled: false,
+      permissions: [{ action: "manage", subject: "all", conditions: null }],
+    };
+
+    return HttpResponse.json(
+      {
+        user,
+        tokens: {
+          access_token: "fake-jwt-access-token-ttl-15min-refreshed",
+          refresh_token: "fake-jwt-refresh-token-ttl-long-refreshed",
+        },
+      },
+      {
+        status: 200,
+        headers: {
+          "Set-Cookie":
+            "access_token=fake-jwt-refreshed; HttpOnly; Secure; SameSite=Strict; Path=/;",
+        },
+      },
+    );
+  }),
+
+  // Forgot password - sends OTP
+  http.post<never, { identifier: string }>(
+    `${baseUrl}/auth/forgot-password`,
+    async ({ request }) => {
+      const { identifier: _identifier } = await request.json();
+
+      // Always return 204 to prevent user enumeration, as per spec
+      return HttpResponse.json(
+        {
+          message: "If an account exists, a verification code has been sent",
+          expires_in: 300,
+        },
+        { status: 204 },
+      );
+    },
+  ),
+
+  // Reset password - verifies OTP and sets new password
+  http.post<never, { identifier: string; otp: string; new_password: string }>(
+    `${baseUrl}/auth/reset-password`,
+    async ({ request }) => {
+      const { identifier, otp, new_password } = await request.json();
+
+      // Validate OTP (mock: accept "123456")
+      if (otp !== "123456") {
+        return HttpResponse.json(
+          {
+            error: {
+              code: "OTP_INVALID",
+              message: "The verification code you entered is invalid",
+            },
+          } as any,
+          { status: 400 },
+        );
+      }
+
+      // Validate password strength (mock validation)
+      if (new_password.length < 8) {
+        return HttpResponse.json(
+          {
+            error: {
+              code: "PASSWORD_TOO_WEAK",
+              message: "Password must be at least 8 characters long",
+            },
+          } as any,
+          { status: 400 },
+        );
+      }
+
+      // Find user and update password
+      let updated = false;
+      for (const [, user] of allUsers.entries()) {
+        if (user.email === identifier || user.phone === identifier) {
+          user.password = new_password;
+          updated = true;
+          break;
+        }
+      }
+
+      if (!updated) {
+        return HttpResponse.json(
+          {
+            error: {
+              code: "USER_NOT_FOUND",
+              message: "No account found with this email or phone number",
+            },
+          } as any,
+          { status: 404 },
+        );
+      }
+
+      return HttpResponse.json(
+        { message: "Password reset successfully" },
+        { status: 204 },
+      );
+    },
+  ),
 ];

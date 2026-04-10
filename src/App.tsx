@@ -1,6 +1,8 @@
 import { BrowserRouter, Navigate, Route, Routes } from "react-router-dom";
 import Toaster from "./components/Toaster";
 import TripDetails from "./components/TripDetails";
+import Layout from "./components/layouts/Layout";
+import AuthGuard from "./components/AuthGuard";
 import BusDetails from "./pages/BusDetails";
 import Buses from "./pages/Buses";
 import DriverDetails from "./pages/DriverDetails";
@@ -9,6 +11,7 @@ import HomePage from "./pages/Home";
 import LoginPage from "./pages/Login";
 import ForgotPassword from "./pages/ForgotPassword";
 import ResetPassword from "./pages/ResetPassword";
+import VerifyPasswordReset from "./pages/VerifyPasswordReset";
 import LoginMfa from "./pages/LoginMfa";
 import NotFound from "./pages/NotFound";
 import ProfileSettings from "./pages/ProfileSettings";
@@ -22,9 +25,9 @@ import TicketDetails from "./pages/TicketDetails";
 import Ticketing from "./pages/Ticketing";
 import TicketSaleHistory from "./pages/TicketSaleHistory";
 import Trips from "./pages/Trips";
+import Organizations from "./pages/Organizations";
+import OrganizationDetails from "./pages/OrganizationDetails";
 import UserDetails from "./pages/UserDetails";
-import Layout from "./components/layouts/Layout";
-import AuthGuard from "./components/AuthGuard";
 
 function App() {
   return (
@@ -34,6 +37,10 @@ function App() {
           <Route path="/" element={<Navigate to="/login" replace />} />
           <Route path="/login" element={<LoginPage />} />
           <Route path="/forgot-password" element={<ForgotPassword />} />
+          <Route
+            path="/verify-password-reset"
+            element={<VerifyPasswordReset />}
+          />
           <Route path="/reset-password" element={<ResetPassword />} />
           <Route path="/login-mfa" element={<LoginMfa />} />
           <Route path="/register" element={<RegisterPage />} />
@@ -44,11 +51,14 @@ function App() {
           />
 
           <Route path="/" element={<Layout />}>
-            <Route path="home" element={
-              <AuthGuard action="read" subject="Home">
-              <HomePage />
-              </AuthGuard>
-              } />
+            <Route
+              path="home"
+              element={
+                <AuthGuard action="read" subject="Home">
+                  <HomePage />
+                </AuthGuard>
+              }
+            />
             <Route
               path="ticketing"
               element={
@@ -70,6 +80,22 @@ function App() {
               element={
                 <AuthGuard action="read" subject="Ticket">
                   <TicketSaleHistory />
+                </AuthGuard>
+              }
+            />
+            <Route
+              path="organizations"
+              element={
+                <AuthGuard action="read" subject="Organization">
+                  <Organizations />
+                </AuthGuard>
+              }
+            />
+            <Route
+              path="organizations/:id"
+              element={
+                <AuthGuard action="read" subject="Organization">
+                  <OrganizationDetails />
                 </AuthGuard>
               }
             />

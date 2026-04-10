@@ -3,6 +3,7 @@ import { Navigate } from "react-router-dom";
 import { useAbility } from "../contexts/AbilityContext";
 import useUser from "../hooks/useUser";
 import { useToastStore } from "../stores/toastStore";
+import Skeleton from "../pages/Skeleton";
 
 interface AuthGuardProps {
   children: ReactNode;
@@ -17,7 +18,7 @@ const AuthGuard = ({ children, action, subject, fallback }: AuthGuardProps) => {
   const showToast = useToastStore((state) => state.showToast);
 
   if (loading) {
-    return <div>Loading...</div>;
+    return <Skeleton/>; 
   }
 
   if (!user) {

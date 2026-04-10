@@ -15,7 +15,7 @@ let trips = [
     },
     departureDateAndTime: "2025-04-30T14:30:00Z",
     arrivalTime: "2025-04-30T14:30:00Z",
-    seats: ['1', '2', '3', '4'],
+    seats: ["1", "2", "3", "4"],
     price: 3530,
     busId: "bus_001",
     status: "unbooked",
@@ -33,17 +33,17 @@ let trips = [
     },
     departureDateAndTime: "2025-04-30T14:30:00Z",
     arrivalTime: "2025-04-30T14:30:00Z",
-    seats: ['1', '2', '3', '4'],
+    seats: ["1", "2", "3", "4"],
     price: 4530,
     busId: "bus_002",
     status: "booked",
     express: true,
-    intermediateStops: ["Muhanga", "Ruhango","Nyanza"],
+    intermediateStops: ["Muhanga", "Ruhango", "Nyanza"],
   },
   {
     tripId: "trip_4023",
     scheduleId: "schedule_002",
-     route: {
+    route: {
       start: "Rubavu",
       startId: "stopRub",
       end: "Kigali",
@@ -51,7 +51,7 @@ let trips = [
     },
     departureDateAndTime: "2025-04-30T14:30:00Z",
     arrivalTime: "2025-04-30T14:30:00Z",
-    seats: ['1', '2', '3', '4'],
+    seats: ["1", "2", "3", "4"],
     price: 4530,
     busId: "bus_002",
     status: "unbooked",
@@ -72,29 +72,33 @@ export const handlers = [
     // const status = url.searchParams.get("status");
 
     if (branch) {
-      if(branch==='All branches') return HttpResponse.json(trips, { status: 200 });
+      if (branch === "All branches")
+        return HttpResponse.json(trips, { status: 200 });
       if (departureTime)
         return HttpResponse.json(
-      trips.filter(trip=>trip.departureDateAndTime===departureTime),
-      { status: 200 }
-    );
-    {
-      if (search)
-        return HttpResponse.json(
-      trips.filter(trip=>trip.route.end.toLowerCase() ===search.toLowerCase()),
-      { status: 200 }
-    );
-  }
-  return HttpResponse.json(
-    trips.filter(trip=>trip.route.start.toLowerCase()===branch.toLowerCase()),
-    { status: 200 }
-  );
-}
-    else return HttpResponse.json(trips, { status: 200 });
+          trips.filter((trip) => trip.departureDateAndTime === departureTime),
+          { status: 200 },
+        );
+      {
+        if (search)
+          return HttpResponse.json(
+            trips.filter(
+              (trip) => trip.route.end.toLowerCase() === search.toLowerCase(),
+            ),
+            { status: 200 },
+          );
+      }
+      return HttpResponse.json(
+        trips.filter(
+          (trip) => trip.route.start.toLowerCase() === branch.toLowerCase(),
+        ),
+        { status: 200 },
+      );
+    } else return HttpResponse.json(trips, { status: 200 });
   }),
-  // Intercept "GET /companies/{companyId}/trips/{tripId}/manifest" requests...
+  // Intercept "GET /organizations/{orgId}/trips/{tripId}/manifest" requests...
   http.get(
-    `${baseUrl}/companies/:companyId/trips/:tripId/manifest`,
+    `${baseUrl}/organizations/:orgId/trips/:tripId/manifest`,
     ({ params }) => {
       // ...and respond to them using this JSON response.
       if (params.tripId === "trip_4022")
@@ -148,7 +152,7 @@ export const handlers = [
               },
             ],
           },
-          { status: 200 }
+          { status: 200 },
         );
       else
         return HttpResponse.json(
@@ -171,9 +175,9 @@ export const handlers = [
               },
             ],
           },
-          { status: 200 }
+          { status: 200 },
         );
-    }
+    },
   ),
   // Intercept "GET /trips/{tripId}" requests...
   http.get(`${baseUrl}/trips/:tripId`, ({ params }) => {
@@ -191,63 +195,60 @@ export const handlers = [
   // Intercept "GET /trip-schedules/{scheduleId}" requests...
   http.get(`${baseUrl}/trip-schedules/:scheduleId`, () => {
     // ...and respond to them using this JSON response.
-    return HttpResponse.json(
-      trips,
-      { status: 200 }
-    );
+    return HttpResponse.json(trips, { status: 200 });
   }),
-   // Intercept "POST /companies/trips" requests...
-    http.post<never,TripDetails,Trip>(`${baseUrl}/companies/:companyId/trips`, async ({request}) => {
+  // Intercept "POST /organizations/{orgId}/trips" requests...
+  http.post<never, TripDetails, Trip>(
+    `${baseUrl}/organizations/:orgId/trips`,
+    async ({ request }) => {
       // ...and respond to them using this JSON response.
-      const newTrip = await request.json()
+      const newTrip = await request.json();
       const newId = crypto.randomUUID();
-      const fullTrip = {...newTrip, tripId: `${newId}`, scheduleId: '', price: 12, arrivalTime:'0', // Valid time value is a must please! for format() or just '0' as default
-  seats: [],
-  status: 'not_booked',
-  express: false,
-  intermediateStops:[],
-  route: {...newTrip.route, startId: '', endId: ''}
-}
-      trips.push(fullTrip)
-        return HttpResponse.json(
-         fullTrip,
-          { status: 201 }
-        );
-    }),
+      const fullTrip = {
+        ...newTrip,
+        tripId: `${newId}`,
+        scheduleId: "",
+        price: 12,
+        arrivalTime: "0", // Valid time value is a must please! for format() or just '0' as default
+        seats: [],
+        status: "not_booked",
+        express: false,
+        intermediateStops: [],
+        route: { ...newTrip.route, startId: "", endId: "" },
+      };
+      trips.push(fullTrip);
+      return HttpResponse.json(fullTrip, { status: 201 });
+    },
+  ),
 
-      // Intercept "PUT /companies/{companyId}/trips/{tripId}" requests...
-      http.put<{tripId: string;companyId: string}, Trip>(`${baseUrl}/companies/:companyId/trips/:tripId`,async ({ params, request }) => {
-        // ...and respond to them using this JSON response.
-        if (params.tripId && params.companyId){
-          const updatedTrip = await request.json()
-          const index = trips.findIndex(trip => trip.tripId === params.tripId);
-          if (index !== -1) {
-            trips[index] = {
-              ...trips[index],
-              ...updatedTrip, // Merge old + new to be safe
-            };
-            return HttpResponse.json(
-              trips[index],
-                { status: 200 }
-              );
-          } else {
-            return HttpResponse.json(trips[index], {status: 404});
-          } 
+  // Intercept "PUT /organizations/{orgId}/trips/{tripId}" requests...
+  http.put<{ tripId: string; orgId: string }, Trip>(
+    `${baseUrl}/organizations/:orgId/trips/:tripId`,
+    async ({ params, request }) => {
+      // ...and respond to them using this JSON response.
+      if (params.tripId && params.orgId) {
+        const updatedTrip = await request.json();
+        const index = trips.findIndex((trip) => trip.tripId === params.tripId);
+        if (index !== -1) {
+          trips[index] = {
+            ...trips[index],
+            ...updatedTrip, // Merge old + new to be safe
+          };
+          return HttpResponse.json(trips[index], { status: 200 });
+        } else {
+          return HttpResponse.json(trips[index], { status: 404 });
         }
-        return HttpResponse.json({ message: "Invalid request" }, { status: 400 });
-      }), 
-    
+      }
+      return HttpResponse.json({ message: "Invalid request" }, { status: 400 });
+    },
+  ),
 
-      // Intercept "DELETE /companies/{companyId}/trips/{tripId}" requests...
-      http.delete(`${baseUrl}/companies/:companyId/trips/:tripId`, ({ params }) => {
-        // ...and respond to them using this JSON response.
-        if (params.tripId && params.companyId){
-          trips = trips.filter((trip)=> trip.tripId !== params.tripId)
-          return HttpResponse.json(
-            trips,
-            { status: 204 }
-          );
-        }
-    
-      }),
+  // Intercept "DELETE /organizations/{orgId}/trips/{tripId}" requests...
+  http.delete(`${baseUrl}/organizations/:orgId/trips/:tripId`, ({ params }) => {
+    // ...and respond to them using this JSON response.
+    if (params.tripId && params.orgId) {
+      trips = trips.filter((trip) => trip.tripId !== params.tripId);
+      return HttpResponse.json(trips, { status: 204 });
+    }
+  }),
 ];

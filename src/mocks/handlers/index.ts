@@ -2,7 +2,7 @@ import { http, HttpResponse } from "msw";
 import { handlers as authHandlers } from "./auth";
 import { handlers as analyticsHandlers } from "./analytics";
 import { handlers as ticketingHandlers } from "./ticketing";
-import { handlers as companyHandlers } from "./companies";
+import { handlers as organizationHandlers } from "./organizations";
 import { handlers as tripHandlers } from "./trips";
 import { handlers as routeHandlers } from "./routes";
 import { handlers as busHandlers } from "./buses";
@@ -20,7 +20,7 @@ export const handlers = [
   ...authHandlers,
   ...analyticsHandlers,
   ...ticketingHandlers,
-  ...companyHandlers,
+  ...organizationHandlers,
   ...tripHandlers,
   ...routeHandlers,
   ...busHandlers,
