@@ -3,6 +3,7 @@ import Footer from "../components/Footer";
 import { Link, useNavigate, useSearchParams } from "react-router-dom";
 import { useState, useEffect, useRef } from "react";
 import useVerify2FA from "../hooks/useVerify2FA";
+import { useResendOtp2FA } from "../hooks/useAuth";
 
 const LoginMfa = () => {
   const navigate = useNavigate();
@@ -11,11 +12,13 @@ const LoginMfa = () => {
   const userIdPending = localStorage.getItem("user_id_pending_2fa");
   const [error, setError] = useState("");
   const [otp, setOtp] = useState(["", "", "", "", "", ""]);
+  const expiresInValue = Number(expiresIn);
   const [timeLeft, setTimeLeft] = useState(
-    expiresIn ? parseInt(expiresIn) : 300,
+    expiresInValue > 0 ? expiresInValue : 60,
   );
   const inputRefs = useRef<(HTMLInputElement | null)[]>([]);
   const verify2FA = useVerify2FA();
+  const resendOtp2FA = useResendOtp2FA();
 
   useEffect(() => {
     if (timeLeft > 0) {
@@ -46,10 +49,18 @@ const LoginMfa = () => {
   };
 
   const handleResend = () => {
-    if (timeLeft === 0) {
-      setTimeLeft(300);
-      // TODO: Implement resend OTP for 2FA
+    if (timeLeft !== 0 || !userIdPending || resendOtp2FA.isPending) {
+      return;
     }
+
+    resendOtp2FA.mutate(
+      { user_id: userIdPending },
+      {
+        onSuccess: () => {
+          setTimeLeft(60);
+        },
+      },
+    );
   };
 
   const handleVerify = (e: React.FormEvent) => {
@@ -126,12 +137,16 @@ const LoginMfa = () => {
                       Wait {timeLeft}s to resend
                     </span>
                   ) : (
-                    <span
+                    <button
+                      type="button"
                       onClick={handleResend}
-                      className="text-brand cursor-pointer ml-2"
+                      disabled={resendOtp2FA.isPending}
+                      className={`ml-2 text-brand ${resendOtp2FA.isPending ? "cursor-not-allowed opacity-50" : "cursor-pointer hover:underline"}`}
                     >
-                      Click to resend
-                    </span>
+                      {resendOtp2FA.isPending
+                        ? "Resending..."
+                        : "Click to resend"}
+                    </button>
                   )}
                 </p>
                 <div className="mt-3 flex items-center space-x-5">

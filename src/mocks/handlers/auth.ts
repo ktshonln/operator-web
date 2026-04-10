@@ -30,6 +30,7 @@ const allUsers = new Map<string, any>([
       role: "admin",
       branch: "main",
       companyId: "comp_001",
+      twoFactorEnabled: false,
     },
   ],
 ]);
@@ -283,6 +284,18 @@ export const handlers = [
         );
       }
 
+      const requires2FA = Boolean(result.twoFactorEnabled);
+      if (requires2FA) {
+        return HttpResponse.json(
+          {
+            requires_2fa: true,
+            user_id: result.id,
+            expires_in: 60,
+          },
+          { status: 200 },
+        );
+      }
+
       const user: AuthUser = {
         id: result.id,
         first_name: result.firstName,
@@ -374,6 +387,48 @@ export const handlers = [
         status: "Logged out.",
         message: "You have been successfully logged out.",
       },
+      { status: 200 },
+    );
+  }),
+
+  // Resend OTP for 2FA or recovery flows
+  http.post<
+    never,
+    { user_id?: string; phone_number?: string },
+    { message: string }
+  >(`${baseUrl}/auth/resend-otp`, async ({ request }) => {
+    const body = (await request.json()) as Record<string, unknown>;
+    const userId = body.user_id ? String(body.user_id) : undefined;
+    const phoneNumber = body.phone_number
+      ? String(body.phone_number)
+      : undefined;
+
+    let userData = null;
+    if (userId) {
+      userData = allUsers.get(userId);
+    } else if (phoneNumber) {
+      for (const user of allUsers.values()) {
+        if (user.phone === phoneNumber || user.email === phoneNumber) {
+          userData = user;
+          break;
+        }
+      }
+    }
+
+    if (!userData) {
+      return HttpResponse.json(
+        {
+          error: {
+            code: "USER_NOT_FOUND",
+            message: "User not found",
+          },
+        } as any,
+        { status: 404 },
+      );
+    }
+
+    return HttpResponse.json(
+      { message: "OTP resent successfully" },
       { status: 200 },
     );
   }),

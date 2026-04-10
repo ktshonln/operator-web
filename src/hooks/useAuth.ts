@@ -2,10 +2,20 @@ import { useToastStore } from "../stores/toastStore";
 import { useMutation } from "@tanstack/react-query";
 import {
   ResendOtpPayload,
+  ResendOtp2FAPayload,
   ForgotPasswordPayload,
   ResetPasswordPayload,
 } from "../services/authService";
 import authService from "../services/authService";
+
+export const useResendOtp2FA = () => {
+  const showToast = useToastStore((s) => s.showToast);
+  return useMutation({
+    mutationFn: (data: ResendOtp2FAPayload) => authService.resendOtp2FA(data),
+    onSuccess: () => showToast("A new OTP has been sent.", "success"),
+    onError: () => showToast("Failed to resend OTP.", "error"),
+  });
+};
 
 export const useResendOtp = () => {
   const showToast = useToastStore((s) => s.showToast);

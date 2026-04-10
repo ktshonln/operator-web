@@ -45,7 +45,9 @@ export interface Login2FAResponse {
   expires_in: number;
 }
 
-const apiClient = new APIClient<LoginResponse>("/auth/login");
+const apiClient = new APIClient<LoginResponse | Login2FAResponse>(
+  "/auth/login",
+);
 const useLogin = () => {
   const showToast = useToastStore((state) => state.showToast);
   const navigate = useNavigate();

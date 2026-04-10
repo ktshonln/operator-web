@@ -60,6 +60,10 @@ export interface ResendOtpPayload {
   phone_number: string;
 }
 
+export interface ResendOtp2FAPayload {
+  user_id: string;
+}
+
 export interface ResetPasswordPayload {
   identifier: string;
   otp: string;
@@ -82,6 +86,10 @@ export default {
   logout: () =>
     authRequest(axiosInstance.post("/auth/logout", {}).then((res) => res.data)),
   resendOtp: (data: ResendOtpPayload) =>
+    authRequest(
+      axiosInstance.post("/auth/resend-otp", data).then((res) => res.data),
+    ),
+  resendOtp2FA: (data: ResendOtp2FAPayload) =>
     authRequest(
       axiosInstance.post("/auth/resend-otp", data).then((res) => res.data),
     ),
