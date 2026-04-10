@@ -2,7 +2,13 @@ import { createContext, ReactNode, useContext, useMemo } from "react";
 import { Ability, AbilityBuilder, MongoAbility } from "@casl/ability";
 import { createContextualCan } from "@casl/react";
 
-export type Actions = "create" | "read" | "update" | "delete" | "manage" | "approve";
+export type Actions =
+  | "create"
+  | "read"
+  | "update"
+  | "delete"
+  | "manage"
+  | "approve";
 export type Subjects =
   | "User"
   | "Organization"
