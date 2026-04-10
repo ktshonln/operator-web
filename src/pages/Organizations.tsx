@@ -1,7 +1,6 @@
 import { useState } from "react";
 import { Link } from "react-router-dom";
 import {
-  BsPlus,
   BsEye,
   BsPencil,
   BsTrash,
@@ -15,14 +14,25 @@ import {
   useApproveOrganization,
 } from "../hooks/useOrganizations";
 import Can from "../components/Can";
+import useUser from "../hooks/useUser";
 
 const Organizations = () => {
+  const { user } = useUser();
   const [statusFilter, setStatusFilter] = useState<
     Organization["status"] | "all"
   >("all");
   const [typeFilter, setTypeFilter] = useState<
     Organization["org_type"] | "all"
   >("all");
+
+  // Only allow admins to view this page
+  if (!user || !user.roles?.includes("admin")) {
+    return (
+      <div className="p-6">
+        <p className="text-red-600">Access denied. Only administrators can view organizations.</p>
+      </div>
+    );
+  }
 
   const queryResult = useOrganizations({
     status: statusFilter !== "all" ? statusFilter : undefined,
@@ -100,15 +110,6 @@ const Organizations = () => {
     <div className="p-6">
       <div className="flex justify-between items-center mb-6">
         <h1 className="text-2xl font-bold text-gray-900">Organizations</h1>
-        <Can I="create" a="Organization">
-          <Link
-            to="/organizations/create"
-            className="bg-blue-500 text-white px-4 py-2 rounded hover:bg-blue-600 flex items-center gap-2"
-          >
-            <BsPlus size={20} />
-            Add Organization
-          </Link>
-        </Can>
       </div>
 
       {/* Filters */}

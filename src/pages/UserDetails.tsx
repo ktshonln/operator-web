@@ -4,14 +4,14 @@ import SettingsNav from "../components/SettingsNav";
 import WidgetLayout from "../components/layouts/WidgetLayout";
 import { useParams } from "react-router-dom";
 import useAgent from "../hooks/useAgent";
+import useUser from "../hooks/useUser";
 
 function UserDetails() {
   const [access, setAccess] = useState(true); // Account access for the user/agent
-  const { agentID } = useParams();
-  const { data } = useAgent(
-    "comp_001",
-    agentID ? agentID : "agent_xyz"
-  );
+  const { userId } = useParams<{ userId: string }>();
+  const { user } = useUser();
+  const orgId = user?.org_id ?? "";
+  const { data } = useAgent(orgId, userId ?? "");
   console.log(data);
   return (
     <div className="mt-10">

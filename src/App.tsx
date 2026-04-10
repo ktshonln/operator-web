@@ -99,6 +99,14 @@ function App() {
                 </AuthGuard>
               }
             />
+            <Route
+              path="organizations/:id/edit"
+              element={
+                <AuthGuard action="update" subject="Organization">
+                  <OrganizationDetails />
+                </AuthGuard>
+              }
+            />
             <Route path="fleets">
               <Route
                 index

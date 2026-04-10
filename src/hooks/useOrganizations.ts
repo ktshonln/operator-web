@@ -92,7 +92,7 @@ export const useUpdateOrganization = () => {
     }: {
       id: string;
       data: UpdateOrganizationPayload;
-    }) => apiClient.put(data, id),
+    }) => apiClient.patch(data, id),
     onSuccess: (_, { id }) => {
       showToast("Organization updated successfully", "success");
       queryClient.invalidateQueries({ queryKey: ["organizations"] });

@@ -130,6 +130,11 @@ class APIClient<TResponse> {
       .put<TResponse>(`${this.endpoint}/${id}`, input)
       .then((res) => res.data);
   };
+  patch = <TRequest>(input: TRequest, id: string | number) => {
+    return axiosInstance
+      .patch<TResponse>(`${this.endpoint}/${id}`, input)
+      .then((res) => res.data);
+  };
   delete = (id: string | number) => {
     return axiosInstance
       .delete<TResponse>(`${this.endpoint}/${id}`)
