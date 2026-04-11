@@ -12,6 +12,7 @@ export type Actions =
 export type Subjects =
   | "User"
   | "Organization"
+  | "OrganizationApplication"
   | "Bus"
   | "Driver"
   | "Trip"
