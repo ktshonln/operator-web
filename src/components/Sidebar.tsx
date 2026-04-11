@@ -30,12 +30,6 @@ const Sidebar = () => {
       action: "read",
       subject: "Organization",
     },
-    {
-      link: "/applications",
-      icon: BsBuilding, // Use a different icon if available, e.g., BsApp or something
-      action: "read",
-      subject: "Application",
-    },
     { link: "/ticketing", icon: BsTicket, action: "read", subject: "Ticket" },
     {
       link: "/fleets",

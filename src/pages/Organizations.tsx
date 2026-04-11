@@ -26,17 +26,6 @@ const Organizations = () => {
     Organization["org_type"] | "all"
   >("all");
 
-  // Only allow admins to view this page
-  if (!user || !user.roles?.includes("admin")) {
-    return (
-      <div className="p-6">
-        <p className="text-red-600">
-          Access denied. Only administrators can view organizations.
-        </p>
-      </div>
-    );
-  }
-
   const queryResult = useOrganizations({
     status: statusFilter !== "all" ? statusFilter : undefined,
     org_type: typeFilter !== "all" ? typeFilter : undefined,
@@ -48,6 +37,17 @@ const Organizations = () => {
 
   const deleteOrg = useDeleteOrganization();
   const approveOrg = useApproveOrganization();
+
+  // Only allow admins to view this page
+  if (!user || !user.roles?.includes("admin")) {
+    return (
+      <div className="p-6">
+        <p className="text-red-600">
+          Access denied. Only administrators can view organizations.
+        </p>
+      </div>
+    );
+  }
 
   const handleDelete = async (id: string, name: string) => {
     if (

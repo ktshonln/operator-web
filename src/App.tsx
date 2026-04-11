@@ -28,7 +28,6 @@ import Trips from "./pages/Trips";
 import Organizations from "./pages/Organizations";
 import OrganizationDetails from "./pages/OrganizationDetails";
 import CreateOrganization from "./pages/CreateOrganization";
-import Applications from "./pages/Applications";
 import UserDetails from "./pages/UserDetails";
 
 function App() {
@@ -114,14 +113,6 @@ function App() {
               element={
                 <AuthGuard action="update" subject="Organization">
                   <OrganizationDetails />
-                </AuthGuard>
-              }
-            />
-            <Route
-              path="applications"
-              element={
-                <AuthGuard action="read" subject="Application">
-                  <Applications />
                 </AuthGuard>
               }
             />

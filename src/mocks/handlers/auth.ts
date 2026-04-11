@@ -689,6 +689,46 @@ export const handlers = [
     },
   ),
 
+  // PUBLIC: Organization registration (creates pending organization)
+  http.post<never, OrganizationRegistrationPayload, OrganizationResponse>(
+    `${baseUrl}/organizations`,
+    async ({ request }) => {
+      const newOrg = await request.json();
+      const orgId = crypto.randomUUID();
+      const slug = newOrg.name
+        .toLowerCase()
+        .replace(/\s+/g, "-")
+        .replace(/[^a-z0-9-]/g, "");
+      const createdAt = new Date().toISOString();
+
+      const createdOrg: OrganizationResponse = {
+        id: orgId,
+        name: newOrg.name,
+        slug,
+        org_type: newOrg.org_type,
+        status: "pending", // Public registration always creates pending
+        contact_email: newOrg.contact_email,
+        contact_phone: newOrg.contact_phone,
+        parent_org_id: newOrg.parent_org_id || null,
+        created_at: createdAt,
+        logo_url: newOrg.logo_url,
+      };
+
+      organizations.set(orgId, createdOrg);
+
+      const token = crypto.randomUUID();
+      activationTokens.set(token, orgId);
+
+      return HttpResponse.json(createdOrg, { status: 201 });
+    },
+  ),
+
+
+
+
+
+
+
   // PUBLIC: Organization applications (self-service registration)
   http.post<never, OrganizationRegistrationPayload, OrganizationResponse>(
     `${baseUrl}/organization-applications`,
@@ -723,7 +763,7 @@ export const handlers = [
     },
   ),
 
-  // CASL: Create organization endpoint by admins
+  // ADMIN: Create organization
   http.post<
     never,
     Omit<OrganizationResponse, "id" | "created_at" | "slug">,
@@ -742,7 +782,7 @@ export const handlers = [
       name: newOrg.name,
       slug,
       org_type: newOrg.org_type,
-      status: newOrg.status || "pending",
+      status: newOrg.status || "active", // Admin creation defaults to active
       contact_email: newOrg.contact_email,
       contact_phone: newOrg.contact_phone,
       parent_org_id: newOrg.parent_org_id || null,
@@ -751,6 +791,7 @@ export const handlers = [
     };
 
     organizations.set(orgId, createdOrg);
+
     return HttpResponse.json(createdOrg, { status: 201 });
   }),
 ];
