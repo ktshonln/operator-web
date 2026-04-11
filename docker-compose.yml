@@ -1,0 +1,11 @@
+services:
+  app:
+    image: ktshonln/operator-web:${IMAGE_TAG}
+    container_name: app
+    restart: unless-stopped
+    networks:
+      - katisha-net
+
+networks:
+  katisha-net:
+    external: true
