@@ -1,6 +1,7 @@
 import { useState } from "react";
 import { Link } from "react-router-dom";
 import {
+  BsPlus,
   BsEye,
   BsPencil,
   BsTrash,
@@ -29,7 +30,9 @@ const Organizations = () => {
   if (!user || !user.roles?.includes("admin")) {
     return (
       <div className="p-6">
-        <p className="text-red-600">Access denied. Only administrators can view organizations.</p>
+        <p className="text-red-600">
+          Access denied. Only administrators can view organizations.
+        </p>
       </div>
     );
   }
@@ -110,6 +113,15 @@ const Organizations = () => {
     <div className="p-6">
       <div className="flex justify-between items-center mb-6">
         <h1 className="text-2xl font-bold text-gray-900">Organizations</h1>
+        <Can I="create" a="Organization">
+          <Link
+            to="/organizations/create"
+            className="bg-blue-500 text-white px-4 py-2 rounded hover:bg-blue-600 flex items-center gap-2"
+          >
+            <BsPlus size={20} />
+            Add Organization
+          </Link>
+        </Can>
       </div>
 
       {/* Filters */}

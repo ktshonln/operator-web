@@ -4,9 +4,9 @@ import { Link, useNavigate } from "react-router-dom";
 import { z } from "zod";
 import { useState } from "react";
 import Footer from "../components/Footer";
-import useRegister, {
-  OrganizationRegistrationPayload,
-} from "../hooks/useRegister";
+import useSubmitOrganizationApplication, {
+  OrganizationApplicationPayload,
+} from "../hooks/useOrganizationApplications";
 import { axiosInstance } from "../services/apiClient";
 
 const OrganizationSchema = z.object({
@@ -49,7 +49,7 @@ const RegisterPage = () => {
     formState: { errors },
   } = useForm<RegistrationData>({ resolver: zodResolver(OrganizationSchema) });
 
-  const createOrganization = useRegister();
+  const submitApplication = useSubmitOrganizationApplication();
 
   const onLogoSelected = (event: React.ChangeEvent<HTMLInputElement>) => {
     const file = event.target.files?.[0];
@@ -81,13 +81,13 @@ const RegisterPage = () => {
         logo_url = presignedResponse.data.fileUrl;
       }
 
-      const payload: OrganizationRegistrationPayload = {
+      const payload: OrganizationApplicationPayload = {
         ...data,
         parent_org_id: data.parent_org_id || undefined,
         logo_url,
       };
 
-      createOrganization.mutate(payload, {
+      submitApplication.mutate(payload, {
         onSuccess: () => {
           reset();
           setLogoFile(null);
@@ -291,11 +291,11 @@ const RegisterPage = () => {
                 )}
 
                 <button
-                  disabled={createOrganization.isPending}
+                  disabled={submitApplication.isPending}
                   type="submit"
                   className="bg-[#0A4370] p-2 block w-full text-white mt-6 rounded-sm cursor-pointer hover:text-[#0A4370] hover:bg-white hover:ring hover:ring-[#0A4370] active:scale-95 disabled:active:scale-none disabled:hover:ring-0 disabled:opacity-50 disabled:hover:bg-[#0A4370] disabled:hover:text-white disabled:cursor-not-allowed"
                 >
-                  {createOrganization.isPending ? "REGISTERING..." : "REGISTER"}
+                  {submitApplication.isPending ? "REGISTERING..." : "REGISTER"}
                 </button>
               </div>
             </form>

@@ -688,4 +688,69 @@ export const handlers = [
       );
     },
   ),
+
+  // PUBLIC: Organization applications (self-service registration)
+  http.post<never, OrganizationRegistrationPayload, OrganizationResponse>(
+    `${baseUrl}/organization-applications`,
+    async ({ request }) => {
+      const newApp = await request.json();
+      const orgId = crypto.randomUUID();
+      const slug = newApp.name
+        .toLowerCase()
+        .replace(/\s+/g, "-")
+        .replace(/[^a-z0-9-]/g, "");
+      const createdAt = new Date().toISOString();
+
+      const createdOrg: OrganizationResponse = {
+        id: orgId,
+        name: newApp.name,
+        slug,
+        org_type: newApp.org_type,
+        status: "pending",
+        contact_email: newApp.contact_email,
+        contact_phone: newApp.contact_phone,
+        parent_org_id: newApp.parent_org_id || null,
+        created_at: createdAt,
+        logo_url: newApp.logo_url,
+      };
+
+      organizations.set(orgId, createdOrg);
+
+      const token = crypto.randomUUID();
+      activationTokens.set(token, orgId);
+
+      return HttpResponse.json(createdOrg, { status: 201 });
+    },
+  ),
+
+  // CASL: Create organization endpoint by admins
+  http.post<
+    never,
+    Omit<OrganizationResponse, "id" | "created_at" | "slug">,
+    OrganizationResponse
+  >(`${baseUrl}/organizations`, async ({ request }) => {
+    const newOrg = await request.json();
+    const orgId = crypto.randomUUID();
+    const slug = newOrg.name
+      .toLowerCase()
+      .replace(/\s+/g, "-")
+      .replace(/[^a-z0-9-]/g, "");
+    const createdAt = new Date().toISOString();
+
+    const createdOrg: OrganizationResponse = {
+      id: orgId,
+      name: newOrg.name,
+      slug,
+      org_type: newOrg.org_type,
+      status: newOrg.status || "pending",
+      contact_email: newOrg.contact_email,
+      contact_phone: newOrg.contact_phone,
+      parent_org_id: newOrg.parent_org_id || null,
+      created_at: createdAt,
+      logo_url: newOrg.logo_url,
+    };
+
+    organizations.set(orgId, createdOrg);
+    return HttpResponse.json(createdOrg, { status: 201 });
+  }),
 ];

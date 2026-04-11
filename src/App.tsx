@@ -27,6 +27,8 @@ import TicketSaleHistory from "./pages/TicketSaleHistory";
 import Trips from "./pages/Trips";
 import Organizations from "./pages/Organizations";
 import OrganizationDetails from "./pages/OrganizationDetails";
+import CreateOrganization from "./pages/CreateOrganization";
+import Applications from "./pages/Applications";
 import UserDetails from "./pages/UserDetails";
 
 function App() {
@@ -92,6 +94,14 @@ function App() {
               }
             />
             <Route
+              path="organizations/create"
+              element={
+                <AuthGuard action="create" subject="Organization">
+                  <CreateOrganization />
+                </AuthGuard>
+              }
+            />
+            <Route
               path="organizations/:id"
               element={
                 <AuthGuard action="read" subject="Organization">
@@ -104,6 +114,14 @@ function App() {
               element={
                 <AuthGuard action="update" subject="Organization">
                   <OrganizationDetails />
+                </AuthGuard>
+              }
+            />
+            <Route
+              path="applications"
+              element={
+                <AuthGuard action="read" subject="Application">
+                  <Applications />
                 </AuthGuard>
               }
             />
