@@ -61,6 +61,11 @@ axiosInstance.interceptors.response.use(
         const response = await axiosInstance.post("/auth/refresh", {});
         const { tokens, user } = response.data;
 
+        // Defensive check for tokens
+        if (!tokens || !tokens.access_token || !tokens.refresh_token) {
+          throw new Error("Invalid refresh response: missing tokens");
+        }
+
         localStorage.setItem("access_token", tokens.access_token);
         localStorage.setItem("refresh_token", tokens.refresh_token);
         localStorage.setItem("user", JSON.stringify(user));

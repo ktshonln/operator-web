@@ -12,7 +12,7 @@ export interface Verify2FAPayload {
 
 export interface Verify2FAResponse {
   user: AuthUser;
-  tokens: Tokens;
+  tokens?: Tokens; // Optional - only present for mobile clients
 }
 
 const apiClient = new APIClient<Verify2FAResponse>("/auth/verify-2fa");
@@ -28,8 +28,15 @@ const useVerify2FA = () => {
     },
     onSuccess: (response) => {
       localStorage.setItem("user", JSON.stringify(response.user));
-      localStorage.setItem("access_token", response.tokens.access_token);
-      localStorage.setItem("refresh_token", response.tokens.refresh_token);
+
+      // Handle tokens based on client type
+      if (response.tokens) {
+        // Mobile client - tokens in response body
+        localStorage.setItem("access_token", response.tokens.access_token);
+        localStorage.setItem("refresh_token", response.tokens.refresh_token);
+      }
+      // For web clients, tokens are automatically available via cookies
+
       localStorage.removeItem("user_id_pending_2fa");
       showToast("2FA verification successful", "success");
       navigate("/home");

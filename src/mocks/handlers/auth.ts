@@ -723,12 +723,6 @@ export const handlers = [
     },
   ),
 
-
-
-
-
-
-
   // PUBLIC: Organization applications (self-service registration)
   http.post<never, OrganizationRegistrationPayload, OrganizationResponse>(
     `${baseUrl}/organization-applications`,

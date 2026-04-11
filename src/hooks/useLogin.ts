@@ -36,7 +36,7 @@ export interface Tokens {
 
 export interface LoginResponse {
   user: AuthUser;
-  tokens: Tokens;
+  tokens?: Tokens; // Optional - only present for mobile clients
 }
 
 export interface Login2FAResponse {
@@ -60,12 +60,24 @@ const useLogin = () => {
         navigate(`/login-2fa?expires_in=${response.expires_in}`);
       } else {
         const loginResponse = response as LoginResponse;
+
         localStorage.setItem("user", JSON.stringify(loginResponse.user));
-        localStorage.setItem("access_token", loginResponse.tokens.access_token);
-        localStorage.setItem(
-          "refresh_token",
-          loginResponse.tokens.refresh_token,
-        );
+
+        // For web clients, tokens are set as HttpOnly cookies by the server
+        // For mobile clients, tokens are in the response body
+        if (loginResponse.tokens) {
+          // Mobile client - tokens in response body
+          localStorage.setItem(
+            "access_token",
+            loginResponse.tokens.access_token,
+          );
+          localStorage.setItem(
+            "refresh_token",
+            loginResponse.tokens.refresh_token,
+          );
+        }
+        // For web clients, tokens are automatically available via cookies
+
         showToast("Successfully logged in", "success");
         navigate("/home");
       }
