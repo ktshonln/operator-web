@@ -10,7 +10,7 @@ function UserDetails() {
   const [access, setAccess] = useState(true); // Account access for the user/agent
   const { userId } = useParams<{ userId: string }>();
   const { user } = useUser();
-  const orgId = user?.org_id ?? "";
+  const orgId = (user as any)?.org_id ?? "";
   const { data } = useAgent(orgId, userId ?? "");
   console.log(data);
   return (

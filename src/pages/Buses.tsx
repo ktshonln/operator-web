@@ -11,7 +11,7 @@ function Buses() {
   const [addBus, setAddBus] = useState(false);
   const [busQuery, setBusQuery] = useState<BusQuery>({} as BusQuery);
   const { user } = useUser();
-  const orgId = user?.org_id ?? "";
+  const orgId = user && "org_id" in user ? (user.org_id ?? "") : "";
   const { data: buses } = useBuses(orgId, {} as BusQuery);
   const tableHeaders = [
     "busId",

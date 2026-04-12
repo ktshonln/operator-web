@@ -329,8 +329,8 @@ export const handlers = [
     },
   ),
 
-  // GET current user profile
-  http.get<never, StaffUser>(`${baseUrl}/api/v1/users/me`, () => {
+  // GET current user profile (updated to new endpoint)
+  http.get(`${baseUrl}/users/me`, () => {
     const firstUser = Array.from(allUsers.values())[0] as any;
     if (!firstUser) {
       return HttpResponse.json(
@@ -345,14 +345,23 @@ export const handlers = [
       last_name: firstUser.lastName,
       phone_number: firstUser.phone || null,
       email: firstUser.email,
-      avatar_url: null,
+      avatar_path: null,
       user_type: "staff",
       status: "active",
       org_id: firstUser.companyId,
       roles: [firstUser.role],
       permissions: [
-        { action: "manage", subject: "all" }, // Admin permissions
+        { subject: "user", action: "read", conditions: {} },
+        {
+          subject: "user",
+          action: "update",
+          conditions: { id: "user_auth_456" },
+        },
+        { subject: "organization", action: "read", conditions: {} },
+        { subject: "role", action: "read", conditions: {} },
       ],
+      notif_channel: "all",
+      two_factor_enabled: false,
       driver_license_number: null,
       driver_license_verified_at: null,
       last_login_at: new Date().toISOString(),
@@ -1024,5 +1033,364 @@ export const handlers = [
     const uploadUrl = `${baseUrl}/uploads/${path}`;
 
     return HttpResponse.json({ upload_url: uploadUrl, path }, { status: 200 });
+  }),
+
+  // ===== NEW USER ENDPOINTS =====
+
+  // PATCH current user profile
+  http.patch(`${baseUrl}/users/me`, async ({ request }) => {
+    const updates = (await request.json()) as any;
+    // Mock update - just return success
+    return HttpResponse.json(
+      {
+        id: "user_auth_456",
+        first_name: "Updated Name",
+        last_name: "Updated Last",
+        ...updates,
+      },
+      { status: 200 },
+    );
+  }),
+
+  // Validate current password
+  http.post(`${baseUrl}/users/me/validate-password`, async ({ request }) => {
+    const { password } = (await request.json()) as any;
+    // Mock validation - accept any password
+    if (password && password.length >= 8) {
+      return new Response(null, { status: 204 });
+    }
+    return HttpResponse.json(
+      {
+        error: { code: "INVALID_CREDENTIALS" },
+      },
+      { status: 401 },
+    );
+  }),
+
+  // Request login channel change
+  http.post(`${baseUrl}/users/me/login-channel`, async ({ request }) => {
+    await request.json();
+    return HttpResponse.json(
+      {
+        expires_in: 300,
+      },
+      { status: 200 },
+    );
+  }),
+
+  // Confirm login channel change
+  http.post(
+    `${baseUrl}/users/me/login-channel/confirm`,
+    async ({ request }) => {
+      const { channel } = (await request.json()) as any;
+      if (Math.random() > 0.5) {
+        // Mock OTP validation
+        return HttpResponse.json(
+          {
+            login_channel: channel,
+          },
+          { status: 200 },
+        );
+      }
+      return HttpResponse.json(
+        {
+          error: { code: "INVALID_OTP" },
+        },
+        { status: 400 },
+      );
+    },
+  ),
+
+  // Toggle 2FA
+  http.patch(`${baseUrl}/users/me/2fa`, async ({ request }) => {
+    const { enabled } = (await request.json()) as any;
+    return HttpResponse.json(
+      {
+        two_factor_enabled: enabled,
+      },
+      { status: 200 },
+    );
+  }),
+
+  // Invite user
+  http.post(`${baseUrl}/users/invite`, async ({ request }) => {
+    await request.json();
+    return HttpResponse.json(
+      {
+        invite_token: crypto.randomUUID(),
+        expires_at: new Date(
+          Date.now() + 7 * 24 * 60 * 60 * 1000,
+        ).toISOString(),
+      },
+      { status: 201 },
+    );
+  }),
+
+  // Accept invite
+  http.post(`${baseUrl}/users/accept-invite`, async ({ request }) => {
+    const { token, password } = (await request.json()) as any;
+    if (token && password) {
+      return HttpResponse.json(
+        {
+          message: "Account created. Please verify your account to log in.",
+          user_id: crypto.randomUUID(),
+          channels: ["email"],
+        },
+        { status: 200 },
+      );
+    }
+    return HttpResponse.json(
+      {
+        error: { code: "INVALID_TOKEN" },
+      },
+      { status: 400 },
+    );
+  }),
+
+  // List users
+  http.get(`${baseUrl}/users`, ({ request }) => {
+    const url = new URL(request.url);
+    const page = parseInt(url.searchParams.get("page") || "1");
+    const limit = parseInt(url.searchParams.get("limit") || "20");
+
+    const mockUsers = [
+      {
+        id: "user_1",
+        first_name: "John",
+        last_name: "Doe",
+        email: "john@example.com",
+        phone_number: "+250780000001",
+        avatar_path: null,
+        user_type: "staff",
+        status: "active",
+        roles: ["dispatcher"],
+        org_id: "org_123",
+        last_login_at: new Date().toISOString(),
+        created_at: new Date().toISOString(),
+      },
+      {
+        id: "user_2",
+        first_name: "Jane",
+        last_name: "Smith",
+        email: "jane@example.com",
+        phone_number: "+250780000002",
+        avatar_path: null,
+        user_type: "staff",
+        status: "active",
+        roles: ["org-admin"],
+        org_id: "org_123",
+        last_login_at: new Date().toISOString(),
+        created_at: new Date().toISOString(),
+      },
+    ];
+
+    return HttpResponse.json(
+      {
+        data: mockUsers,
+        total: mockUsers.length,
+        page,
+        limit,
+      },
+      { status: 200 },
+    );
+  }),
+
+  // Get user by ID
+  http.get(`${baseUrl}/users/:id`, ({ params }) => {
+    const userId = params.id as string;
+    const mockUser = {
+      id: userId,
+      first_name: "John",
+      last_name: "Doe",
+      email: "john@example.com",
+      phone_number: "+250780000001",
+      phone_verified_at: new Date().toISOString(),
+      email_verified_at: new Date().toISOString(),
+      avatar_path: null,
+      user_type: "staff",
+      status: "active",
+      org_id: "org_123",
+      roles: ["dispatcher"],
+      driver_license_number: null,
+      driver_license_verified_at: null,
+      last_login_at: new Date().toISOString(),
+      created_at: new Date().toISOString(),
+      updated_at: new Date().toISOString(),
+    };
+
+    return HttpResponse.json(mockUser, { status: 200 });
+  }),
+
+  // Update user by ID
+  http.patch(`${baseUrl}/users/:id`, async ({ params, request }) => {
+    const userId = params.id as string;
+    const updates = (await request.json()) as any;
+
+    const mockUser = {
+      id: userId,
+      first_name: "Updated",
+      last_name: "User",
+      ...updates,
+      updated_at: new Date().toISOString(),
+    };
+
+    return HttpResponse.json(mockUser, { status: 200 });
+  }),
+
+  // Delete user
+  http.delete(`${baseUrl}/users/:id`, () => {
+    // Mock deletion
+    return new Response(null, { status: 204 });
+  }),
+
+  // ===== ROLES ENDPOINTS =====
+
+  // List roles
+  http.get(`${baseUrl}/roles`, () => {
+    const mockRoles = [
+      {
+        id: "role_1",
+        name: "Dispatcher",
+        slug: "dispatcher",
+        org_id: "org_123",
+        is_managed: false,
+        grants: [
+          {
+            id: "grant_1",
+            pattern: "trip:read:org",
+            is_managed: false,
+          },
+        ],
+      },
+      {
+        id: "role_2",
+        name: "Organization Admin",
+        slug: "org-admin",
+        org_id: "org_123",
+        is_managed: true,
+        grants: [
+          {
+            id: "grant_2",
+            pattern: "user:read:org",
+            is_managed: true,
+          },
+        ],
+      },
+    ];
+
+    return HttpResponse.json({ data: mockRoles }, { status: 200 });
+  }),
+
+  // Get role by ID
+  http.get(`${baseUrl}/roles/:id`, ({ params }) => {
+    const roleId = params.id as string;
+    const mockRole = {
+      id: roleId,
+      name: "Dispatcher",
+      slug: "dispatcher",
+      org_id: "org_123",
+      is_managed: false,
+      grants: [
+        {
+          id: "grant_1",
+          pattern: "trip:read:org",
+          is_managed: false,
+        },
+      ],
+    };
+
+    return HttpResponse.json(mockRole, { status: 200 });
+  }),
+
+  // Create role
+  http.post(`${baseUrl}/roles`, async ({ request }) => {
+    const roleData = (await request.json()) as any;
+    const mockRole = {
+      id: crypto.randomUUID(),
+      name: roleData.name,
+      slug: roleData.slug || roleData.name.toLowerCase().replace(/\s+/g, "-"),
+      org_id: roleData.org_id,
+      is_managed: false,
+      grants: [],
+    };
+
+    return HttpResponse.json(mockRole, { status: 201 });
+  }),
+
+  // Update role
+  http.patch(`${baseUrl}/roles/:id`, async ({ params, request }) => {
+    const roleId = params.id as string;
+    const updates = (await request.json()) as any;
+
+    const mockRole = {
+      id: roleId,
+      name: updates.name,
+      slug: "dispatcher",
+      org_id: "org_123",
+      is_managed: false,
+      grants: [],
+    };
+
+    return HttpResponse.json(mockRole, { status: 200 });
+  }),
+
+  // Delete role
+  http.delete(`${baseUrl}/roles/:id`, () => {
+    return new Response(null, { status: 204 });
+  }),
+
+  // Add grant to role
+  http.post(`${baseUrl}/roles/:id/grants`, async ({ request }) => {
+    const { pattern } = (await request.json()) as any;
+
+    const mockRole = {
+      id: "role_1",
+      name: "Dispatcher",
+      slug: "dispatcher",
+      org_id: "org_123",
+      is_managed: false,
+      grants: [
+        {
+          id: crypto.randomUUID(),
+          pattern,
+          is_managed: false,
+        },
+      ],
+    };
+
+    return HttpResponse.json(mockRole, { status: 200 });
+  }),
+
+  // Remove grant from role
+  http.delete(`${baseUrl}/roles/:id/grants/:grantId`, () => {
+    return new Response(null, { status: 204 });
+  }),
+
+  // ===== PERMISSIONS ENDPOINTS =====
+
+  // List permissions
+  http.get(`${baseUrl}/permissions`, () => {
+    const mockPermissions = [
+      {
+        id: "perm_1",
+        code: "user:read",
+        action: "read",
+        subject: "User",
+        display_name: "View users",
+        description: "Read user profile information",
+        group: "User management",
+      },
+      {
+        id: "perm_2",
+        code: "user:update",
+        action: "update",
+        subject: "User",
+        display_name: "Edit users",
+        description: "Update user information",
+        group: "User management",
+      },
+    ];
+
+    return HttpResponse.json({ data: mockPermissions }, { status: 200 });
   }),
 ];

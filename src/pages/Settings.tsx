@@ -50,7 +50,7 @@ const permissionOptions = [
 
 function Settings() {
   const { user } = useUser();
-  const companyId = user?.org_id ?? "";
+  const companyId = (user as any)?.org_id ?? "";
   const userId = user?.id ?? "";
   const tableHeaders = [
     "userId",

@@ -13,14 +13,13 @@ import useCompany from "../hooks/useCompany";
 import { Manifest } from "../hooks/useManifest";
 import useTrips, { TripQuery } from "../hooks/useTrips";
 import useUser from "../hooks/useUser";
-import { camelCaseToTitle } from "../utils/helpers";
 import Skeleton from "./Skeleton";
 
 function Ticketing() {
   const { user, loading: userLoad } = useUser();
   const [tripQuery, setTripQuery] = useState<TripQuery>({} as TripQuery);
   const { data: company, isLoading: companyLoad } = useCompany(
-    user?.companyId ?? "",
+    (user as any)?.org_id ?? "",
   );
   const { data: trips, isLoading: tripsLoad } = useTrips(tripQuery);
   const [viewList, setViewList] = useState(false);
@@ -58,8 +57,8 @@ function Ticketing() {
   );
 
   useEffect(() => {
-    if (user?.role !== "admin")
-      setTripQuery({ ...tripQuery, branch: user?.branch }); // Only show the relevant branch for an agent
+    if (user && "roles" in user && !user.roles.includes("platform-admin"))
+      setTripQuery({ ...tripQuery }); // Only show relevant data for non-admin users
   }, [user]);
 
   return (
@@ -86,7 +85,7 @@ function Ticketing() {
 
       <div className="mt-3 mb-10 flex items-center justify-between">
         <div className="flex items-center gap-2 text-sm">
-          {user?.role === "admin" ? (
+          {user && "roles" in user && user.roles.includes("platform-admin") ? (
             companyLoad ? (
               <div className="w-full h-8 mb-2 rounded-md animate-pulse bg-neutral-200 dark:bg-neutral-900" />
             ) : (
@@ -99,7 +98,7 @@ function Ticketing() {
           ) : (
             <div className="border-1 border-neutral-200 dark:border-neutral-800 rounded-sm w-fit p-1 pl-10 pr-10 text-sm text-neutral-500">
               {userLoad && <Skeleton />}
-              <p>{camelCaseToTitle(user?.branch ?? "")}</p>
+              <p>Branch</p>
             </div>
           )}
           {companyLoad && <Skeleton mb="mb-0" width="w-24" />}

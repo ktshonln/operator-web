@@ -12,7 +12,7 @@ function Drivers() {
     {} as DriverQuery,
   );
   const { user } = useUser();
-  const orgId = user?.org_id ?? "";
+  const orgId = user && "org_id" in user ? (user.org_id ?? "") : "";
   const { data: drivers } = useDrivers(orgId, {} as DriverQuery);
   const tableHeaders = [
     "driverId",

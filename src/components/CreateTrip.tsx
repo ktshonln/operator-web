@@ -6,7 +6,6 @@ import { useEffect, useState } from "react";
 import { format } from "date-fns";
 import CustomDatePicker from "./CustomDatePicker";
 import useUser from "../hooks/useUser";
-import { camelCaseToTitle } from "../utils/helpers";
 import useCompany from "../hooks/useCompany";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { Controller, useForm } from "react-hook-form";
@@ -113,7 +112,7 @@ type FormData = z.infer<typeof schema>;
 
 const CreateTrip = ({ effectTwo }: { effectTwo: () => void }) => {
   const { user } = useUser();
-  const companyId = user?.companyId ?? "";
+  const companyId = (user as any)?.org_id ?? "";
   const { data: company } = useCompany(companyId);
   const { data: buses } = useBuses(companyId, {} as BusQuery);
   const [currentOrigin, setCurrentOrigin] = useState("");
@@ -183,7 +182,9 @@ const CreateTrip = ({ effectTwo }: { effectTwo: () => void }) => {
         <p className="block mb-0.5 font-medium">Origin</p>
         <div className="mb-5">
           <div className="ring ring-gray-200 p-1 rounded-xs bg-white">
-            {user?.role === "admin" ? (
+            {user &&
+            "roles" in user &&
+            user.roles.includes("platform-admin") ? (
               <Controller
                 name="route.start"
                 control={control}
@@ -202,11 +203,7 @@ const CreateTrip = ({ effectTwo }: { effectTwo: () => void }) => {
                 )}
               />
             ) : (
-              <input
-                className="text-neutral-500"
-                disabled
-                value={camelCaseToTitle(user?.branch ?? "")}
-              />
+              <input className="text-neutral-500" disabled value="" />
             )}
           </div>
           {errors.route?.start && (

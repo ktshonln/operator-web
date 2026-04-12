@@ -19,7 +19,6 @@ import useRoutes, { RouteQuery } from "../hooks/useRoutes";
 import { RiFlashlightLine } from "react-icons/ri";
 import { BiCalendarAlt, BiTime } from "react-icons/bi";
 import CustomDatePicker from "./CustomDatePicker";
-import { camelCaseToTitle } from "../utils/helpers";
 
 interface Props {
   effectTwo: () => void;
@@ -121,9 +120,9 @@ const schema = z
   });
 type FormData = z.infer<typeof schema>;
 
-const EditTrip = ({ effectTwo , trip }: Props) => {
+const EditTrip = ({ effectTwo, trip }: Props) => {
   const { user } = useUser();
-  const resolvedCompanyId = user?.companyId ?? "";
+  const resolvedCompanyId = (user as any)?.org_id ?? "";
   const { data: company } = useCompany(resolvedCompanyId);
   const { data: buses } = useBuses(resolvedCompanyId, {} as BusQuery);
   const [currentOrigin, setCurrentOrigin] = useState(trip.route.start ?? "");
@@ -221,7 +220,9 @@ const EditTrip = ({ effectTwo , trip }: Props) => {
         <p className="block mb-0.5 font-medium">Origin</p>
         <div className="mb-5">
           <div className="ring ring-gray-200 p-1 rounded-xs bg-white">
-            {user?.role === "admin" ? (
+            {user &&
+            "roles" in user &&
+            user.roles.includes("platform-admin") ? (
               <Controller
                 name="route.start"
                 defaultValue={trip.route.start}
@@ -241,11 +242,7 @@ const EditTrip = ({ effectTwo , trip }: Props) => {
                 )}
               />
             ) : (
-              <input
-                className="text-neutral-500"
-                disabled
-                value={camelCaseToTitle(user?.branch ?? "")}
-              />
+              <input className="text-neutral-500" disabled value="" />
             )}
           </div>
           {errors.route?.start && (

@@ -40,7 +40,7 @@ const Organizations = () => {
   const approveOrg = useApproveOrganization();
 
   // Only allow admins to view this page
-  if (!user || !user.roles?.includes("admin")) {
+  if (!user || !("roles" in user) || !user.roles?.includes("platform-admin")) {
     return (
       <div className="p-6">
         <p className="text-red-600">

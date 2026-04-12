@@ -101,7 +101,9 @@ const Sidebar = () => {
                 {user?.first_name + " " + user?.last_name}
               </p>
               <p className="text-xs text-[#6A717D]">
-                {camelCaseToTitle(user?.roles?.[0] ?? "")}
+                {user && "roles" in user
+                  ? camelCaseToTitle(user.roles?.[0] ?? "")
+                  : ""}
               </p>
             </div>
           </div>

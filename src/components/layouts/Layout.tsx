@@ -18,7 +18,11 @@ const Layout = ({ children }: Props) => {
   }
 
   return (
-    <AbilityProvider permissions={user.permissions as any[]}>
+    <AbilityProvider
+      permissions={
+        user && "permissions" in user ? (user.permissions as any) : []
+      }
+    >
       <div className="font-heebo flex">
         <ErrorBoundary FallbackComponent={ErrorFallback}>
           <Sidebar />
