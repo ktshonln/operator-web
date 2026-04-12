@@ -1,8 +1,14 @@
 import { InfiniteData, useInfiniteQuery } from "@tanstack/react-query";
-import { AgentQuery } from "../pages/ProfileSettings";
+import { Branch } from "../components/Filter";
 import { Agent } from "./useAgent";
 import APIClient from "../services/apiClient";
 import { CACHE_KEY_AGENTS } from "../utils/constants";
+
+export interface AgentQuery {
+  branch: Branch | null;
+  sortOrder: string;
+  searchText: string;
+}
 
 const apiClient = new APIClient<Agent[]>("/organizations");
 
