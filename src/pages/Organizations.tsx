@@ -16,6 +16,7 @@ import {
 } from "../hooks/useOrganizations";
 import Can from "../components/Can";
 import useUser from "../hooks/useUser";
+import { buildCdnUrl } from "../services/apiClient";
 
 const Organizations = () => {
   const { user } = useUser();
@@ -188,10 +189,10 @@ const Organizations = () => {
               <tr key={org.id} className="hover:bg-gray-50">
                 <td className="px-6 py-4 whitespace-nowrap">
                   <div className="flex items-center">
-                    {org.logo_url && (
+                    {org.logo_path && (
                       <img
                         className="h-10 w-10 rounded-full mr-3"
-                        src={org.logo_url}
+                        src={buildCdnUrl(org.logo_path)}
                         alt={org.name}
                       />
                     )}

@@ -37,6 +37,7 @@ const allUsers = new Map<string, any>([
 
 const organizations = new Map<string, OrganizationResponse>();
 const activationTokens = new Map<string, string>();
+const organizationApplicationOtps = new Map<string, string>();
 
 function findUserByCredentials(identifier: string, password: string) {
   for (const [id, user] of allUsers.entries()) {
@@ -78,7 +79,7 @@ export const handlers = [
         contact_phone: newOrg.contact_phone,
         parent_org_id: newOrg.parent_org_id || null,
         created_at: createdAt,
-        logo_url: newOrg.logo_url,
+        logo_path: newOrg.logo_path,
       };
 
       organizations.set(orgId, createdOrg);
@@ -151,7 +152,7 @@ export const handlers = [
       contact_phone: "+250780000001",
       parent_org_id: null,
       created_at: new Date().toISOString(),
-      logo_url: "",
+      logo_path: "",
     };
 
     return HttpResponse.json(defaultOrg, { status: 200 });
@@ -711,7 +712,7 @@ export const handlers = [
         contact_phone: newOrg.contact_phone,
         parent_org_id: newOrg.parent_org_id || null,
         created_at: createdAt,
-        logo_url: newOrg.logo_url,
+        logo_path: newOrg.logo_path,
       };
 
       organizations.set(orgId, createdOrg);
@@ -745,15 +746,147 @@ export const handlers = [
         contact_phone: newApp.contact_phone,
         parent_org_id: newApp.parent_org_id || null,
         created_at: createdAt,
-        logo_url: newApp.logo_url,
+        logo_path: newApp.logo_path,
       };
 
       organizations.set(orgId, createdOrg);
-
-      const token = crypto.randomUUID();
-      activationTokens.set(token, orgId);
+      organizationApplicationOtps.set(orgId, "123456");
 
       return HttpResponse.json(createdOrg, { status: 201 });
+    },
+  ),
+
+  // PUBLIC: Get presigned URLs for application documents
+  http.get(
+    `${baseUrl}/organizations/apply/documents/presigned-url`,
+    ({ request }) => {
+      const url = new URL(request.url, "http://localhost");
+      const docType = url.searchParams.get("doc_type");
+      const contentType = url.searchParams.get("content_type");
+
+      if (!docType || !contentType) {
+        return HttpResponse.json(
+          {
+            error: {
+              code: "INVALID_PARAMETERS",
+              message: "doc_type and content_type are required.",
+            },
+          },
+          { status: 400 },
+        );
+      }
+
+      const key = `org-app-docs/pending/${docType}/${crypto.randomUUID()}`;
+      const uploadUrl = `${baseUrl}/uploads/${key}`;
+      const path = key;
+
+      return HttpResponse.json(
+        { upload_url: uploadUrl, key, path },
+        { status: 200 },
+      );
+    },
+  ),
+
+  // PUBLIC: Submit organization application
+  http.post(`${baseUrl}/organizations/apply`, async ({ request }) => {
+    const newApp = (await request.json()) as any;
+    const orgId = crypto.randomUUID();
+    const slug = newApp.name
+      .toLowerCase()
+      .replace(/\s+/g, "-")
+      .replace(/[^a-z0-9-]/g, "");
+    const createdAt = new Date().toISOString();
+
+    const createdOrg: OrganizationResponse = {
+      id: orgId,
+      name: newApp.name,
+      slug,
+      org_type: newApp.org_type,
+      status: "pending",
+      contact_email: newApp.contact_email,
+      contact_phone: newApp.contact_phone,
+      parent_org_id: newApp.parent_org_id || null,
+      created_at: createdAt,
+      logo_path: newApp.logo_path,
+    };
+
+    organizations.set(orgId, createdOrg);
+    organizationApplicationOtps.set(orgId, "123456");
+
+    return HttpResponse.json(
+      {
+        org_id: orgId,
+        message:
+          "Application received. Please check your email for a verification code.",
+      },
+      { status: 202 },
+    );
+  }),
+
+  // PUBLIC: Verify organization contact email
+  http.post(`${baseUrl}/organizations/verify-contact`, async ({ request }) => {
+    const payload = (await request.json()) as any;
+    const expectedOtp = organizationApplicationOtps.get(payload.org_id);
+
+    if (!expectedOtp || payload.otp !== expectedOtp) {
+      return HttpResponse.json(
+        {
+          error: {
+            code: "INVALID_OTP",
+            message: "Invalid OTP.",
+          },
+        },
+        { status: 400 },
+      );
+    }
+
+    const organization = organizations.get(payload.org_id);
+    if (!organization) {
+      return HttpResponse.json(
+        {
+          error: {
+            code: "NOT_FOUND",
+            message: "Organization not found.",
+          },
+        },
+        { status: 404 },
+      );
+    }
+
+    (organization as any).contact_email_verified_at = new Date().toISOString();
+    organizationApplicationOtps.delete(payload.org_id);
+
+    return HttpResponse.json({}, { status: 204 });
+  }),
+
+  // PUBLIC: Resend organization application OTP
+  http.post<never, { org_id: string }, any>(
+    `${baseUrl}/organizations/resend-otp`,
+    async ({ request }) => {
+      const payload = (await request.json()) as any;
+      const orgId = payload.org_id;
+      const organization = organizations.get(orgId);
+
+      if (!organization) {
+        return HttpResponse.json(
+          {
+            error: {
+              code: "NOT_FOUND",
+              message: "Organization not found.",
+            },
+          },
+          { status: 404 },
+        );
+      }
+
+      organizationApplicationOtps.set(orgId, "123456");
+
+      return HttpResponse.json(
+        {
+          message: "Verification code resent successfully.",
+        },
+        { status: 200 },
+      );
     },
   ),
 
@@ -781,11 +914,115 @@ export const handlers = [
       contact_phone: newOrg.contact_phone,
       parent_org_id: newOrg.parent_org_id || null,
       created_at: createdAt,
-      logo_url: newOrg.logo_url,
+      logo_path: newOrg.logo_path,
     };
 
     organizations.set(orgId, createdOrg);
 
     return HttpResponse.json(createdOrg, { status: 201 });
+  }),
+
+  // Media uploads: User avatar presigned URL
+  http.get(`${baseUrl}/users/me/avatar/presigned-url`, ({ request }) => {
+    const url = new URL(request.url, "http://localhost");
+    const contentType = url.searchParams.get("content_type");
+
+    if (
+      !contentType ||
+      !["image/jpeg", "image/png", "image/webp"].includes(contentType)
+    ) {
+      return HttpResponse.json(
+        {
+          error: {
+            code: "INVALID_CONTENT_TYPE",
+            message:
+              "Content type must be image/jpeg, image/png, or image/webp",
+          },
+        },
+        { status: 400 },
+      );
+    }
+
+    const userId = "user_auth_456"; // Mock current user
+    const path = `avatars/${userId}/${crypto.randomUUID()}.jpg`;
+    const uploadUrl = `${baseUrl}/uploads/${path}`;
+
+    return HttpResponse.json({ upload_url: uploadUrl, path }, { status: 200 });
+  }),
+
+  // Media uploads: Org logo presigned URL (by ID)
+  http.get(
+    `${baseUrl}/organizations/:id/logo/presigned-url`,
+    ({ request, params }) => {
+      const url = new URL(request.url, "http://localhost");
+      const contentType = url.searchParams.get("content_type");
+      const orgId = params.id as string;
+
+      if (
+        !contentType ||
+        !["image/jpeg", "image/png", "image/webp"].includes(contentType)
+      ) {
+        return HttpResponse.json(
+          {
+            error: {
+              code: "INVALID_CONTENT_TYPE",
+              message:
+                "Content type must be image/jpeg, image/png, or image/webp",
+            },
+          },
+          { status: 400 },
+        );
+      }
+
+      const organization = organizations.get(orgId);
+      if (!organization) {
+        return HttpResponse.json(
+          {
+            error: {
+              code: "NOT_FOUND",
+              message: "Organization not found",
+            },
+          },
+          { status: 404 },
+        );
+      }
+
+      const path = `logos/${orgId}/${crypto.randomUUID()}.jpg`;
+      const uploadUrl = `${baseUrl}/uploads/${path}`;
+
+      return HttpResponse.json(
+        { upload_url: uploadUrl, path },
+        { status: 200 },
+      );
+    },
+  ),
+
+  // Media uploads: My org logo presigned URL
+  http.get(`${baseUrl}/organizations/me/logo/presigned-url`, ({ request }) => {
+    const url = new URL(request.url, "http://localhost");
+    const contentType = url.searchParams.get("content_type");
+
+    if (
+      !contentType ||
+      !["image/jpeg", "image/png", "image/webp"].includes(contentType)
+    ) {
+      return HttpResponse.json(
+        {
+          error: {
+            code: "INVALID_CONTENT_TYPE",
+            message:
+              "Content type must be image/jpeg, image/png, or image/webp",
+          },
+        },
+        { status: 400 },
+      );
+    }
+
+    // Mock current user's org
+    const orgId = "org_123";
+    const path = `logos/${orgId}/${crypto.randomUUID()}.jpg`;
+    const uploadUrl = `${baseUrl}/uploads/${path}`;
+
+    return HttpResponse.json({ upload_url: uploadUrl, path }, { status: 200 });
   }),
 ];

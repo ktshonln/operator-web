@@ -24,7 +24,7 @@ const CreateOrganization = () => {
       org_type: (formData.org_type as Organization["org_type"]) ?? "company",
       contact_email: formData.contact_email || "",
       contact_phone: formData.contact_phone,
-      logo_url: formData.logo_url,
+      logo_path: formData.logo_path,
       address: formData.address,
       parent_org_id: formData.parent_org_id ?? undefined,
     };
@@ -128,12 +128,12 @@ const CreateOrganization = () => {
 
           <div>
             <label className="block text-sm font-medium text-gray-700 mb-1">
-              Logo URL
+              Logo Path
             </label>
             <input
-              type="url"
-              value={formData.logo_url ?? ""}
-              onChange={(e) => handleChange("logo_url", e.target.value)}
+              type="text"
+              value={formData.logo_path ?? ""}
+              onChange={(e) => handleChange("logo_path", e.target.value)}
               className="w-full border border-gray-300 rounded px-3 py-2"
             />
           </div>

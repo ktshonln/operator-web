@@ -12,7 +12,7 @@ export interface OrganizationRegistrationPayload {
   contact_phone: string;
   address: string;
   parent_org_id?: string;
-  logo_url?: string;
+  logo_path?: string;
 }
 
 export interface OrganizationResponse {
@@ -26,7 +26,7 @@ export interface OrganizationResponse {
   parent_org_id: string | null;
   created_at: string;
   updated_at?: string;
-  logo_url?: string;
+  logo_path?: string;
 }
 
 const apiClient = new APIClient<OrganizationResponse>("/api/v1/organizations");

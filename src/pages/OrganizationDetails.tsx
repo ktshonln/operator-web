@@ -8,6 +8,7 @@ import {
   UpdateOrganizationPayload,
 } from "../hooks/useOrganizations";
 import Can from "../components/Can";
+import { buildCdnUrl } from "../services/apiClient";
 
 const OrganizationDetails = () => {
   const { id } = useParams<{ id: string }>();
@@ -31,7 +32,7 @@ const OrganizationDetails = () => {
         org_type: formData.org_type,
         contact_email: formData.contact_email,
         contact_phone: formData.contact_phone,
-        logo_url: formData.logo_url,
+        logo_path: formData.logo_path,
         address: formData.address,
         parent_org_id: formData.parent_org_id ?? undefined,
         status: formData.status,
@@ -154,9 +155,9 @@ const OrganizationDetails = () => {
             <label className="block text-sm font-medium text-gray-700 mb-2">
               Logo
             </label>
-            {organization.logo_url ? (
+            {organization.logo_path ? (
               <img
-                src={organization.logo_url}
+                src={buildCdnUrl(organization.logo_path)}
                 alt={organization.name}
                 className="w-24 h-24 rounded-lg object-cover border"
               />

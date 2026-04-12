@@ -11,7 +11,7 @@ export interface Company {
   contact_email: string;
   contact_phone?: string;
   parent_org_id?: string | null;
-  logo_url?: string;
+  logo_path?: string;
   address?: string;
   created_at: string;
   updated_at: string;

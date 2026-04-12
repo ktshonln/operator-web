@@ -1,6 +1,14 @@
 import axios, { AxiosRequestConfig, AxiosError } from "axios";
 
 export const baseUrl = import.meta.env.VITE_API_URL || "/api/v1";
+export const cdnUrl = import.meta.env.VITE_CDN_URL || "";
+
+export const buildCdnUrl = (
+  path: string | null | undefined,
+): string | undefined => {
+  if (!path || !cdnUrl) return undefined;
+  return `${cdnUrl}/${path}`;
+};
 
 export const axiosInstance = axios.create({
   baseURL: baseUrl,

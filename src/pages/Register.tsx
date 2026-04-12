@@ -4,7 +4,9 @@ import { Link, useNavigate } from "react-router-dom";
 import { z } from "zod";
 import { useState } from "react";
 import Footer from "../components/Footer";
+import { useToastStore } from "../stores/toastStore";
 import useSubmitOrganizationApplication, {
+  getOrganizationApplicationDocumentPresignedUrl,
   OrganizationApplicationPayload,
 } from "../hooks/useOrganizationApplications";
 import { axiosInstance } from "../services/apiClient";
@@ -39,8 +41,12 @@ export type FullRegistrationData = z.infer<typeof FullSchema>;
 
 const RegisterPage = () => {
   const navigate = useNavigate();
+  const showToast = useToastStore((state) => state.showToast);
   const [logoFile, setLogoFile] = useState<File | null>(null);
   const [logoPreview, setLogoPreview] = useState<string>("");
+  const [businessCertificateFile, setBusinessCertificateFile] =
+    useState<File | null>(null);
+  const [repIdFile, setRepIdFile] = useState<File | null>(null);
 
   const {
     register,
@@ -58,9 +64,53 @@ const RegisterPage = () => {
     setLogoPreview(URL.createObjectURL(file));
   };
 
+  const onBusinessCertificateSelected = (
+    event: React.ChangeEvent<HTMLInputElement>,
+  ) => {
+    const file = event.target.files?.[0];
+    if (!file) return;
+    setBusinessCertificateFile(file);
+  };
+
+  const onRepIdSelected = (event: React.ChangeEvent<HTMLInputElement>) => {
+    const file = event.target.files?.[0];
+    if (!file) return;
+    setRepIdFile(file);
+  };
+
   const onSubmit = async (data: RegistrationData) => {
+    if (!businessCertificateFile || !repIdFile) {
+      showToast("Please upload both required application documents.", "error");
+      return;
+    }
+
     try {
-      let logo_url: string | undefined;
+      const businessCertUrl =
+        await getOrganizationApplicationDocumentPresignedUrl(
+          "business_certificate",
+          businessCertificateFile.type,
+        );
+      await fetch(businessCertUrl.upload_url, {
+        method: "PUT",
+        body: businessCertificateFile,
+        headers: {
+          "Content-Type": businessCertificateFile.type,
+        },
+      });
+
+      const repIdUrl = await getOrganizationApplicationDocumentPresignedUrl(
+        "rep_id",
+        repIdFile.type,
+      );
+      await fetch(repIdUrl.upload_url, {
+        method: "PUT",
+        body: repIdFile,
+        headers: {
+          "Content-Type": repIdFile.type,
+        },
+      });
+
+      let logo_path: string | undefined;
       if (logoFile) {
         const presignedResponse = await axiosInstance.post<{
           uploadUrl: string;
@@ -78,25 +128,36 @@ const RegisterPage = () => {
           },
         });
 
-        logo_url = presignedResponse.data.fileUrl;
+        logo_path = presignedResponse.data.fileUrl;
       }
 
       const payload: OrganizationApplicationPayload = {
         ...data,
         parent_org_id: data.parent_org_id || undefined,
-        logo_url,
+        business_certificate_path: businessCertUrl.path,
+        rep_id_path: repIdUrl.path,
+        logo_path,
       };
 
       submitApplication.mutate(payload, {
-        onSuccess: () => {
+        onSuccess: (response) => {
           reset();
           setLogoFile(null);
           setLogoPreview("");
-          navigate("/register/success");
+          setBusinessCertificateFile(null);
+          setRepIdFile(null);
+          if (response?.org_id) {
+            navigate(
+              `/register/verify?org_id=${encodeURIComponent(response.org_id)}`,
+            );
+          } else {
+            navigate("/register/success");
+          }
         },
       });
     } catch (error) {
       console.error(error);
+      showToast("Failed to upload documents or submit application.", "error");
     }
   };
 
@@ -253,6 +314,44 @@ const RegisterPage = () => {
                 {errors.address && (
                   <p className="text-red-500 text-xs">
                     {errors.address.message}
+                  </p>
+                )}
+
+                <label
+                  htmlFor="business_certificate"
+                  className="text-[#6A717D] block mb-0.5 text-xs"
+                >
+                  Business certificate (PDF)
+                </label>
+                <input
+                  id="business_certificate"
+                  type="file"
+                  accept="application/pdf"
+                  onChange={onBusinessCertificateSelected}
+                  className="ring ring-gray-200 p-2 rounded-xs bg-white w-full outline-none"
+                />
+                {businessCertificateFile && (
+                  <p className="text-gray-500 text-xs mt-1">
+                    Selected: {businessCertificateFile.name}
+                  </p>
+                )}
+
+                <label
+                  htmlFor="rep_id"
+                  className="text-[#6A717D] block mb-0.5 text-xs"
+                >
+                  Representative ID (PDF, JPG, PNG, or WEBP)
+                </label>
+                <input
+                  id="rep_id"
+                  type="file"
+                  accept="application/pdf,image/jpeg,image/png,image/webp"
+                  onChange={onRepIdSelected}
+                  className="ring ring-gray-200 p-2 rounded-xs bg-white w-full outline-none"
+                />
+                {repIdFile && (
+                  <p className="text-gray-500 text-xs mt-1">
+                    Selected: {repIdFile.name}
                   </p>
                 )}
 

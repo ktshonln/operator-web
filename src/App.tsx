@@ -16,6 +16,7 @@ import LoginMfa from "./pages/LoginMfa";
 import NotFound from "./pages/NotFound";
 import ProfileSettings from "./pages/ProfileSettings";
 import RegisterPage from "./pages/Register";
+import VerifyOrganizationContact from "./pages/VerifyOrganizationContact";
 import RegisterSuccess from "./pages/RegisterSuccess";
 import AdminActivation from "./pages/AdminActivation";
 import Reports from "./pages/Reports";
@@ -45,6 +46,10 @@ function App() {
           <Route path="/reset-password" element={<ResetPassword />} />
           <Route path="/login-mfa" element={<LoginMfa />} />
           <Route path="/register" element={<RegisterPage />} />
+          <Route
+            path="/register/verify"
+            element={<VerifyOrganizationContact />}
+          />
           <Route path="/register/success" element={<RegisterSuccess />} />
           <Route
             path="/activate/:activationToken"

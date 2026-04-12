@@ -15,7 +15,7 @@ export interface OrganizationApplication {
   parent_org_id: string | null;
   created_at: string;
   updated_at?: string;
-  logo_url?: string;
+  logo_path?: string;
 }
 
 const apiClient = new APIClient<OrganizationApplication>(
