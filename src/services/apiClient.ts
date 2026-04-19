@@ -336,7 +336,7 @@ class APIClient<TResponse> {
       .post<{
         uploadUrl: string;
         fileUrl: string;
-      }>("/api/v1/uploads/presigned-url", {
+      }>("/uploads/presigned-url", {
         file_name: fileName,
         content_type: contentType,
       })

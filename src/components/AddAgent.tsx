@@ -16,10 +16,6 @@ export interface GrantDisplay {
   scope: string;
 }
 const schema = z.object({
-  inviteUserId: z
-    .string()
-    .min(2, { message: "Please enter a valid ID of the inviting user." }),
-  companyId: z.string().min(2, { message: "Please enter a valid company ID" }),
   firstName: z
     .string()
     .min(2, { message: "First name must be at least 2 characters." }),
@@ -45,8 +41,6 @@ const AddAgent = ({ companyId, userId, roles, rolePermissions }: Props) => {
   const [refreshKey, setRefreshKey] = useState(0);
 
   const values = {
-    inviteUserId: userId,
-    companyId: companyId,
     firstName: "",
     lastName: "",
     email: "",
@@ -68,16 +62,19 @@ const AddAgent = ({ companyId, userId, roles, rolePermissions }: Props) => {
   const selectedRole = watch("role", values.role);
   const addAgent = useAddAgent(companyId);
 
-  const onSubmit = async (data: AgentDetails) => {
-    console.log("Added!", data);
-    addAgent.mutate(data);
+  const onSubmit = async (data: FormData) => {
+    const fullData: AgentDetails = {
+      ...data,
+      companyId,
+      inviteUserId: userId,
+    };
+    addAgent.mutate(fullData);
     resetField("firstName");
     resetField("lastName");
     resetField("email");
     resetField("phoneNumber");
     setRefreshKey((c) => c + 1);
   };
-  console.log("Invite user", userId);
   return (
     <div className="rounded-md border border-gray-200 dark:border-neutral-800 p-6 bg-white dark:bg-neutral-900">
       <form onSubmit={handleSubmit(onSubmit)} className="text-sm space-y-4">

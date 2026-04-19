@@ -10,9 +10,10 @@ export const useUserAvatar = () => {
   const queryClient = useQueryClient();
 
   const getPresignedUrl = useMutation({
-    mutationFn: async () => {
-      const response = await axiosInstance.get<GetPresignedUrlResponse>(
+    mutationFn: async ({ fileName, contentType }: { fileName: string, contentType: string }) => {
+      const response = await axiosInstance.post<GetPresignedUrlResponse>(
         "/users/me/avatar/presigned-url",
+        { file_name: fileName, content_type: contentType }
       );
       return response.data;
     },
@@ -21,7 +22,7 @@ export const useUserAvatar = () => {
   const uploadAvatar = useMutation({
     mutationFn: async (file: File) => {
       // First get the presigned URL
-      const { upload_url, path } = await getPresignedUrl.mutateAsync();
+      const { upload_url, path } = await getPresignedUrl.mutateAsync({ fileName: file.name, contentType: file.type });
 
       // Upload the file to the presigned URL
       const formData = new FormData();
