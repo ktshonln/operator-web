@@ -23,25 +23,25 @@ const Sidebar = () => {
     action: string;
     subject: string;
   }[] = [
-    { link: "/home", icon: BiHomeAlt, action: "read", subject: "all" },
-    {
-      link: "/organizations",
-      icon: BsBuilding,
-      action: "read",
-      subject: "Organization",
-    },
-    { link: "/ticketing", icon: BsTicket, action: "read", subject: "Ticket" },
-    {
-      link: "/fleets",
-      icon: RiBusFill,
-      subLinks: ["/buses", "/drivers"],
-      action: "read",
-      subject: "Bus",
-    },
-    { link: "/trips", icon: BiTrip, action: "read", subject: "Trip" },
-    { link: "/reports", icon: FaChartLine, action: "read", subject: "Report" },
-    { link: "/settings", icon: FiSettings, action: "read", subject: "User" },
-  ];
+      { link: "/home", icon: BiHomeAlt, action: "read", subject: "all" },
+      {
+        link: "/organizations",
+        icon: BsBuilding,
+        action: "read",
+        subject: "Organization",
+      },
+      { link: "/ticketing", icon: BsTicket, action: "read", subject: "Ticket" },
+      {
+        link: "/fleets",
+        icon: RiBusFill,
+        subLinks: ["/buses", "/drivers"],
+        action: "read",
+        subject: "Bus",
+      },
+      { link: "/trips", icon: BiTrip, action: "read", subject: "Trip" },
+      { link: "/reports", icon: FaChartLine, action: "read", subject: "Report" },
+      { link: "/settings", icon: FiSettings, action: "read", subject: "User" },
+    ];
   const { show, hideMenu } = useMenuStore();
   return (
     <div
@@ -115,6 +115,9 @@ const Sidebar = () => {
             <p className="font-semibold text-sm hidden md:block">Logout</p>
           </div>
         </div>
+        <p className="absolute text-[10px] text-white bottom-0 hfit">
+          v {__BUILD_DATE__}
+        </p>
       </div>
     </div>
   );
