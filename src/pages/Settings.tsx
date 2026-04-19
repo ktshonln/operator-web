@@ -48,7 +48,7 @@ function Settings() {
   const rolePermissions = useMemo(
     () =>
       availableRoles.reduce<Record<string, string[]>>((acc, role) => {
-        acc[role.slug] = role.grants.map((g) => g.pattern);
+        acc[role.slug] = role.grants ? role.grants.map((g) => g.pattern) : [];
         return acc;
       }, {}),
     [availableRoles],
