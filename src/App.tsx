@@ -19,6 +19,7 @@ import RegisterPage from "./pages/Register";
 import VerifyOrganizationContact from "./pages/VerifyOrganizationContact";
 import RegisterSuccess from "./pages/RegisterSuccess";
 import AdminActivation from "./pages/AdminActivation";
+import AcceptInvite from "./pages/AcceptInvite";
 import Reports from "./pages/Reports";
 import SecuritySettings from "./pages/SecuritySettings";
 import Settings from "./pages/Settings";
@@ -44,6 +45,7 @@ function App() {
             element={<VerifyPasswordReset />}
           />
           <Route path="/reset-password" element={<ResetPassword />} />
+          <Route path="/accept-invite" element={<AcceptInvite />} />
           <Route path="/login-mfa" element={<LoginMfa />} />
           <Route path="/register" element={<RegisterPage />} />
           <Route

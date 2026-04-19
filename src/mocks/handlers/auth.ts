@@ -1414,6 +1414,58 @@ export const handlers = [
     return new Response(null, { status: 204 });
   }),
 
+  // List Users directly
+  http.get(`${baseUrl}/users`, ({ request }) => {
+    const url = new URL(request.url);
+    const orgId = url.searchParams.get("org_id");
+    
+    let usersList = Array.from(allUsers.values()) as any[];
+    if (orgId) {
+      usersList = usersList.filter((u) => u.companyId === orgId);
+    }
+    
+    const mapped = usersList.map((u) => ({
+      id: u.userId || u.id,
+      first_name: u.firstName,
+      last_name: u.lastName,
+      email: u.email,
+      phone_number: u.phone,
+      roles: [u.role],
+      status: u.status || "active",
+      created_at: new Date().toISOString()
+    }));
+    
+    return HttpResponse.json({ data: mapped, has_next: false }, { status: 200 });
+  }),
+
+  // Invite User
+  http.post(`${baseUrl}/users/invite`, async ({ request }) => {
+    const body = await request.json() as any;
+    const newUserId = "user_inv_" + Date.now();
+    allUsers.set(newUserId, {
+      userId: newUserId,
+      firstName: body.first_name,
+      lastName: body.last_name,
+      email: body.email,
+      phone: body.phone_number,
+      companyId: body.org_id,
+      role: body.role_slug || "staff",
+      status: "invited"
+    });
+    return HttpResponse.json({ id: newUserId }, { status: 201 });
+  }),
+
+  // Validate Invite Token
+  http.get(`${baseUrl}/auth/invite/validate`, () => {
+    return HttpResponse.json({ valid: true }, { status: 200 });
+  }),
+
+  // Accept Invite
+  http.post(`${baseUrl}/users/accept-invite`, () => {
+    return HttpResponse.json({ success: true }, { status: 200 });
+  }),
+
+
   // ===== PERMISSIONS ENDPOINTS =====
 
   // List permissions
