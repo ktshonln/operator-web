@@ -66,7 +66,7 @@ axiosInstance.interceptors.response.use(
         }
 
         // Call refresh endpoint
-        const response = await axiosInstance.post("/auth/refresh", {});
+        const response = await axiosInstance.post("/auth/refresh", { refresh_token: refreshToken });
         const { tokens, user } = response.data;
 
         // Defensive check for tokens

@@ -3,7 +3,7 @@ import {
   useMutation,
   useQueryClient,
 } from "@tanstack/react-query";
-import APIClient from "../services/apiClient";
+import { axiosInstance } from "../services/apiClient";
 import { useToastStore } from "../stores/toastStore";
 import { CACHE_KEY_AGENTS } from "../utils/constants";
 import { Agent } from "./useAgent";
@@ -12,7 +12,6 @@ import { Role } from "./useUser";
 export interface AgentDetails {
   inviteUserId: string;
   companyId: string;
-  branch: string;
   firstName: string;
   lastName: string;
   email: string;
@@ -24,25 +23,38 @@ interface EditAgentContext {
   previousAgents: Agent[];
 }
 
-const apiClient = new APIClient<Agent>("/organizations");
 const useAddAgent = (orgId: string) => {
   const queryClient = useQueryClient();
   const showToast = useToastStore((state) => state.showToast);
   return useMutation<Agent, Error, AgentDetails, EditAgentContext>({
-    mutationFn: (routeDetails: AgentDetails) =>
-      apiClient.addAgent<AgentDetails>(routeDetails, orgId),
+    mutationFn: async (routeDetails: AgentDetails) => {
+      const response = await axiosInstance.post("/users/invite", {
+        first_name: routeDetails.firstName,
+        last_name: routeDetails.lastName,
+        email: routeDetails.email,
+        phone_number: routeDetails.phoneNumber,
+        org_id: orgId,
+        role_slug: routeDetails.role,
+      });
+      return {
+        userId: response.data.id || `temp-${Date.now()}`,
+        status: "invited",
+        joinedDate: new Date().toISOString(),
+        ...routeDetails,
+      } as unknown as Agent;
+    },
     onMutate: (newData) => {
       // Optimistic updates
       const previousData = queryClient.getQueryData<InfiniteData<Agent[]>>([
         CACHE_KEY_AGENTS,
       ]);
       // Create optimistic route object
-      const optimisticAgent: Agent = {
+      const optimisticAgent = {
         userId: `temp-${Date.now()}`,
         status: "notActive",
         joinedDate: `temp-${Date.now()}`,
         ...newData,
-      };
+      } as unknown as Agent;
 
       // Update cache for infinite query
       queryClient.setQueryData<InfiniteData<Agent[]>>(

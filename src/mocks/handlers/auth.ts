@@ -27,8 +27,7 @@ const allUsers = new Map<string, any>([
       email: "user@example.com",
       password: "12345678Aa!",
       userType: "operator",
-      role: "admin",
-      branch: "main",
+      role: "platform-admin",
       companyId: "comp_001",
       twoFactorEnabled: false,
     },
@@ -116,8 +115,7 @@ export const handlers = [
       email: payload.email,
       password: payload.password,
       userType: "operator",
-      role: "admin",
-      branch: "main",
+      role: "platform-admin",
       companyId: orgId,
     });
 
@@ -351,14 +349,7 @@ export const handlers = [
       org_id: firstUser.companyId,
       roles: [firstUser.role],
       permissions: [
-        { subject: "user", action: "read", conditions: {} },
-        {
-          subject: "user",
-          action: "update",
-          conditions: { id: "user_auth_456" },
-        },
-        { subject: "organization", action: "read", conditions: {} },
-        { subject: "role", action: "read", conditions: {} },
+        { subject: "all", action: "manage" },
       ],
       notif_channel: "all",
       two_factor_enabled: false,
@@ -370,6 +361,63 @@ export const handlers = [
     };
 
     return HttpResponse.json(user, { status: 200 });
+  }),
+
+  // POST refresh token
+  http.post(`${baseUrl}/auth/refresh`, () => {
+    const firstUser = Array.from(allUsers.values())[0] as any;
+    if (!firstUser) {
+      return HttpResponse.json(
+        { message: "Not authenticated" },
+        { status: 401 },
+      );
+    }
+    const user: StaffUser = {
+      id: "user_auth_456",
+      first_name: firstUser.firstName,
+      last_name: firstUser.lastName,
+      phone_number: firstUser.phone || null,
+      email: firstUser.email,
+      avatar_path: null,
+      user_type: "staff",
+      status: "active",
+      org_id: firstUser.companyId,
+      roles: [firstUser.role],
+      permissions: [
+        { subject: "all", action: "manage" },
+      ],
+      notif_channel: "all",
+      two_factor_enabled: false,
+      driver_license_number: null,
+      driver_license_verified_at: null,
+      last_login_at: new Date().toISOString(),
+      created_at: new Date().toISOString(),
+      updated_at: new Date().toISOString(),
+    };
+
+    return HttpResponse.json(
+      {
+        user,
+        tokens: {
+          access_token: "fake-jwt-access-token-refreshed",
+          refresh_token: "fake-jwt-refresh-token-new",
+        },
+      },
+      { status: 200 },
+    );
+  }),
+
+  // POST users invite
+  http.post(`${baseUrl}/users/invite`, async ({ request }) => {
+    const payload = await request.json() as any;
+    return HttpResponse.json(
+      {
+        id: "inv_" + Date.now(),
+        status: "pending",
+        ...payload,
+      },
+      { status: 201 },
+    );
   }),
 
   // Upload presigned URL

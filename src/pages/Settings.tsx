@@ -1,9 +1,11 @@
-import React, { useEffect, useMemo, useState } from "react";
+import React, { useMemo, useState } from "react";
 import { useNavigate } from "react-router-dom";
+import { useRoles } from "../hooks/useRoles";
+import { usePermissions } from "../hooks/usePermissions";
 import SettingsNav from "../components/SettingsNav";
 import useAgents from "../hooks/useAgents";
 import { camelCaseToTitle } from "../utils/helpers";
-import { AgentQuery } from "../hooks/useAgents";
+import { AgentQuery } from "./ProfileSettings";
 import ThemeToggle from "../components/ThemeToggle";
 import AddAgent from "../components/AddAgent";
 import useUser from "../hooks/useUser";
@@ -12,18 +14,13 @@ import DropDown from "../components/DropDown";
 import { Can } from "../contexts/AbilityContext";
 import RoleManager from "../components/RoleManager";
 import useUpdateAgent from "../hooks/useUpdateAgent";
-import { useRoles } from "../hooks/useRoles";
-import { usePermissions } from "../hooks/usePermissions";
-import { useCreateRole } from "../hooks/useCreateRole";
 
-type RoleDefinition = {
-  name: string;
-  permissions: string[];
-};
+
 
 function Settings() {
   const { user } = useUser();
   const companyId = (user as any)?.org_id ?? "";
+  const userId = user?.id ?? "";
   const tableHeaders = [
     "userId",
     "name",
@@ -34,69 +31,33 @@ function Settings() {
   ];
   const navigate = useNavigate();
   const [agentQuery, setAgentQuery] = useState<AgentQuery>({} as AgentQuery);
-  const [availableRoles, setAvailableRoles] = useState<RoleDefinition[]>([]);
-  const [roleSelection, setRoleSelection] = useState<Record<string, string>>(
-    {},
-  );
+  const [roleSelection, setRoleSelection] = useState<Record<string, string>>({});
   const [activeTab, setActiveTab] = useState<"add" | "roles" | "theme">("add");
   const updateRole = useUpdateAgent(companyId);
 
-  const { data: rolesResponse } = useRoles();
-  const { data: permissionsResponse } = usePermissions();
-  const createRole = useCreateRole();
+  const { data: rolesData, isLoading: rolesLoading } = useRoles();
+  const { data: permissionsData } = usePermissions();
 
-  useEffect(() => {
-    if (rolesResponse?.data) {
-      setAvailableRoles(
-        rolesResponse.data.map((role) => ({
-          name: role.slug,
-          permissions: role.grants.map(
-            (grant: { pattern: string }) => grant.pattern,
-          ),
-        })),
-      );
-    }
-  }, [rolesResponse?.data]);
+  const availableRoles = useMemo(() => rolesData?.data || [], [rolesData]);
 
-  const permissionOptions = useMemo(
-    () =>
-      permissionsResponse?.data.map(
-        (permission: { code: string }) => permission.code,
-      ) ?? [],
-    [permissionsResponse?.data],
+  const roleNames = useMemo(
+    () => availableRoles.map((role) => role.slug),
+    [availableRoles],
   );
 
-  const handleCreateRole = (role: RoleDefinition) => {
-    const normalized = role.name.trim();
-    if (
-      !normalized ||
-      availableRoles.some((item) => item.name === normalized)
-    ) {
-      return;
-    }
+  const rolePermissions = useMemo(
+    () =>
+      availableRoles.reduce<Record<string, string[]>>((acc, role) => {
+        acc[role.slug] = role.grants.map((g) => g.pattern);
+        return acc;
+      }, {}),
+    [availableRoles],
+  );
 
-    createRole.mutate(
-      {
-        name: normalized,
-        slug: normalized.toLowerCase().replace(/\s+/g, "-"),
-        org_id: companyId || undefined,
-        patterns: role.permissions.map((permission) =>
-          permission.includes(":") ? permission : `${permission}:org`,
-        ),
-      },
-      {
-        onSuccess: (newRole) => {
-          setAvailableRoles((prev) => [
-            ...prev,
-            {
-              name: newRole.slug,
-              permissions: newRole.grants.map((grant) => grant.pattern),
-            },
-          ]);
-        },
-      },
-    );
-  };
+  const permissionOptions = useMemo(
+    () => permissionsData?.data || [],
+    [permissionsData],
+  );
 
   const handleRoleChange = (userId: string, role: string) => {
     setRoleSelection((prev) => ({ ...prev, [userId]: role }));
@@ -107,20 +68,6 @@ function Settings() {
 
   const getSelectedRole = (userId: string, fallbackRole: string) =>
     roleSelection[userId] ?? fallbackRole;
-
-  const roleNames = useMemo(
-    () => availableRoles.map((role) => role.name),
-    [availableRoles],
-  );
-
-  const rolePermissions = useMemo(
-    () =>
-      availableRoles.reduce<Record<string, string[]>>((acc, role) => {
-        acc[role.name] = role.permissions;
-        return acc;
-      }, {}),
-    [availableRoles],
-  );
 
   const { data: agents, isLoading } = useAgents(companyId, agentQuery);
 
@@ -164,6 +111,7 @@ function Settings() {
           </div>
           <div className="grid gap-6 lg:grid-cols-[minmax(400px,450px)_1fr]">
             <div className="space-y-4">
+              {/* Tab Navigation */}
               <div className="flex border-b border-gray-200 dark:border-neutral-800">
                 <button
                   onClick={() => setActiveTab("add")}
@@ -197,11 +145,13 @@ function Settings() {
                 </button>
               </div>
 
+              {/* Tab Content */}
               <div className="min-h-[400px]">
                 {activeTab === "add" && (
                   <Can I="create" a="User">
                     <AddAgent
                       companyId={companyId}
+                      userId={userId}
                       roles={roleNames}
                       rolePermissions={rolePermissions}
                     />
@@ -211,7 +161,6 @@ function Settings() {
                   <RoleManager
                     roles={availableRoles}
                     permissionOptions={permissionOptions}
-                    onCreateRole={handleCreateRole}
                   />
                 )}
                 {activeTab === "theme" && (
@@ -235,7 +184,7 @@ function Settings() {
                   <Search
                     label="Search users..."
                     onSearch={(searchText) =>
-                      setAgentQuery({ ...agentQuery, searchText })
+                      setAgentQuery({ ...agentQuery, searchText: searchText })
                     }
                     alt
                   />
@@ -254,13 +203,13 @@ function Settings() {
                         </tr>
                       </thead>
                       <tbody className="divide-y divide-gray-100 dark:divide-neutral-800">
-                        {isLoading && (
+                        {isLoading || rolesLoading ? (
                           <tr>
                             <td colSpan={6} className="px-3 py-4">
                               Loading...
                             </td>
                           </tr>
-                        )}
+                        ) : null}
                         {agents?.pages.map((page, pageIndex) => (
                           <React.Fragment key={pageIndex}>
                             {page?.map(
@@ -278,9 +227,9 @@ function Settings() {
                               ) => (
                                 <tr
                                   key={userId || rowIndex}
-                                  onClick={() =>
-                                    navigate(`/settings/user/${userId}`)
-                                  }
+                                  onClick={() => {
+                                    navigate(`/settings/user/${userId}`);
+                                  }}
                                   className="hover:bg-gray-50 dark:text-white dark:hover:bg-neutral-900 cursor-pointer"
                                 >
                                   <td className="px-3 py-3">{rowIndex + 1}</td>

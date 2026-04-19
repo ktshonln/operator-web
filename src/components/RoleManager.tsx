@@ -1,24 +1,27 @@
-import { useState } from "react";
-
-type RoleDefinition = {
-  name: string;
-  permissions: string[];
-};
+import { useState, useMemo } from "react";
+import { useCreateRole } from "../hooks/useCreateRole";
+import { Role } from "../hooks/useRoles";
+import { Permission } from "../hooks/usePermissions";
 
 interface RoleManagerProps {
-  roles: RoleDefinition[];
-  permissionOptions: string[];
-  onCreateRole: (role: RoleDefinition) => void;
+  roles: Role[];
+  permissionOptions: Permission[];
 }
 
-const RoleManager = ({
-  roles,
-  permissionOptions,
-  onCreateRole,
-}: RoleManagerProps) => {
+const RoleManager = ({ roles, permissionOptions }: RoleManagerProps) => {
   const [roleName, setRoleName] = useState("");
   const [error, setError] = useState("");
   const [selectedPermissions, setSelectedPermissions] = useState<string[]>([]);
+  const createRole = useCreateRole();
+
+  const groupedPermissions = useMemo(() => {
+    return permissionOptions.reduce((groups, permission) => {
+      const group = permission.group || "Other";
+      if (!groups[group]) groups[group] = [];
+      groups[group].push(permission);
+      return groups;
+    }, {} as Record<string, Permission[]>);
+  }, [permissionOptions]);
 
   const handleCreate = () => {
     const trimmed = roleName.trim();
@@ -31,10 +34,21 @@ const RoleManager = ({
       return;
     }
 
-    onCreateRole({ name: trimmed, permissions: selectedPermissions });
-    setRoleName("");
-    setSelectedPermissions([]);
-    setError("");
+    const patterns = selectedPermissions.map(code => `${code}:org`);
+
+    createRole.mutate(
+      { name: trimmed, patterns },
+      {
+        onSuccess: () => {
+          setRoleName("");
+          setSelectedPermissions([]);
+          setError("");
+        },
+        onError: () => {
+          setError("Failed to create role.");
+        },
+      }
+    );
   };
 
   const togglePermission = (permission: string) => {
@@ -42,7 +56,7 @@ const RoleManager = ({
     setSelectedPermissions((prev) =>
       prev.includes(permission)
         ? prev.filter((item) => item !== permission)
-        : [...prev, permission],
+        : [...prev, permission]
     );
   };
 
@@ -59,30 +73,41 @@ const RoleManager = ({
             onChange={(e) => setRoleName(e.target.value)}
             placeholder="New role name"
             className="w-full rounded-sm border border-gray-200 p-2 text-sm outline-none dark:bg-black dark:text-white dark:border-neutral-800"
+            disabled={createRole.isPending}
           />
           <button
             type="button"
             onClick={handleCreate}
-            className="bg-brand text-white px-4 py-2 rounded-sm text-sm hover:brightness-95"
+            disabled={createRole.isPending}
+            className="bg-brand text-white px-4 py-2 rounded-sm text-sm hover:brightness-95 disabled:opacity-50"
           >
-            Create
+            {createRole.isPending ? "Creating..." : "Create"}
           </button>
         </div>
 
-        <div className="grid gap-2 sm:grid-cols-2">
-          {permissionOptions.map((permission) => (
-            <button
-              key={permission}
-              type="button"
-              onClick={() => togglePermission(permission)}
-              className={`rounded-full border px-3 py-1 text-xs transition-colors ${
-                selectedPermissions.includes(permission)
-                  ? "border-brand bg-brand/10 text-brand"
-                  : "border-gray-200 bg-white text-neutral-700 dark:border-neutral-700 dark:bg-neutral-950 dark:text-neutral-300"
-              }`}
-            >
-              {permission}
-            </button>
+        <div className="space-y-4">
+          {Object.entries(groupedPermissions).map(([group, perms]) => (
+            <div key={group}>
+              <h4 className="text-xs font-semibold uppercase tracking-wider text-neutral-500 mb-2">
+                {group}
+              </h4>
+              <div className="flex flex-wrap gap-2">
+                {perms.map((permission) => (
+                  <button
+                    key={permission.code}
+                    type="button"
+                    onClick={() => togglePermission(permission.code)}
+                    className={`rounded-full border px-3 py-1 text-xs transition-colors ${
+                      selectedPermissions.includes(permission.code)
+                        ? "border-brand bg-brand/10 text-brand"
+                        : "border-gray-200 bg-white text-neutral-700 dark:border-neutral-700 dark:bg-neutral-950 dark:text-neutral-300"
+                    }`}
+                  >
+                    {permission.display_name}
+                  </button>
+                ))}
+              </div>
+            </div>
           ))}
         </div>
 
@@ -95,24 +120,31 @@ const RoleManager = ({
           <div className="space-y-3">
             {roles.map((role) => (
               <div
-                key={role.name}
+                key={role.id}
                 className="rounded-lg border border-gray-100 dark:border-neutral-800 p-3 bg-gray-50 dark:bg-neutral-950"
               >
                 <div className="flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
-                  <p className="font-semibold text-sm text-neutral-900 dark:text-white">
-                    {role.name}
-                  </p>
+                  <div className="flex items-center gap-2">
+                    <p className="font-semibold text-sm text-neutral-900 dark:text-white">
+                      {role.name}
+                    </p>
+                    {role.is_managed && (
+                      <span className="text-[10px] bg-neutral-200 dark:bg-neutral-800 px-1.5 py-0.5 rounded-sm dark:text-neutral-300">
+                        Managed
+                      </span>
+                    )}
+                  </div>
                   <p className="text-[11px] uppercase text-neutral-500 dark:text-neutral-400">
-                    {role.permissions.length} permissions
+                    {role.grants.length} permissions
                   </p>
                 </div>
                 <div className="flex flex-wrap gap-2 mt-2">
-                  {role.permissions.map((permission) => (
+                  {role.grants.map((grant) => (
                     <span
-                      key={permission}
+                      key={grant.id}
                       className="rounded-full border border-gray-200 bg-white px-2.5 py-1 text-[11px] text-neutral-600 dark:border-neutral-700 dark:bg-neutral-900 dark:text-neutral-300"
                     >
-                      {permission}
+                      {grant.pattern}
                     </span>
                   ))}
                 </div>
@@ -126,3 +158,4 @@ const RoleManager = ({
 };
 
 export default RoleManager;
+

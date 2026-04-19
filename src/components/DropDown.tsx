@@ -65,7 +65,7 @@ function DropDown(props: SingleSelectProps | MultiSelectProps): JSX.Element {
                   {choice}
                 </span>
               ))
-            : (label ?label(optionChoice):optionChoice)}
+            : (label ? (optionChoice ? label(optionChoice as string) : "") : optionChoice)}
         </p>
         <div className="flex space-x-2 items-center">
           {multiValue !== undefined &&
