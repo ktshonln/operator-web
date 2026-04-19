@@ -14,6 +14,7 @@ import DropDown from "../components/DropDown";
 import { Can } from "../contexts/AbilityContext";
 import RoleManager from "../components/RoleManager";
 import useUpdateAgent from "../hooks/useUpdateAgent";
+import { GrantDisplay } from "../components/AddAgent";
 
 
 
@@ -45,18 +46,44 @@ function Settings() {
     [availableRoles],
   );
 
-  const rolePermissions = useMemo(
-    () =>
-      availableRoles.reduce<Record<string, string[]>>((acc, role) => {
-        acc[role.slug] = role.grants ? role.grants.map((g) => g.pattern) : [];
-        return acc;
-      }, {}),
-    [availableRoles],
-  );
-
   const permissionOptions = useMemo(
     () => permissionsData?.data || [],
     [permissionsData],
+  );
+
+  const getGrantDisplay = (pattern: string): GrantDisplay => {
+    const parts = pattern.split(":");
+    const scope = parts.length >= 3 ? parts.pop() || "" : "";
+    const code = parts.join(":");
+    const perm = permissionOptions.find((p) => p.code === code);
+    
+    // Grammatical Fallback Engine (Action Subject+s)
+    let fallbackName = code;
+    if (code === "*:*") fallbackName = "Full Access";
+    else if (code.includes(":")) {
+      const [subject, action] = code.split(":");
+      if (subject && action) {
+        const capAction = action.charAt(0).toUpperCase() + action.slice(1);
+        const pluralSubject = subject.endsWith("s") ? subject : `${subject}s`;
+        fallbackName = `${capAction} ${pluralSubject}`;
+      }
+    }
+
+    return {
+      pattern,
+      displayName: perm ? perm.display_name : fallbackName,
+      description: perm?.description ?? "No description provided by backend catalog.",
+      scope
+    };
+  };
+
+  const rolePermissions = useMemo(
+    () =>
+      availableRoles.reduce<Record<string, GrantDisplay[]>>((acc, role) => {
+        acc[role.slug] = role.grants ? role.grants.map((g) => getGrantDisplay(g.pattern)) : [];
+        return acc;
+      }, {}),
+    [availableRoles, permissionOptions],
   );
 
   const handleRoleChange = (userId: string, role: string) => {
@@ -98,21 +125,23 @@ function Settings() {
   };
 
   return (
-    <div className="max-w-7xl mx-auto px-4 py-8">
-      <SettingsNav />
+    <div className="max-w-7xl mx-auto px-4 py-6 h-[calc(100vh-20px)] flex flex-col overflow-hidden">
+      <div className="shrink-0 mb-4">
+        <SettingsNav />
+      </div>
 
-      <div className="mt-6 flex flex-col gap-4 lg:flex-row">
-        <div className="flex-1">
-          <div className="mb-6">
-            <h1 className="font-bold text-2xl mb-2">{getPageTitle()}</h1>
-            <p className="text-neutral-600 dark:text-neutral-400">
+      <div className="flex flex-col gap-4 lg:flex-row flex-1 min-h-0">
+        <div className="flex-1 flex flex-col min-h-0">
+          <div className="mb-4 shrink-0">
+            <h1 className="font-bold text-2xl mb-1">{getPageTitle()}</h1>
+            <p className="text-neutral-600 dark:text-neutral-400 text-sm">
               {getPageDescription()}
             </p>
           </div>
-          <div className="grid gap-6 lg:grid-cols-[minmax(400px,450px)_1fr]">
-            <div className="space-y-4">
+          <div className="grid gap-6 lg:grid-cols-[minmax(400px,450px)_1fr] flex-1 min-h-0">
+            <div className="flex flex-col min-h-0 space-y-4">
               {/* Tab Navigation */}
-              <div className="flex border-b border-gray-200 dark:border-neutral-800">
+              <div className="flex border-b border-gray-200 dark:border-neutral-800 shrink-0">
                 <button
                   onClick={() => setActiveTab("add")}
                   className={`px-4 py-2 text-sm font-medium border-b-2 transition-colors ${
@@ -146,7 +175,7 @@ function Settings() {
               </div>
 
               {/* Tab Content */}
-              <div className="min-h-[400px]">
+              <div className="flex-1 overflow-y-auto pr-2 custom-scrollbar min-h-0 pb-10">
                 {activeTab === "add" && (
                   <Can I="create" a="User">
                     <AddAgent
@@ -173,22 +202,24 @@ function Settings() {
                 )}
               </div>
             </div>
-            <div className="w-full">
-              <div className="rounded-3xl border border-gray-200 dark:border-neutral-800 bg-white dark:bg-neutral-950/90 shadow-sm overflow-hidden">
-                <div className="px-6 py-5 border-b border-gray-100 dark:border-neutral-800">
+            <div className="w-full flex flex-col min-h-0">
+              <div className="rounded-3xl border border-gray-200 dark:border-neutral-800 bg-white dark:bg-neutral-950/90 shadow-sm overflow-hidden flex flex-col h-full">
+                <div className="px-6 py-5 border-b border-gray-100 dark:border-neutral-800 shrink-0">
                   <h2 className="font-bold text-lg dark:text-white">
                     Current users
                   </h2>
                 </div>
-                <div className="p-6 space-y-4">
-                  <Search
-                    label="Search users..."
-                    onSearch={(searchText) =>
-                      setAgentQuery({ ...agentQuery, searchText: searchText })
-                    }
-                    alt
-                  />
-                  <div className="overflow-x-auto">
+                <div className="p-6 flex flex-col gap-4 overflow-hidden h-full">
+                  <div className="shrink-0">
+                    <Search
+                      label="Search users..."
+                      onSearch={(searchText) =>
+                        setAgentQuery({ ...agentQuery, searchText: searchText })
+                      }
+                      alt
+                    />
+                  </div>
+                  <div className="flex-1 overflow-y-auto custom-scrollbar">
                     <table className="min-w-full text-sm">
                       <thead>
                         <tr className="text-left text-xs uppercase tracking-widest text-neutral-500 dark:text-neutral-400">

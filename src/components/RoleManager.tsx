@@ -1,4 +1,6 @@
 import { useState, useMemo } from "react";
+import { BsBuilding } from "react-icons/bs";
+import { BiWorld, BiUser } from "react-icons/bi";
 import { useCreateRole } from "../hooks/useCreateRole";
 import { Role } from "../hooks/useRoles";
 import { Permission } from "../hooks/usePermissions";
@@ -22,6 +24,31 @@ const RoleManager = ({ roles, permissionOptions }: RoleManagerProps) => {
       return groups;
     }, {} as Record<string, Permission[]>);
   }, [permissionOptions]);
+
+  const getGrantDisplay = (pattern: string) => {
+    const parts = pattern.split(":");
+    const scope = parts.length >= 3 ? parts.pop() || "" : "";
+    const code = parts.join(":");
+    const perm = permissionOptions.find((p) => p.code === code);
+    
+    let fallbackName = code;
+    if (code === "*:*") fallbackName = "Full Access";
+    else if (code.includes(":")) {
+      const [subject, action] = code.split(":");
+      if (subject && action) {
+        const capAction = action.charAt(0).toUpperCase() + action.slice(1);
+        const pluralSubject = subject.endsWith("s") ? subject : `${subject}s`;
+        fallbackName = `${capAction} ${pluralSubject}`;
+      }
+    }
+
+    return {
+      pattern,
+      displayName: perm ? perm.display_name : fallbackName,
+      description: perm?.description ?? "No description provided by backend catalog.",
+      scope
+    };
+  };
 
   const handleCreate = () => {
     const trimmed = roleName.trim();
@@ -139,14 +166,27 @@ const RoleManager = ({ roles, permissionOptions }: RoleManagerProps) => {
                   </p>
                 </div>
                 <div className="flex flex-wrap gap-2 mt-2">
-                  {role.grants?.map((grant) => (
-                    <span
-                      key={grant.id}
-                      className="rounded-full border border-gray-200 bg-white px-2.5 py-1 text-[11px] text-neutral-600 dark:border-neutral-700 dark:bg-neutral-900 dark:text-neutral-300"
-                    >
-                      {grant.pattern}
-                    </span>
-                  ))}
+                  {role.grants?.map((g) => {
+                    const grant = getGrantDisplay(g.pattern);
+                    return (
+                      <div
+                        key={grant.pattern}
+                        className="rounded-md border border-gray-200 bg-white px-2.5 py-1.5 text-xs text-neutral-600 dark:border-neutral-700 dark:bg-neutral-900 dark:text-neutral-300 flex flex-col"
+                      >
+                        <div className="flex items-center font-medium text-neutral-900 dark:text-white">
+                          {grant.displayName}
+                          <div className="ml-1.5 opacity-70 flex items-center">
+                            {grant.scope === 'org' && <BsBuilding title="Organization Scope" />}
+                            {grant.scope === 'platform' && <BiWorld title="Platform Scope" />}
+                            {grant.scope === 'own' && <BiUser title="Self Scope" />}
+                          </div>
+                        </div>
+                        <span className="text-[10px] text-neutral-500 mt-0.5 truncate max-w-[200px]" title={grant.description}>
+                          {grant.description}
+                        </span>
+                      </div>
+                    );
+                  })}
                 </div>
               </div>
             ))}

@@ -1437,6 +1437,15 @@ export const handlers = [
         description: "Update user information",
         group: "User management",
       },
+      {
+        id: "perm_3",
+        code: "trip:read",
+        action: "read",
+        subject: "Trip",
+        display_name: "View trips",
+        description: "Read trip schedules and history",
+        group: "Trip management",
+      },
     ];
 
     return HttpResponse.json({ data: mockPermissions }, { status: 200 });

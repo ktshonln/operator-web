@@ -6,6 +6,15 @@ import useAddAgent, { AgentDetails } from "../hooks/useAddAgent";
 import { camelCaseToTitle } from "../utils/helpers";
 import DropDown from "./DropDown";
 import { useState } from "react";
+import { BsBuilding } from "react-icons/bs";
+import { BiWorld, BiUser } from "react-icons/bi";
+
+export interface GrantDisplay {
+  pattern: string;
+  displayName: string;
+  description: string;
+  scope: string;
+}
 const schema = z.object({
   inviteUserId: z
     .string()
@@ -30,7 +39,7 @@ interface Props {
   companyId: string;
   userId: string;
   roles: string[];
-  rolePermissions: Record<string, string[]>;
+  rolePermissions: Record<string, GrantDisplay[]>;
 }
 const AddAgent = ({ companyId, userId, roles, rolePermissions }: Props) => {
   const [refreshKey, setRefreshKey] = useState(0);
@@ -98,17 +107,30 @@ const AddAgent = ({ companyId, userId, roles, rolePermissions }: Props) => {
         </div>
         {selectedRole && rolePermissions[selectedRole] && (
           <div className="mb-4 rounded-md bg-gray-50 p-3 text-xs text-neutral-700 dark:bg-neutral-900 dark:text-neutral-300">
-            <p className="font-semibold mb-2">
+            <p className="font-semibold mb-3">
               Permissions for {camelCaseToTitle(selectedRole)}:
             </p>
             <div className="flex flex-wrap gap-2">
-              {rolePermissions[selectedRole].map((permission) => (
-                <span
-                  key={permission}
-                  className="rounded-full bg-brand/10 px-2.5 py-1 text-[11px] text-brand"
+              {rolePermissions[selectedRole].map((grant) => (
+                <div
+                  key={grant.pattern}
+                  className="rounded-md border border-brand/20 bg-brand/5 px-3 py-1.5 flex flex-col"
                 >
-                  {permission}
-                </span>
+                  <div className="flex items-center text-brand font-medium">
+                    {grant.displayName}
+                    <div className="ml-1.5 opacity-70 flex items-center">
+                      {grant.scope === "org" && <BsBuilding title="Organization Scope" />}
+                      {grant.scope === "platform" && <BiWorld title="Platform Scope" />}
+                      {grant.scope === "own" && <BiUser title="Self Scope" />}
+                    </div>
+                  </div>
+                  <span
+                    className="text-[10px] text-brand/70 mt-0.5 truncate max-w-[220px]"
+                    title={grant.description}
+                  >
+                    {grant.description}
+                  </span>
+                </div>
               ))}
             </div>
           </div>
