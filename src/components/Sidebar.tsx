@@ -115,7 +115,7 @@ const Sidebar = () => {
             <p className="font-semibold text-sm hidden md:block">Logout</p>
           </div>
         </div>
-        <p className="absolute text-[10px] text-white bottom-0 hfit">
+        <p title={__BUILD_DATE__} className="absolute text-[10px] text-white dark:text-neutral-900 bottom-0 hfit">
           v {__BUILD_DATE__}
         </p>
       </div>
