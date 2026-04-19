@@ -3,6 +3,7 @@ import { useNavigate, Link } from "react-router-dom";
 import { BsArrowLeft } from "react-icons/bs";
 import { useCreateOrganization, Organization } from "../hooks/useOrganizations";
 import Can from "../components/Can";
+import APIClient from "../services/apiClient";
 
 const CreateOrganization = () => {
   const navigate = useNavigate();
@@ -11,6 +12,8 @@ const CreateOrganization = () => {
     org_type: "company",
     status: "pending",
   });
+  const [logoFile, setLogoFile] = useState<File | null>(null);
+  const [isUploading, setIsUploading] = useState(false);
 
   const handleChange = (field: keyof Organization, value: string) => {
     setFormData((prev) => ({ ...prev, [field]: value }));
@@ -18,21 +21,40 @@ const CreateOrganization = () => {
 
   const handleSubmit = async (event: React.FormEvent<HTMLFormElement>) => {
     event.preventDefault();
+    setIsUploading(true);
+
+    let finalLogoPath = formData.logo_path;
+    try {
+      if (logoFile) {
+        const fileClient = new APIClient<any>("");
+        const { uploadUrl, fileUrl } = await fileClient.getPresignedUploadUrl(logoFile.name, logoFile.type);
+        await fileClient.uploadFileToUrl(uploadUrl, logoFile);
+        finalLogoPath = fileUrl;
+      }
+    } catch (e) {
+      console.error("Failed to upload logo", e);
+      setIsUploading(false);
+      return; 
+    }
 
     const payload = {
       name: formData.name || "",
       org_type: (formData.org_type as Organization["org_type"]) ?? "company",
       contact_email: formData.contact_email || "",
       contact_phone: formData.contact_phone,
-      logo_path: formData.logo_path,
+      logo_path: finalLogoPath,
       address: formData.address,
       parent_org_id: formData.parent_org_id ?? undefined,
     };
 
     createOrg.mutate(payload, {
       onSuccess: () => {
+        setIsUploading(false);
         navigate("/organizations");
       },
+      onError: () => {
+        setIsUploading(false);
+      }
     });
   };
 
@@ -128,22 +150,48 @@ const CreateOrganization = () => {
 
           <div>
             <label className="block text-sm font-medium text-gray-700 mb-1">
-              Logo Path
+              Organization Logo
             </label>
-            <input
-              type="text"
-              value={formData.logo_path ?? ""}
-              onChange={(e) => handleChange("logo_path", e.target.value)}
-              className="w-full border border-gray-300 rounded px-3 py-2"
-            />
+            <div className="flex items-center gap-4">
+              <div 
+                className="w-16 h-16 rounded-lg border-2 border-dashed border-gray-300 dark:border-neutral-700 flex items-center justify-center overflow-hidden bg-gray-50 dark:bg-neutral-900 cursor-pointer hover:bg-gray-100 dark:hover:bg-neutral-800 transition-colors"
+                onClick={() => document.getElementById("logo-upload")?.click()}
+              >
+                {logoFile ? (
+                  <img src={URL.createObjectURL(logoFile)} alt="Logo Preview" className="w-full h-full object-cover" />
+                ) : formData.logo_path ? (
+                  <img src={formData.logo_path} alt="Logo" className="w-full h-full object-cover" />
+                ) : (
+                  <span className="text-xs text-gray-400 text-center px-2">Upload</span>
+                )}
+              </div>
+              <div className="flex-1">
+                <input
+                  id="logo-upload"
+                  type="file"
+                  accept="image/*"
+                  className="hidden"
+                  onChange={(e) => {
+                    const file = e.target.files?.[0];
+                    if (file) setLogoFile(file);
+                  }}
+                />
+                <p className="text-xs text-neutral-500 mb-2">Recommended: 256x256px transparent PNG or JPG.</p>
+                {logoFile && (
+                  <button type="button" onClick={() => setLogoFile(null)} className="text-xs text-red-500 hover:text-red-700 transition-colors">
+                    Remove selected logo
+                  </button>
+                )}
+              </div>
+            </div>
           </div>
 
           <button
             type="submit"
-            disabled={createOrg.isPending}
+            disabled={createOrg.isPending || isUploading}
             className="bg-blue-500 text-white px-5 py-3 rounded hover:bg-blue-600 disabled:opacity-50"
           >
-            {createOrg.isPending ? "Creating..." : "Create Organization"}
+            {createOrg.isPending || isUploading ? "Creating..." : "Create Organization"}
           </button>
         </form>
       </Can>

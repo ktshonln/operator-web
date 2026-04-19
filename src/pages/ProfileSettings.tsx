@@ -28,6 +28,7 @@ function ProfileSettings() {
 
   const [isEditing, setIsEditing] = useState(false);
   const [editForm, setEditForm] = useState({ first_name: '', last_name: '', phone_number: '' });
+  const [avatarFile, setAvatarFile] = useState<File | null>(null);
 
   const startEditing = () => {
     if (user) {
@@ -37,30 +38,32 @@ function ProfileSettings() {
         phone_number: user.phone_number || '',
       });
       setIsEditing(true);
+      setAvatarFile(null);
     }
   };
 
   const handleSaveProfile = async () => {
     try {
+      if (avatarFile) {
+        await uploadAvatar.mutateAsync(avatarFile);
+      }
       await updateMe.mutateAsync(editForm);
       setIsEditing(false);
+      setAvatarFile(null);
     } catch (error) {
       console.error("Failed to update profile", error);
     }
   };
   
   const handleAvatarClick = () => {
+    if (!isEditing) return; // Only allow avatar changes while editing
     const fileInput = document.createElement("input");
     fileInput.type = "file";
     fileInput.accept = "image/*";
-    fileInput.onchange = async (e) => {
+    fileInput.onchange = (e) => {
       const file = (e.target as HTMLInputElement).files?.[0];
       if (file) {
-        try {
-          await uploadAvatar.mutateAsync(file);
-        } catch (error) {
-          console.error("Failed to upload avatar", error);
-        }
+        setAvatarFile(file);
       }
     };
     fileInput.click();
@@ -124,13 +127,16 @@ function ProfileSettings() {
                   <div className="rounded-md border border-gray-200 dark:border-neutral-800 p-6 bg-white dark:bg-neutral-900">
                     <div className="flex items-center space-x-3 mb-6">
                       <div 
-                        className="p-3 rounded-lg bg-neutral-100 dark:bg-neutral-800 text-brand2 cursor-pointer hover:opacity-80 transition-opacity"
+                        title={isEditing ? "Click to change avatar" : undefined}
+                        className={`p-3 rounded-lg overflow-hidden flex items-center justify-center bg-neutral-100 dark:bg-neutral-800 text-brand2 transition-all ${isEditing ? 'cursor-pointer hover:opacity-80 ring-2 ring-brand ring-offset-2 dark:ring-offset-neutral-900 ml-1 mr-2' : ''}`}
                         onClick={handleAvatarClick}
                       >
-                        {user?.avatar_path ? (
-                          <img src={user.avatar_path} alt="Avatar" className="w-8 h-8 rounded-full object-cover" />
+                        {avatarFile ? (
+                          <img src={URL.createObjectURL(avatarFile)} alt="Preview" className="w-12 h-12 rounded-full object-cover" />
+                        ) : user?.avatar_path ? (
+                          <img src={user.avatar_path} alt="Avatar" className="w-12 h-12 rounded-full object-cover" />
                         ) : (
-                          <BiSolidUserCircle size={32} />
+                          <BiSolidUserCircle size={40} />
                         )}
                       </div>
                       <div className="flex-1">

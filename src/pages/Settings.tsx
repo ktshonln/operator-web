@@ -15,6 +15,7 @@ import { Can } from "../contexts/AbilityContext";
 import RoleManager from "../components/RoleManager";
 import useUpdateAgent from "../hooks/useUpdateAgent";
 import { GrantDisplay } from "../components/AddAgent";
+import { useOrganizations } from "../hooks/useOrganizations";
 
 
 
@@ -34,7 +35,14 @@ function Settings() {
   const [agentQuery, setAgentQuery] = useState<AgentQuery>({} as AgentQuery);
   const [roleSelection, setRoleSelection] = useState<Record<string, string>>({});
   const [activeTab, setActiveTab] = useState<"add" | "roles" | "theme">("add");
-  const updateRole = useUpdateAgent(companyId);
+  const [selectedOrgId, setSelectedOrgId] = useState<string>(companyId);
+
+  const isSuperAdmin = user && "roles" in user && user.roles?.includes("platform-admin");
+  const orgQueryResult = useOrganizations({});
+  const allOrgs = (Array.isArray(orgQueryResult.data) ? orgQueryResult.data : []) as any[];
+  const orgNames = ["All Organizations", ...allOrgs.map(o => o.name)];
+
+  const updateRole = useUpdateAgent(selectedOrgId || companyId);
 
   const { data: rolesData, isLoading: rolesLoading } = useRoles();
   const { data: permissionsData } = usePermissions();
@@ -96,7 +104,9 @@ function Settings() {
   const getSelectedRole = (userId: string, fallbackRole: string) =>
     roleSelection[userId] ?? fallbackRole;
 
-  const { data: agents, isLoading } = useAgents(companyId, agentQuery);
+  // Use selectedOrgId instead of static companyId. If "All Logs" (no specific org ID), we can omit or send what the API expects.
+  // We'll pass selectedOrgId if it's set and not the generic bypass.
+  const { data: agents, isLoading } = useAgents(selectedOrgId, agentQuery);
 
   const getPageTitle = () => {
     switch (activeTab) {
@@ -210,14 +220,32 @@ function Settings() {
                   </h2>
                 </div>
                 <div className="p-6 flex flex-col gap-4 overflow-hidden h-full">
-                  <div className="shrink-0">
-                    <Search
-                      label="Search users..."
-                      onSearch={(searchText) =>
-                        setAgentQuery({ ...agentQuery, searchText: searchText })
-                      }
-                      alt
-                    />
+                  <div className="shrink-0 flex flex-col md:flex-row gap-4 items-center">
+                    <div className="w-full">
+                      <Search
+                        label="Search users..."
+                        onSearch={(searchText) =>
+                          setAgentQuery({ ...agentQuery, searchText: searchText })
+                        }
+                        alt
+                      />
+                    </div>
+                    {isSuperAdmin && (
+                      <div className="w-full md:w-64 z-10 shrink-0">
+                        <DropDown
+                          options={orgNames}
+                          value={allOrgs.find(o => o.id === selectedOrgId)?.name || "All Organizations"}
+                          onSelect={(choice) => {
+                            if (choice === "All Organizations") setSelectedOrgId("");
+                            else {
+                              const org = allOrgs.find(o => o.name === choice);
+                              if (org) setSelectedOrgId(org.id);
+                            }
+                          }}
+                          style="v2"
+                        />
+                      </div>
+                    )}
                   </div>
                   <div className="flex-1 overflow-y-auto custom-scrollbar">
                     <table className="min-w-full text-sm">
