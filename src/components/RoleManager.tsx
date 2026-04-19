@@ -135,11 +135,11 @@ const RoleManager = ({ roles, permissionOptions }: RoleManagerProps) => {
                     )}
                   </div>
                   <p className="text-[11px] uppercase text-neutral-500 dark:text-neutral-400">
-                    {role.grants.length} permissions
+                    {role.grants?.length || 0} permissions
                   </p>
                 </div>
                 <div className="flex flex-wrap gap-2 mt-2">
-                  {role.grants.map((grant) => (
+                  {role.grants?.map((grant) => (
                     <span
                       key={grant.id}
                       className="rounded-full border border-gray-200 bg-white px-2.5 py-1 text-[11px] text-neutral-600 dark:border-neutral-700 dark:bg-neutral-900 dark:text-neutral-300"
