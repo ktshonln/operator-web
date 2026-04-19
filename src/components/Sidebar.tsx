@@ -115,8 +115,8 @@ const Sidebar = () => {
             <p className="font-semibold text-sm hidden md:block">Logout</p>
           </div>
         </div>
-        <p title={__BUILD_DATE__} className="absolute text-[10px] text-white dark:text-neutral-900 bottom-0 hfit">
-          v {__BUILD_DATE__}
+        <p title={new Date(__BUILD_DATE__).toLocaleString()} className="absolute text-[10px] text-white dark:text-neutral-900 hover:text-neutral-500 bottom-0 hfit">
+          v {new Date(__BUILD_DATE__).toLocaleString()}
         </p>
       </div>
     </div>
