@@ -7,6 +7,8 @@ import { useDeleteUser } from "../hooks/useDeleteUser";
 import { useToastStore } from "../stores/toastStore";
 import SettingsNav from "../components/SettingsNav";
 import { camelCaseToTitle } from "../utils/helpers";
+import { useRoles } from "../hooks/useRoles";
+import { Can } from "../contexts/AbilityContext";
 
 // Fetch user by ID directly from GET /users/:id
 function useUserById(userId: string) {
@@ -25,10 +27,38 @@ function UserDetails() {
   const navigate = useNavigate();
   const { showToast } = useToastStore();
   const [confirmDelete, setConfirmDelete] = useState(false);
+  const [isEditing, setIsEditing] = useState(false);
+  const [editForm, setEditForm] = useState({ first_name: "", last_name: "", role_slugs: [] as string[] });
 
   const { data: user, isLoading, refetch } = useUserById(userId ?? "");
   const updateUser = useUpdateUser(userId ?? "");
   const deleteUser = useDeleteUser();
+  const { data: rolesData } = useRoles();
+  const availableRoles = rolesData?.data ?? [];
+
+  const startEditing = () => {
+    if (!user) return;
+    setEditForm({
+      first_name: user.first_name ?? "",
+      last_name: user.last_name ?? "",
+      role_slugs: user.roles ?? [],
+    });
+    setIsEditing(true);
+  };
+
+  const handleSaveEdit = () => {
+    updateUser.mutate(
+      { first_name: editForm.first_name, last_name: editForm.last_name, role_slugs: editForm.role_slugs },
+      {
+        onSuccess: () => {
+          refetch();
+          setIsEditing(false);
+          showToast("User updated", "success");
+        },
+        onError: (err: Error) => showToast(err.message, "error"),
+      }
+    );
+  };
 
   const handleToggleStatus = () => {
     if (!user) return;
@@ -51,6 +81,15 @@ function UserDetails() {
       },
       onError: (err: Error) => showToast(err.message, "error"),
     });
+  };
+
+  const toggleRole = (slug: string) => {
+    setEditForm(prev => ({
+      ...prev,
+      role_slugs: prev.role_slugs.includes(slug)
+        ? prev.role_slugs.filter(r => r !== slug)
+        : [...prev.role_slugs, slug],
+    }));
   };
 
   const avatarUrl = buildCdnUrl(user?.avatar_path);
@@ -111,9 +150,25 @@ function UserDetails() {
 
               {/* Name + badges */}
               <div className="flex-1 min-w-0">
-                <h1 className="text-xl font-bold text-neutral-900 dark:text-white">{fullName}</h1>
+                {isEditing ? (
+                  <div className="flex gap-2 mb-2">
+                    <input
+                      value={editForm.first_name}
+                      onChange={e => setEditForm(p => ({ ...p, first_name: e.target.value }))}
+                      placeholder="First name"
+                      className="flex-1 text-sm border border-gray-200 dark:border-neutral-700 rounded-lg px-3 py-1.5 bg-white dark:bg-neutral-800 text-neutral-900 dark:text-white outline-none focus:ring-2 focus:ring-brand/20"
+                    />
+                    <input
+                      value={editForm.last_name}
+                      onChange={e => setEditForm(p => ({ ...p, last_name: e.target.value }))}
+                      placeholder="Last name"
+                      className="flex-1 text-sm border border-gray-200 dark:border-neutral-700 rounded-lg px-3 py-1.5 bg-white dark:bg-neutral-800 text-neutral-900 dark:text-white outline-none focus:ring-2 focus:ring-brand/20"
+                    />
+                  </div>
+                ) : (
+                  <h1 className="text-xl font-bold text-neutral-900 dark:text-white">{fullName}</h1>
+                )}
                 <div className="flex flex-wrap gap-2 mt-2">
-                  {/* Status badge */}
                   <span className={`inline-flex items-center px-2.5 py-1 rounded-full text-xs font-medium ${
                     user.status === "active" ? "bg-green-100 text-green-800 dark:bg-green-900/30 dark:text-green-300"
                     : user.status === "suspended" ? "bg-red-100 text-red-800 dark:bg-red-900/30 dark:text-red-300"
@@ -122,11 +177,11 @@ function UserDetails() {
                     <span className="w-1.5 h-1.5 rounded-full bg-current mr-1.5" />
                     {camelCaseToTitle(user.status)}
                   </span>
-                  {/* Role badge */}
-                  <span className="inline-flex items-center px-2.5 py-1 rounded-lg text-xs font-medium bg-gray-100 text-gray-800 dark:bg-neutral-800 dark:text-gray-200 border border-gray-200 dark:border-neutral-700">
-                    {camelCaseToTitle(primaryRole)}
-                  </span>
-                  {/* User type badge */}
+                  {!isEditing && (
+                    <span className="inline-flex items-center px-2.5 py-1 rounded-lg text-xs font-medium bg-gray-100 text-gray-800 dark:bg-neutral-800 dark:text-gray-200 border border-gray-200 dark:border-neutral-700">
+                      {camelCaseToTitle(primaryRole)}
+                    </span>
+                  )}
                   {user.user_type && (
                     <span className="inline-flex items-center px-2.5 py-1 rounded-lg text-xs font-medium bg-blue-50 text-blue-700 dark:bg-blue-900/20 dark:text-blue-300">
                       {camelCaseToTitle(user.user_type)}
@@ -135,87 +190,143 @@ function UserDetails() {
                 </div>
               </div>
 
-              {/* Actions */}
-              <div className="flex items-center gap-2 flex-shrink-0">
-                {user.status !== "pending_verification" && (
-                  <button
-                    onClick={handleToggleStatus}
-                    disabled={updateUser.isPending}
-                    className={`px-3 py-1.5 text-sm font-medium rounded-lg border transition-colors disabled:opacity-50 ${
-                      user.status === "active"
-                        ? "border-yellow-300 text-yellow-700 hover:bg-yellow-50 dark:border-yellow-700 dark:text-yellow-400 dark:hover:bg-yellow-900/20"
-                        : "border-green-300 text-green-700 hover:bg-green-50 dark:border-green-700 dark:text-green-400 dark:hover:bg-green-900/20"
-                    }`}
-                  >
-                    {updateUser.isPending ? "..." : user.status === "active" ? "Suspend" : "Activate"}
-                  </button>
+              {/* Action buttons */}
+              <div className="flex items-center gap-2 flex-shrink-0 flex-wrap justify-end">
+                {isEditing ? (
+                  <>
+                    <button
+                      onClick={handleSaveEdit}
+                      disabled={updateUser.isPending}
+                      className="px-3 py-1.5 text-sm font-medium rounded-lg bg-brand text-white hover:brightness-95 transition-colors disabled:opacity-50"
+                    >
+                      {updateUser.isPending ? "Saving..." : "Save"}
+                    </button>
+                    <button
+                      onClick={() => setIsEditing(false)}
+                      className="px-3 py-1.5 text-sm font-medium rounded-lg border border-gray-200 dark:border-neutral-700 text-neutral-600 dark:text-neutral-400 hover:bg-gray-50 dark:hover:bg-neutral-800 transition-colors"
+                    >
+                      Cancel
+                    </button>
+                  </>
+                ) : (
+                  <>
+                    <Can I="update" a="User">
+                      <button
+                        onClick={startEditing}
+                        className="px-3 py-1.5 text-sm font-medium rounded-lg border border-gray-200 dark:border-neutral-700 text-neutral-700 dark:text-neutral-300 hover:bg-gray-50 dark:hover:bg-neutral-800 transition-colors"
+                      >
+                        Edit
+                      </button>
+                    </Can>
+                    <Can I="suspend" a="User">
+                      {user.status !== "pending_verification" && (
+                        <button
+                          onClick={handleToggleStatus}
+                          disabled={updateUser.isPending}
+                          className={`px-3 py-1.5 text-sm font-medium rounded-lg border transition-colors disabled:opacity-50 ${
+                            user.status === "active"
+                              ? "border-yellow-300 text-yellow-700 hover:bg-yellow-50 dark:border-yellow-700 dark:text-yellow-400 dark:hover:bg-yellow-900/20"
+                              : "border-green-300 text-green-700 hover:bg-green-50 dark:border-green-700 dark:text-green-400 dark:hover:bg-green-900/20"
+                          }`}
+                        >
+                          {updateUser.isPending ? "..." : user.status === "active" ? "Suspend" : "Activate"}
+                        </button>
+                      )}
+                    </Can>
+                    <Can I="delete" a="User">
+                      <button
+                        onClick={handleDelete}
+                        disabled={deleteUser.isPending}
+                        className={`px-3 py-1.5 text-sm font-medium rounded-lg border transition-colors disabled:opacity-50 ${
+                          confirmDelete
+                            ? "bg-red-600 text-white border-red-600 hover:bg-red-700"
+                            : "border-red-300 text-red-600 hover:bg-red-50 dark:border-red-700 dark:text-red-400 dark:hover:bg-red-900/20"
+                        }`}
+                      >
+                        {deleteUser.isPending ? "Deleting..." : confirmDelete ? "Confirm?" : "Delete"}
+                      </button>
+                    </Can>
+                  </>
                 )}
-                <button
-                  onClick={handleDelete}
-                  disabled={deleteUser.isPending}
-                  className={`px-3 py-1.5 text-sm font-medium rounded-lg border transition-colors disabled:opacity-50 ${
-                    confirmDelete
-                      ? "bg-red-600 text-white border-red-600 hover:bg-red-700"
-                      : "border-red-300 text-red-600 hover:bg-red-50 dark:border-red-700 dark:text-red-400 dark:hover:bg-red-900/20"
-                  }`}
-                >
-                  {deleteUser.isPending ? "Deleting..." : confirmDelete ? "Confirm Delete?" : "Delete"}
-                </button>
               </div>
             </div>
           </div>
 
           {/* Details */}
-          <div className="p-6 space-y-4">
-            <h2 className="text-sm font-semibold text-neutral-900 dark:text-white uppercase tracking-wide">Details</h2>
-            <div className="grid gap-3 sm:grid-cols-2">
-              {user.email && (
+          <div className="p-6 space-y-6">
+            <div>
+              <h2 className="text-xs font-semibold text-neutral-500 dark:text-neutral-400 uppercase tracking-wide mb-3">Details</h2>
+              <div className="grid gap-3 sm:grid-cols-2">
+                {user.email && (
+                  <div className="flex flex-col gap-0.5">
+                    <span className="text-xs font-medium text-neutral-500 dark:text-neutral-400">Email</span>
+                    <span className="text-sm text-neutral-900 dark:text-white">{user.email}</span>
+                  </div>
+                )}
+                {user.phone_number && (
+                  <div className="flex flex-col gap-0.5">
+                    <span className="text-xs font-medium text-neutral-500 dark:text-neutral-400">Phone</span>
+                    <span className="text-sm text-neutral-900 dark:text-white">{user.phone_number}</span>
+                  </div>
+                )}
                 <div className="flex flex-col gap-0.5">
-                  <span className="text-xs font-medium text-neutral-500 dark:text-neutral-400">Email</span>
-                  <span className="text-sm text-neutral-900 dark:text-white">{user.email}</span>
+                  <span className="text-xs font-medium text-neutral-500 dark:text-neutral-400">User ID</span>
+                  <span className="text-xs text-neutral-900 dark:text-white font-mono bg-gray-50 dark:bg-neutral-800 px-2 py-0.5 rounded">{user.id}</span>
                 </div>
-              )}
-              {user.phone_number && (
+                {user.org_id && (
+                  <div className="flex flex-col gap-0.5">
+                    <span className="text-xs font-medium text-neutral-500 dark:text-neutral-400">Org ID</span>
+                    <span className="text-xs text-neutral-900 dark:text-white font-mono">{user.org_id}</span>
+                  </div>
+                )}
+                {user.last_login_at && (
+                  <div className="flex flex-col gap-0.5">
+                    <span className="text-xs font-medium text-neutral-500 dark:text-neutral-400">Last Login</span>
+                    <span className="text-sm text-neutral-900 dark:text-white">{new Date(user.last_login_at).toLocaleString()}</span>
+                  </div>
+                )}
                 <div className="flex flex-col gap-0.5">
-                  <span className="text-xs font-medium text-neutral-500 dark:text-neutral-400">Phone</span>
-                  <span className="text-sm text-neutral-900 dark:text-white">{user.phone_number}</span>
+                  <span className="text-xs font-medium text-neutral-500 dark:text-neutral-400">Joined</span>
+                  <span className="text-sm text-neutral-900 dark:text-white">{new Date(user.created_at).toLocaleDateString()}</span>
                 </div>
-              )}
-              <div className="flex flex-col gap-0.5">
-                <span className="text-xs font-medium text-neutral-500 dark:text-neutral-400">User ID</span>
-                <span className="text-sm text-neutral-900 dark:text-white font-mono bg-gray-50 dark:bg-neutral-800 px-2 py-0.5 rounded text-xs">{user.id}</span>
-              </div>
-              {user.org_id && (
-                <div className="flex flex-col gap-0.5">
-                  <span className="text-xs font-medium text-neutral-500 dark:text-neutral-400">Organization ID</span>
-                  <span className="text-sm text-neutral-900 dark:text-white font-mono text-xs">{user.org_id}</span>
-                </div>
-              )}
-              {user.last_login_at && (
-                <div className="flex flex-col gap-0.5">
-                  <span className="text-xs font-medium text-neutral-500 dark:text-neutral-400">Last Login</span>
-                  <span className="text-sm text-neutral-900 dark:text-white">{new Date(user.last_login_at).toLocaleString()}</span>
-                </div>
-              )}
-              <div className="flex flex-col gap-0.5">
-                <span className="text-xs font-medium text-neutral-500 dark:text-neutral-400">Joined</span>
-                <span className="text-sm text-neutral-900 dark:text-white">{new Date(user.created_at).toLocaleDateString()}</span>
               </div>
             </div>
 
-            {/* Roles */}
-            {roles.length > 0 && (
-              <div className="pt-2">
-                <h2 className="text-sm font-semibold text-neutral-900 dark:text-white uppercase tracking-wide mb-3">Roles</h2>
+            {/* Roles — editable when in edit mode */}
+            <div>
+              <h2 className="text-xs font-semibold text-neutral-500 dark:text-neutral-400 uppercase tracking-wide mb-3">Roles</h2>
+              {isEditing ? (
                 <div className="flex flex-wrap gap-2">
-                  {roles.map((role: string) => (
+                  {availableRoles.map((role: any) => {
+                    const selected = editForm.role_slugs.includes(role.slug);
+                    return (
+                      <button
+                        key={role.slug}
+                        type="button"
+                        onClick={() => toggleRole(role.slug)}
+                        className={`px-3 py-1.5 rounded-lg text-xs font-medium border transition-colors ${
+                          selected
+                            ? "bg-brand text-white border-brand"
+                            : "bg-white dark:bg-neutral-900 text-neutral-600 dark:text-neutral-400 border-gray-200 dark:border-neutral-700 hover:border-brand hover:text-brand"
+                        }`}
+                      >
+                        {camelCaseToTitle(role.slug)}
+                      </button>
+                    );
+                  })}
+                </div>
+              ) : (
+                <div className="flex flex-wrap gap-2">
+                  {roles.length > 0 ? roles.map((role: string) => (
                     <span key={role} className="inline-flex items-center px-3 py-1 rounded-lg text-sm font-medium bg-gray-100 text-gray-800 dark:bg-neutral-800 dark:text-gray-200 border border-gray-200 dark:border-neutral-700">
                       {camelCaseToTitle(role)}
                     </span>
-                  ))}
+                  )) : (
+                    <span className="text-sm text-neutral-400">No roles assigned</span>
+                  )}
                 </div>
-              </div>
-            )}
+              )}
+            </div>
           </div>
         </div>
 
