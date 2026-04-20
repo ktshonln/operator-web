@@ -93,7 +93,7 @@ const useAddAgent = (orgId: string) => {
         queryKey: [CACHE_KEY_AGENTS],
         refetchType: "active",
       });
-      showToast("Successfully added a new agent!", "success");
+      showToast(`Successfully added a new ${savedAgent.role}!`, "success");
     },
     onError: (error, _newData, context) => {
       if (!context) return;
