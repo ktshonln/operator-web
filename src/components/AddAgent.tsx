@@ -74,7 +74,9 @@ const AddAgent = ({ companyId, userId, roles, rolePermissions }: Props) => {
     resetField("email");
     resetField("phoneNumber");
     setRefreshKey((c) => c + 1);
+    console.log('DBG:Sent',fullData);
   };
+  
   return (
     <div className="rounded-md border border-gray-200 dark:border-neutral-800 p-6 bg-white dark:bg-neutral-900">
       <form onSubmit={handleSubmit(onSubmit)} className="text-sm space-y-4">

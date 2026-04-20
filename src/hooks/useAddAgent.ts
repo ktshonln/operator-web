@@ -31,10 +31,11 @@ const useAddAgent = (orgId: string) => {
       const response = await axiosInstance.post("/users/invite", {
         first_name: routeDetails.firstName,
         last_name: routeDetails.lastName,
+        role_slug: routeDetails.role,
+        org_id: orgId,
         email: routeDetails.email,
         phone_number: routeDetails.phoneNumber,
-        org_id: orgId,
-        role_slug: routeDetails.role,
+        locale: "rw",
       });
       return {
         userId: response.data.id || `temp-${Date.now()}`,
