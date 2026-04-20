@@ -14,6 +14,9 @@ export interface Agent {
   role: Role;
   status: string;
   joinedDate: string;
+  avatarPath?: string | null;
+  lastLoginAt?: string | null;
+  userType?: 'passenger' | 'staff';
 }
 
 const apiClient = new APIClient<Agent>("/organizations");

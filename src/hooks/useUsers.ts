@@ -1,51 +1,49 @@
-import { useQuery } from "@tanstack/react-query";
-import { axiosInstance } from "../services/apiClient";
+import { InfiniteData, useInfiniteQuery } from "@tanstack/react-query";
+import { Agent } from "./useAgent";
+import APIClient from "../services/apiClient";
+import { CACHE_KEY_USERS } from "../utils/constants";
 
-export interface UserListItem {
-  id: string;
-  first_name: string;
-  last_name: string;
-  email?: string | null;
-  phone_number?: string | null;
-  avatar_path?: string | null;
-  user_type: "passenger" | "staff";
-  status: "active" | "pending_verification" | "suspended";
-  roles: string[];
-  org_id?: string | null;
-  last_login_at?: string | null;
-  created_at: string;
+const apiClient = new APIClient<any>("/users");
+
+export interface UserQuery {
+  branch: null;
+  sortOrder: string;
+  searchText: string;
+  status?: 'active' | 'pending_verification' | 'suspended';
+  userType?: 'passenger' | 'staff';
 }
 
-export interface UsersResponse {
-  data: UserListItem[];
-  total: number;
-  page: number;
-  limit: number;
-}
-
-export interface UsersFilters {
-  page?: number;
-  limit?: number;
-  status?: "active" | "pending_verification" | "suspended";
-  user_type?: "passenger" | "staff";
-  org_id?: string;
-}
-
-export const useUsers = (filters: UsersFilters = {}) => {
-  return useQuery({
-    queryKey: ["users", filters],
-    queryFn: async () => {
-      const params = new URLSearchParams();
-      if (filters.page) params.append("page", filters.page.toString());
-      if (filters.limit) params.append("limit", filters.limit.toString());
-      if (filters.status) params.append("status", filters.status);
-      if (filters.user_type) params.append("user_type", filters.user_type);
-      if (filters.org_id) params.append("org_id", filters.org_id);
-
-      const response = await axiosInstance.get<UsersResponse>(
-        `/users?${params.toString()}`,
-      );
-      return response.data;
+const useUsers = (orgId: string, userQuery: UserQuery) =>
+  useInfiniteQuery<Agent[], Error, InfiniteData<Agent[], number>>({
+    queryKey: [CACHE_KEY_USERS, userQuery, orgId],
+    queryFn: async ({ pageParam = 1 }) => {
+      const params: Record<string, any> = { page: pageParam, limit: 20 };
+      if (orgId) params.org_id = orgId;
+      if (userQuery.searchText) params.search = userQuery.searchText;
+      if (userQuery.status) params.status = userQuery.status;
+      if (userQuery.userType) params.user_type = userQuery.userType;
+      const res = await apiClient.getAll({ params });
+      const items = res.data?.data || (Array.isArray(res.data) ? res.data : []);
+      return items.map((user: any) => ({
+        userId: user.id,
+        firstName: user.first_name,
+        lastName: user.last_name,
+        email: user.email,
+        phoneNumber: user.phone_number,
+        role: (user.roles && user.roles.length > 0) ? user.roles[0] : 'user',
+        status: user.status || 'pending_verification',
+        joinedDate: user.created_at,
+        orgId: user.org_id,
+        avatarPath: user.avatar_path,
+        lastLoginAt: user.last_login_at,
+        userType: user.user_type as 'passenger' | 'staff' | undefined,
+      }));
     },
+    initialPageParam: 1,
+    staleTime: 10 * 1000,
+    placeholderData: (previousData) => previousData || { pages: [], pageParams: [] },
+    getNextPageParam: (_lastPage, allPages) => allPages.length + 1,
+    enabled: true,
   });
-};
+
+export default useUsers;

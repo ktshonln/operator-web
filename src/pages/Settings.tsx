@@ -1,21 +1,17 @@
-import React, { useMemo, useState } from "react";
-import { useNavigate } from "react-router-dom";
+import { useMemo, useState } from "react";
 import { useRoles } from "../hooks/useRoles";
 import { usePermissions } from "../hooks/usePermissions";
 import SettingsNav from "../components/SettingsNav";
-import useAgents from "../hooks/useAgents";
-import { camelCaseToTitle } from "../utils/helpers";
-import { AgentQuery } from "./ProfileSettings";
+import useUsers, { UserQuery } from "../hooks/useUsers";
 import ThemeToggle from "../components/ThemeToggle";
 import AddAgent from "../components/AddAgent";
 import useUser from "../hooks/useUser";
 import Search from "../components/Search";
-import DropDown from "../components/DropDown";
 import { Can } from "../contexts/AbilityContext";
 import RoleManager from "../components/RoleManager";
-import useUpdateAgent from "../hooks/useUpdateAgent";
 import { GrantDisplay } from "../components/AddAgent";
 import { useOrganizations } from "../hooks/useOrganizations";
+import { UsersTable } from "../components/UsersTable";
 
 
 
@@ -23,26 +19,17 @@ function Settings() {
   const { user } = useUser();
   const companyId = (user as any)?.org_id ?? "";
   const userId = user?.id ?? "";
-  const tableHeaders = [
-    "userId",
-    "name",
-    "email",
-    "phoneNumber",
-    "role",
-    "status",
-  ];
-  const navigate = useNavigate();
-  const [agentQuery, setAgentQuery] = useState<AgentQuery>({} as AgentQuery);
-  const [roleSelection, setRoleSelection] = useState<Record<string, string>>({});
+  const [userQuery, setUserQuery] = useState<UserQuery>({
+    branch: null,
+    sortOrder: '',
+    searchText: ''
+  });
   const [activeTab, setActiveTab] = useState<"add" | "roles" | "theme">("add");
   const [selectedOrgId, setSelectedOrgId] = useState<string>(companyId);
 
   const isSuperAdmin = user && "roles" in user && user.roles?.includes("platform-admin");
   const orgQueryResult = useOrganizations({});
   const allOrgs = (Array.isArray(orgQueryResult.data) ? orgQueryResult.data : []) as any[];
-  const orgNames = ["All Organizations", ...allOrgs.map(o => o.name)];
-
-  const updateRole = useUpdateAgent(selectedOrgId || companyId);
 
   const { data: rolesData, isLoading: rolesLoading } = useRoles();
   const { data: permissionsData } = usePermissions();
@@ -65,7 +52,6 @@ function Settings() {
     const code = parts.join(":");
     const perm = permissionOptions.find((p) => p.code === code);
     
-    // Grammatical Fallback Engine (Action Subject+s)
     let fallbackName = code;
     if (code === "*:*") fallbackName = "Full Access";
     else if (code.includes(":")) {
@@ -94,62 +80,42 @@ function Settings() {
     [availableRoles, permissionOptions],
   );
 
-  const handleRoleChange = (userId: string, role: string) => {
-    setRoleSelection((prev) => ({ ...prev, [userId]: role }));
-    if (companyId) {
-      updateRole.mutate({ userId, role });
-    }
-  };
-
-  const getSelectedRole = (userId: string, fallbackRole: string) =>
-    roleSelection[userId] ?? fallbackRole;
-
-  // Use selectedOrgId instead of static companyId. If "All Logs" (no specific org ID), we can omit or send what the API expects.
-  // We'll pass selectedOrgId if it's set and not the generic bypass.
-  const { data: agents, isLoading } = useAgents(selectedOrgId, agentQuery);
+  const usersQuery = useUsers(selectedOrgId, userQuery);
 
   const getPageTitle = () => {
     switch (activeTab) {
-      case "add":
-        return "Add New User";
-      case "roles":
-        return "Manage Roles & Permissions";
-      case "theme":
-        return "Theme Settings";
-      default:
-        return "General Settings";
+      case "add": return "Add New User";
+      case "roles": return "Manage Roles & Permissions";
+      case "theme": return "Theme Settings";
+      default: return "General Settings";
     }
   };
 
   const getPageDescription = () => {
     switch (activeTab) {
-      case "add":
-        return "Create and invite new users to your organization";
-      case "roles":
-        return "Define roles and assign permissions to control access";
-      case "theme":
-        return "Customize the appearance of your application";
-      default:
-        return "Manage users, roles, and application settings";
+      case "add": return "Create and invite new users to your organization";
+      case "roles": return "Define roles and assign permissions to control access";
+      case "theme": return "Customize the appearance of your application";
+      default: return "Manage users, roles, and application settings";
     }
   };
 
   return (
-    <div className="max-w-7xl mx-auto px-4 py-6 h-[calc(100vh-20px)] flex flex-col overflow-hidden">
-      <div className="shrink-0 mb-4">
+    <div className="max-w-7xl mx-auto px-4 py-6 min-h-screen">
+      <div className="mb-4">
         <SettingsNav />
       </div>
 
-      <div className="flex flex-col gap-4 lg:flex-row flex-1 min-h-0">
-        <div className="flex-1 flex flex-col min-h-0">
-          <div className="mb-4 shrink-0">
+      <div className="flex flex-col gap-6 lg:flex-row">
+        <div className="w-full lg:w-auto lg:flex-1">
+          <div className="mb-6">
             <h1 className="font-bold text-2xl mb-1">{getPageTitle()}</h1>
             <p className="text-neutral-600 dark:text-neutral-400 text-sm">
               {getPageDescription()}
             </p>
           </div>
-          <div className="grid gap-6 lg:grid-cols-[minmax(400px,450px)_1fr] flex-1 min-h-0">
-            <div className="flex flex-col min-h-0 space-y-4">
+          <div className="grid gap-6 lg:grid-cols-[450px_minmax(0,1fr)] xl:grid-cols-[400px_minmax(0,1fr)]">
+            <div className="space-y-4">
               {/* Tab Navigation */}
               <div className="flex border-b border-gray-200 dark:border-neutral-800 shrink-0">
                 <button
@@ -212,120 +178,91 @@ function Settings() {
                 )}
               </div>
             </div>
-            <div className="w-full flex flex-col min-h-0">
-              <div className="rounded-3xl border border-gray-200 dark:border-neutral-800 bg-white dark:bg-neutral-950/90 shadow-sm overflow-hidden flex flex-col h-full">
-                <div className="px-6 py-5 border-b border-gray-100 dark:border-neutral-800 shrink-0">
-                  <h2 className="font-bold text-lg dark:text-white">
-                    Current users
-                  </h2>
-                </div>
-                <div className="p-6 flex flex-col gap-4 overflow-hidden h-full">
-                  <div className="shrink-0 flex flex-col md:flex-row gap-4 items-center">
-                    <div className="w-full">
+
+            <div className="w-full min-w-0">
+              <div className="rounded-3xl border border-gray-200 dark:border-neutral-800 bg-white dark:bg-neutral-950/90 shadow-sm overflow-hidden">
+                {/* Card header — sticky title + search */}
+                <div className="px-6 py-5 border-b border-gray-100 dark:border-neutral-800">
+                  <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
+                    <h2 className="font-bold text-lg dark:text-white">
+                      Current users
+                    </h2>
+                    <div className="w-full sm:w-auto">
                       <Search
                         label="Search users..."
                         onSearch={(searchText) =>
-                          setAgentQuery({ ...agentQuery, searchText: searchText })
+                          setUserQuery({ ...userQuery, searchText })
                         }
                         alt
                       />
                     </div>
+                  </div>
+                </div>
+
+                {/* Scrollable content area */}
+                <div className="flex flex-col px-6 pb-6" style={{ maxHeight: 'calc(100vh - 220px)' }}>
+                  {/* Filters row — compact dropdowns */}
+                  <div className="shrink-0 flex flex-wrap gap-3 items-center pt-4 pb-4 border-b border-gray-100 dark:border-neutral-800">
+                    {/* Status filter */}
+                    <div className="relative">
+                      <select
+                        value={userQuery.status || 'all'}
+                        onChange={(e) => setUserQuery({ ...userQuery, status: e.target.value === 'all' ? undefined : e.target.value as any })}
+                        className="appearance-none px-4 py-2 pr-10 text-sm font-medium rounded-lg border border-gray-200 dark:border-neutral-700 bg-white dark:bg-neutral-900 text-neutral-700 dark:text-neutral-300 hover:border-brand focus:outline-none focus:ring-2 focus:ring-brand/20 transition-colors cursor-pointer"
+                      >
+                        <option value="all">All Status</option>
+                        <option value="active">Active</option>
+                        <option value="pending_verification">Pending</option>
+                        <option value="suspended">Suspended</option>
+                      </select>
+                      <svg className="absolute right-3 top-1/2 -translate-y-1/2 w-4 h-4 text-neutral-400 pointer-events-none" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
+                      </svg>
+                    </div>
+
+                    {/* User type filter */}
+                    <div className="relative">
+                      <select
+                        value={userQuery.userType || 'all'}
+                        onChange={(e) => setUserQuery({ ...userQuery, userType: e.target.value === 'all' ? undefined : e.target.value as any })}
+                        className="appearance-none px-4 py-2 pr-10 text-sm font-medium rounded-lg border border-gray-200 dark:border-neutral-700 bg-white dark:bg-neutral-900 text-neutral-700 dark:text-neutral-300 hover:border-brand focus:outline-none focus:ring-2 focus:ring-brand/20 transition-colors cursor-pointer"
+                      >
+                        <option value="all">All Types</option>
+                        <option value="staff">Staff</option>
+                        <option value="passenger">Passenger</option>
+                      </select>
+                      <svg className="absolute right-3 top-1/2 -translate-y-1/2 w-4 h-4 text-neutral-400 pointer-events-none" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
+                      </svg>
+                    </div>
+
+                    {/* Org filter for superadmin */}
                     {isSuperAdmin && (
-                      <div className="w-full md:w-64 z-10 shrink-0">
-                        <DropDown
-                          options={orgNames}
-                          value={allOrgs.find(o => o.id === selectedOrgId)?.name || "All Organizations"}
-                          onSelect={(choice) => {
-                            if (choice === "All Organizations") setSelectedOrgId("");
-                            else {
-                              const org = allOrgs.find(o => o.name === choice);
-                              if (org) setSelectedOrgId(org.id);
-                            }
-                          }}
-                          style="v2"
-                        />
+                      <div className="relative">
+                        <select
+                          value={selectedOrgId || 'all'}
+                          onChange={(e) => setSelectedOrgId(e.target.value === 'all' ? '' : e.target.value)}
+                          className="appearance-none px-4 py-2 pr-10 text-sm font-medium rounded-lg border border-gray-200 dark:border-neutral-700 bg-white dark:bg-neutral-900 text-neutral-700 dark:text-neutral-300 hover:border-brand focus:outline-none focus:ring-2 focus:ring-brand/20 transition-colors cursor-pointer"
+                        >
+                          <option value="all">All Organizations</option>
+                          {allOrgs.map((org) => (
+                            <option key={org.id} value={org.id}>{org.name}</option>
+                          ))}
+                        </select>
+                        <svg className="absolute right-3 top-1/2 -translate-y-1/2 w-4 h-4 text-neutral-400 pointer-events-none" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
+                        </svg>
                       </div>
                     )}
                   </div>
-                  <div className="flex-1 overflow-y-auto custom-scrollbar">
-                    <table className="min-w-full text-sm">
-                      <thead>
-                        <tr className="text-left text-xs uppercase tracking-widest text-neutral-500 dark:text-neutral-400">
-                          <th className="px-3 py-2">#</th>
-                          {tableHeaders
-                            .filter((h) => h !== "userId")
-                            .map((header, i) => (
-                              <th key={i} className="px-3 py-2">
-                                {camelCaseToTitle(header)}
-                              </th>
-                            ))}
-                        </tr>
-                      </thead>
-                      <tbody className="divide-y divide-gray-100 dark:divide-neutral-800">
-                        {isLoading || rolesLoading ? (
-                          <tr>
-                            <td colSpan={6} className="px-3 py-4">
-                              Loading...
-                            </td>
-                          </tr>
-                        ) : null}
-                        {agents?.pages.map((page, pageIndex) => (
-                          <React.Fragment key={pageIndex}>
-                            {page?.map(
-                              (
-                                {
-                                  userId,
-                                  firstName,
-                                  lastName,
-                                  email,
-                                  phoneNumber,
-                                  role,
-                                  status,
-                                },
-                                rowIndex,
-                              ) => (
-                                <tr
-                                  key={userId || rowIndex}
-                                  onClick={() => {
-                                    navigate(`/settings/user/${userId}`);
-                                  }}
-                                  className="hover:bg-gray-50 dark:text-white dark:hover:bg-neutral-900 cursor-pointer"
-                                >
-                                  <td className="px-3 py-3">{rowIndex + 1}</td>
-                                  <td className="px-3 py-3">
-                                    {firstName} {lastName}
-                                  </td>
-                                  <td className="px-3 py-3">{email}</td>
-                                  <td className="px-3 py-3">{phoneNumber}</td>
-                                  <td
-                                    className="px-3 py-3"
-                                    onClick={(e) => e.stopPropagation()}
-                                  >
-                                    <div className="max-w-[240px] w-full">
-                                      <DropDown
-                                        key={getSelectedRole(userId, role)}
-                                        options={roleNames}
-                                        onSelect={(choice) =>
-                                          handleRoleChange(userId, choice)
-                                        }
-                                        label={(choice) =>
-                                          camelCaseToTitle(choice)
-                                        }
-                                        value={getSelectedRole(userId, role)}
-                                        style="v1"
-                                      />
-                                    </div>
-                                  </td>
-                                  <td className="px-3 py-3">
-                                    {camelCaseToTitle(status)}
-                                  </td>
-                                </tr>
-                              ),
-                            )}
-                          </React.Fragment>
-                        ))}
-                      </tbody>
-                    </table>
+
+                  {/* Scrollable table area */}
+                  <div className="flex-1 overflow-y-auto custom-scrollbar pt-4 min-w-0">
+                    <UsersTable
+                      usersQuery={usersQuery}
+                      rolesLoading={rolesLoading}
+                      userQuery={userQuery}
+                    />
                   </div>
                 </div>
               </div>

@@ -65,13 +65,13 @@ const Sidebar = () => {
             />
           )}
 
-          <div className="w-fit mx-auto">
-            <img
-              src="/logoOne.svg"
-              className="w-32 dark:invert"
-              alt="Katisha-logo"
-            />
-          </div>
+<div className="w-[42px] md:w-32 mx-auto overflow-hidden">
+  <img
+    src="/logoOne.svg"
+    className="w-32 max-w-none md:w-full object-left object-cover dark:invert"
+    alt="Katisha-logo"
+  />
+</div>
           <div
             className={`mt-8 mx-auto ${show ? "w-full" : "w-fit"} md:w-full`}
           >

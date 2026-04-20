@@ -14,6 +14,8 @@ export interface AgentQuery {
   branch: Branch | null;
   sortOrder: string;
   searchText: string;
+  status?: 'active' | 'pending_verification' | 'suspended';
+  userType?: 'passenger' | 'staff';
 }
 
 function ProfileSettings() {

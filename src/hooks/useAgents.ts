@@ -8,26 +8,51 @@ const apiClient = new APIClient<any>("/users");
 
 const useAgents = (orgId: string, agentQuery: AgentQuery) =>
   useInfiniteQuery<Agent[], Error, InfiniteData<Agent[], number>>({
-    queryKey: [CACHE_KEY_AGENTS, agentQuery],
+    queryKey: [CACHE_KEY_AGENTS, agentQuery, orgId],
     queryFn: async ({ pageParam = 1 }) => {
-      const res = await apiClient.getAll({
-        params: {
-          org_id: orgId,
-          search: agentQuery.searchText,
-          page: pageParam,
-        },
-      });
+      const params: Record<string, any> = {
+        page: pageParam,
+        limit: 20,
+      };
+
+      // Add org_id filter for platform admins
+      if (orgId) {
+        params.org_id = orgId;
+      }
+
+      // Add search filter if provided
+      if (agentQuery.searchText) {
+        params.search = agentQuery.searchText;
+      }
+
+      // Add status filter if provided
+      if (agentQuery.status) {
+        params.status = agentQuery.status;
+      }
+
+      // Add user_type filter if provided
+      if (agentQuery.userType) {
+        params.user_type = agentQuery.userType;
+      }
+
+      const res = await apiClient.getAll({ params });
       
-      const items = res.data || (Array.isArray(res) ? res : []);
+      // Handle paginated response: { data: [], total: number, page: number, limit: number }
+      const items = res.data?.data || (Array.isArray(res.data) ? res.data : []);
+      
       return items.map((user: any) => ({
          userId: user.id,
-         firstName: user.first_name || user.firstName,
-         lastName: user.last_name || user.lastName,
+         firstName: user.first_name,
+         lastName: user.last_name,
          email: user.email,
-         phoneNumber: user.phone_number || user.phoneNumber,
-         role: (user.roles && user.roles.length > 0) ? user.roles[0] : (user.role || 'user'),
-         status: user.status || 'invited',
-         joinedDate: user.created_at || new Date().toISOString()
+         phoneNumber: user.phone_number,
+         role: (user.roles && user.roles.length > 0) ? user.roles[0] : 'user',
+         status: user.status || 'pending_verification',
+         joinedDate: user.created_at,
+         orgId: user.org_id,
+         avatarPath: user.avatar_path,
+         lastLoginAt: user.last_login_at,
+         userType: user.user_type as 'passenger' | 'staff' | undefined,
       }));
     },
     initialPageParam: 1,
@@ -37,7 +62,7 @@ const useAgents = (orgId: string, agentQuery: AgentQuery) =>
     getNextPageParam: (_lastPage, allPages) => {
       return allPages.length + 1;
     },
-    enabled: !!orgId,
+    enabled: true, // Enable for all authenticated users
   });
 
 export default useAgents;
