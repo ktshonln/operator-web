@@ -202,9 +202,9 @@ function ExpandedDetails({ email, phoneNumber, lastLoginAt, userType, userId, sh
   );
 }
 
-// ─── Per-row component (desktop) ─────────────────────────────────────────────
+// ─── Self-contained row — owns ALL its own state ─────────────────────────────
 
-interface DesktopRowProps {
+interface SelfContainedRowProps {
   agent: {
     userId: string;
     firstName: string;
@@ -218,121 +218,179 @@ interface DesktopRowProps {
     userType?: 'passenger' | 'staff';
   };
   rowIndex: number;
-  isExpanded: boolean;
-  isMenuOpen: boolean;
-  isPendingDelete: boolean;
-  menuRef: React.RefObject<HTMLDivElement>;
-  onToggleExpand: () => void;
-  onToggleMenu: () => void;
-  onEdit: () => void;
-  onSuspendActivate: () => void;
-  onDelete: () => void;
+  mobile?: boolean;
 }
 
-function DesktopRow({
-  agent,
-  rowIndex,
-  isExpanded,
-  isMenuOpen,
-  isPendingDelete,
-  menuRef,
-  onToggleExpand,
-  onToggleMenu,
-  onEdit,
-  onSuspendActivate,
-  onDelete,
-}: DesktopRowProps) {
+function SelfContainedRow({ agent, rowIndex, mobile = false }: SelfContainedRowProps) {
+  const [isExpanded, setIsExpanded] = useState(false);
+  const [isMenuOpen, setIsMenuOpen] = useState(false);
+  const [isPendingDelete, setIsPendingDelete] = useState(false);
+  const menuRef = useRef<HTMLDivElement>(null);
+  const navigate = useNavigate();
+  const { showToast } = useToastStore();
+  const queryClient = useQueryClient();
+  const deleteUser = useDeleteUser();
+  const updateUser = useUpdateUser(agent.userId);
+
+  const closeMenu = useCallback(() => {
+    setIsMenuOpen(false);
+    setIsPendingDelete(false);
+  }, []);
+
+  // Outside-click detection scoped to this row's menu
+  useEffect(() => {
+    if (!isMenuOpen) return;
+    const handleMouseDown = (e: MouseEvent) => {
+      if (!menuRef.current?.contains(e.target as Node)) {
+        closeMenu();
+      }
+    };
+    document.addEventListener('mousedown', handleMouseDown);
+    return () => document.removeEventListener('mousedown', handleMouseDown);
+  }, [isMenuOpen, closeMenu]);
+
+  const handleToggleMenu = () => setIsMenuOpen((prev) => !prev);
+  const handleToggleExpand = () => setIsExpanded((prev) => !prev);
+
+  const handleEdit = () => {
+    navigate(`/settings/user/${agent.userId}`);
+    closeMenu();
+  };
+
+  const handleSuspendActivate = () => {
+    const newStatus = agent.status === 'active' ? 'suspended' : 'active';
+    updateUser.mutate({ status: newStatus }, {
+      onSuccess: () => {
+        closeMenu();
+        queryClient.invalidateQueries({ queryKey: CACHE_KEY_USERS });
+      },
+      onError: (err: Error) => showToast(err.message, 'error'),
+    });
+  };
+
+  const handleDelete = () => {
+    if (!isPendingDelete) { setIsPendingDelete(true); return; }
+    deleteUser.mutate(agent.userId, {
+      onSuccess: () => {
+        closeMenu();
+        queryClient.invalidateQueries({ queryKey: CACHE_KEY_USERS });
+      },
+      onError: (err: Error) => showToast(err.message, 'error'),
+    });
+  };
+
   const { userId, firstName, lastName, email, phoneNumber, role, status, avatarPath, lastLoginAt, userType } = agent;
 
+  if (mobile) {
+    return (
+      <div className="bg-white dark:bg-neutral-900 rounded-2xl border border-gray-200 dark:border-neutral-800 overflow-hidden hover:shadow-md transition-all">
+        <div className="p-4">
+          <div className="flex items-start justify-between mb-3">
+            <div className="flex items-center space-x-3 flex-1 min-w-0">
+              <UserAvatar firstName={firstName} lastName={lastName} avatarPath={avatarPath} size="md" />
+              <div className="flex-1 min-w-0">
+                <div className="font-semibold text-neutral-900 dark:text-white text-base truncate">{firstName} {lastName}</div>
+                <div className="text-sm text-neutral-500 dark:text-neutral-400 truncate">{email}</div>
+              </div>
+            </div>
+            <span className={`ml-2 flex-shrink-0 inline-flex items-center px-2.5 py-1 rounded-full text-xs font-medium ${statusBadgeClass(status)}`}>
+              <span className="w-1.5 h-1.5 rounded-full bg-current mr-1.5"></span>
+              {camelCaseToTitle(status)}
+            </span>
+          </div>
+          <div className="flex items-center justify-between">
+            <span className={`inline-flex items-center px-2.5 py-1 rounded-lg text-xs font-medium ${roleBadgeClass(role)}`}>
+              {camelCaseToTitle(role)}
+            </span>
+            <div className="flex items-center space-x-1">
+              <button onClick={handleToggleExpand} className="p-2 hover:bg-gray-100 dark:hover:bg-neutral-800 rounded-lg transition-colors">
+                <svg className={`w-5 h-5 transition-transform ${isExpanded ? 'rotate-180' : ''}`} fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
+                </svg>
+              </button>
+              <div className="relative" ref={menuRef}>
+                <button onClick={handleToggleMenu} className="p-2 hover:bg-gray-100 dark:hover:bg-neutral-800 rounded-lg transition-colors">
+                  <svg className="w-5 h-5 text-neutral-500 dark:text-neutral-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 5v.01M12 12v.01M12 19v.01M12 6a1 1 0 110-2 1 1 0 010 2zm0 7a1 1 0 110-2 1 1 0 010 2zm0 7a1 1 0 110-2 1 1 0 010 2z" />
+                  </svg>
+                </button>
+                {isMenuOpen && (
+                  <div className="absolute right-0 top-full mt-1 z-50">
+                    <ActionMenuContent userId={userId} status={status} isPendingDelete={isPendingDelete}
+                      onEdit={handleEdit} onSuspendActivate={handleSuspendActivate} onDelete={handleDelete} rounded="rounded-xl" />
+                  </div>
+                )}
+              </div>
+            </div>
+          </div>
+        </div>
+        {isExpanded && (
+          <div className="px-4 pb-4 border-t border-gray-100 dark:border-neutral-800 pt-4">
+            <ExpandedDetails phoneNumber={phoneNumber} lastLoginAt={lastLoginAt} userType={userType} userId={userId} email={email} showEmail={true} />
+          </div>
+        )}
+      </div>
+    );
+  }
+
+  // Desktop row
   return (
     <React.Fragment>
-      <tr className="hover:bg-gray-50 dark:hover:bg-neutral-900/50 transition-colors cursor-pointer">
+      <tr className="hover:bg-gray-50 dark:hover:bg-neutral-900/50 transition-colors">
         <td className="px-3 py-4 text-sm text-neutral-500 dark:text-neutral-400 font-medium w-10">
           <div className="flex items-center gap-1">
-            <button
-              onClick={(e) => { e.stopPropagation(); onToggleExpand(); }}
-              className="w-6 h-6 flex items-center justify-center hover:bg-gray-200 dark:hover:bg-neutral-700 rounded transition-colors"
-              aria-label={isExpanded ? 'Collapse row' : 'Expand row'}
-            >
-              <svg
-                className={`w-4 h-4 transition-transform ${isExpanded ? 'rotate-90' : ''}`}
-                fill="none" stroke="currentColor" viewBox="0 0 24 24"
-              >
+            <button onClick={handleToggleExpand}
+              className="w-6 h-6 flex items-center justify-center hover:bg-gray-200 dark:hover:bg-neutral-700 rounded transition-colors">
+              <svg className={`w-4 h-4 transition-transform ${isExpanded ? 'rotate-90' : ''}`} fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
               </svg>
             </button>
             <span>{rowIndex + 1}</span>
           </div>
         </td>
-
-        <td className="px-3 py-4 max-w-[160px]">
+        <td className="px-3 py-4">
           <div className="flex items-center space-x-2 min-w-0">
             <UserAvatar firstName={firstName} lastName={lastName} avatarPath={avatarPath} size="sm" />
             <div className="min-w-0 flex-1">
-              <div className="font-medium text-neutral-900 dark:text-white truncate text-sm">
-                {firstName} {lastName}
-              </div>
+              <div className="font-medium text-neutral-900 dark:text-white truncate text-sm">{firstName} {lastName}</div>
             </div>
           </div>
         </td>
-
-        <td className="px-3 py-4 hidden xl:table-cell max-w-[180px]">
+        <td className="px-3 py-4 hidden xl:table-cell">
           <div className="text-sm text-neutral-600 dark:text-neutral-400 truncate">{email}</div>
         </td>
-
         <td className="px-3 py-4 hidden md:table-cell">
           <span className={`inline-flex items-center px-2 py-0.5 rounded-md text-xs font-medium ${roleBadgeClass(role)}`}>
             {camelCaseToTitle(role)}
           </span>
         </td>
-
         <td className="px-3 py-4">
           <span className={`inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium ${statusBadgeClass(status)}`}>
             <span className="w-1.5 h-1.5 rounded-full bg-current mr-1.5"></span>
             {camelCaseToTitle(status)}
           </span>
         </td>
-
         <td className="px-3 py-4 w-10">
           <div className="relative" ref={menuRef}>
-            <button
-              onClick={(e) => { e.stopPropagation(); onToggleMenu(); }}
-              className="p-2 hover:bg-gray-100 dark:hover:bg-neutral-800 rounded-lg transition-colors"
-              aria-label="Open actions menu"
-            >
+            <button onClick={handleToggleMenu}
+              className="p-2 hover:bg-gray-100 dark:hover:bg-neutral-800 rounded-lg transition-colors">
               <svg className="w-4 h-4 text-neutral-500 dark:text-neutral-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 5v.01M12 12v.01M12 19v.01M12 6a1 1 0 110-2 1 1 0 010 2zm0 7a1 1 0 110-2 1 1 0 010 2zm0 7a1 1 0 110-2 1 1 0 010 2z" />
               </svg>
             </button>
-
             {isMenuOpen && (
               <div className="absolute right-0 top-full mt-1 z-50">
-                <ActionMenuContent
-                  userId={userId}
-                  status={status}
-                  isPendingDelete={isPendingDelete}
-                  onEdit={onEdit}
-                  onSuspendActivate={onSuspendActivate}
-                  onDelete={onDelete}
-                />
+                <ActionMenuContent userId={userId} status={status} isPendingDelete={isPendingDelete}
+                  onEdit={handleEdit} onSuspendActivate={handleSuspendActivate} onDelete={handleDelete} />
               </div>
             )}
           </div>
         </td>
       </tr>
-
       {isExpanded && (
         <tr className="bg-gray-50 dark:bg-neutral-900/30">
           <td colSpan={6} className="px-3 py-3">
-            {/* Show email when xl column is hidden (below xl), role when md column is hidden (below md) */}
-            <ExpandedDetails
-              email={email}
-              phoneNumber={phoneNumber}
-              lastLoginAt={lastLoginAt}
-              userType={userType}
-              userId={userId}
-              showEmail={true}
-            />
+            <ExpandedDetails email={email} phoneNumber={phoneNumber} lastLoginAt={lastLoginAt} userType={userType} userId={userId} showEmail={true} />
           </td>
         </tr>
       )}
@@ -340,277 +398,20 @@ function DesktopRow({
   );
 }
 
-// ─── Per-card component (mobile) ─────────────────────────────────────────────
-
-interface MobileCardProps {
-  agent: {
-    userId: string;
-    firstName: string;
-    lastName: string;
-    email: string;
-    phoneNumber?: string | null;
-    role: string;
-    status: string;
-    avatarPath?: string | null;
-    lastLoginAt?: string | null;
-    userType?: 'passenger' | 'staff';
-  };
-  isExpanded: boolean;
-  isMenuOpen: boolean;
-  isPendingDelete: boolean;
-  menuRef: React.RefObject<HTMLDivElement>;
-  onToggleExpand: () => void;
-  onToggleMenu: () => void;
-  onEdit: () => void;
-  onSuspendActivate: () => void;
-  onDelete: () => void;
-}
-
-function MobileCard({
-  agent,
-  isExpanded,
-  isMenuOpen,
-  isPendingDelete,
-  menuRef,
-  onToggleExpand,
-  onToggleMenu,
-  onEdit,
-  onSuspendActivate,
-  onDelete,
-}: MobileCardProps) {
-  const { userId, firstName, lastName, email, phoneNumber, role, status, avatarPath, lastLoginAt, userType } = agent;
-
-  return (
-    <div className="bg-white dark:bg-neutral-900 rounded-2xl border border-gray-200 dark:border-neutral-800 overflow-hidden hover:shadow-lg transition-all">
-      <div className="p-4">
-        <div className="flex items-start justify-between mb-3">
-          <div className="flex items-center space-x-3 flex-1 min-w-0">
-            <UserAvatar firstName={firstName} lastName={lastName} avatarPath={avatarPath} size="md" />
-            <div className="flex-1 min-w-0">
-              <div className="font-semibold text-neutral-900 dark:text-white text-base truncate">
-                {firstName} {lastName}
-              </div>
-              <div className="text-sm text-neutral-500 dark:text-neutral-400 truncate">{email}</div>
-            </div>
-          </div>
-          <div className="flex-shrink-0 ml-2">
-            <span className={`inline-flex items-center px-2.5 py-1 rounded-full text-xs font-medium ${statusBadgeClass(status)}`}>
-              <span className="w-1.5 h-1.5 rounded-full bg-current mr-1.5"></span>
-              {camelCaseToTitle(status)}
-            </span>
-          </div>
-        </div>
-
-        <div className="flex items-center justify-between">
-          <span className={`inline-flex items-center px-2.5 py-1 rounded-lg text-xs font-medium ${roleBadgeClass(role)}`}>
-            {camelCaseToTitle(role)}
-          </span>
-
-          <div className="flex items-center space-x-1">
-            <button
-              onClick={(e) => { e.stopPropagation(); onToggleExpand(); }}
-              className="p-2 hover:bg-gray-100 dark:hover:bg-neutral-800 rounded-lg transition-colors"
-              aria-label={isExpanded ? 'Collapse details' : 'Expand details'}
-            >
-              <svg
-                className={`w-5 h-5 transition-transform ${isExpanded ? 'rotate-180' : ''}`}
-                fill="none" stroke="currentColor" viewBox="0 0 24 24"
-              >
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
-              </svg>
-            </button>
-
-            <div className="relative" ref={menuRef}>
-              <button
-                onClick={(e) => { e.stopPropagation(); onToggleMenu(); }}
-                className="p-2 hover:bg-gray-100 dark:hover:bg-neutral-800 rounded-lg transition-colors"
-                aria-label="Open actions menu"
-              >
-                <svg className="w-5 h-5 text-neutral-500 dark:text-neutral-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 5v.01M12 12v.01M12 19v.01M12 6a1 1 0 110-2 1 1 0 010 2zm0 7a1 1 0 110-2 1 1 0 010 2zm0 7a1 1 0 110-2 1 1 0 010 2z" />
-                </svg>
-              </button>
-
-              {isMenuOpen && (
-                <div className="absolute right-0 top-full mt-1 z-50">
-                  <ActionMenuContent
-                    userId={userId}
-                    status={status}
-                    isPendingDelete={isPendingDelete}
-                    onEdit={onEdit}
-                    onSuspendActivate={onSuspendActivate}
-                    onDelete={onDelete}
-                    rounded="rounded-xl"
-                  />
-                </div>
-              )}
-            </div>
-          </div>
-        </div>
-      </div>
-
-      {isExpanded && (
-        <div className="px-4 pb-4 border-t border-gray-100 dark:border-neutral-800">
-          <div className="pt-4">
-            <ExpandedDetails
-              phoneNumber={phoneNumber}
-              lastLoginAt={lastLoginAt}
-              userType={userType}
-              userId={userId}
-              showEmail={false}
-            />
-          </div>
-        </div>
-      )}
-    </div>
-  );
-}
-
-// ─── Per-row wrapper — owns per-row ref and outside-click ────────────────────
-
-interface UserRowWrapperProps {
-  agent: {
-    userId: string;
-    firstName: string;
-    lastName: string;
-    email: string;
-    phoneNumber?: string | null;
-    role: string;
-    status: string;
-    avatarPath?: string | null;
-    lastLoginAt?: string | null;
-    userType?: 'passenger' | 'staff';
-  };
-  rowIndex: number;
-  isExpanded: boolean;
-  isMenuOpen: boolean;
-  isPendingDelete: boolean;
-  onToggleExpand: () => void;
-  onOpenMenu: () => void;
-  onCloseMenu: () => void;
-  onSetPendingDelete: (id: string) => void;
-  mobile?: boolean;
-}
-
-function UserRowWrapper({
-  agent,
-  rowIndex,
-  isExpanded,
-  isMenuOpen,
-  isPendingDelete,
-  onToggleExpand,
-  onOpenMenu,
-  onCloseMenu,
-  onSetPendingDelete,
-  mobile = false,
-}: UserRowWrapperProps) {
-  const navigate = useNavigate();
-  const { showToast } = useToastStore();
-  const queryClient = useQueryClient();
-  // Each row owns its own ref — fixes the "opens for all rows" shared ref bug
-  const menuRef = useRef<HTMLDivElement>(null);
-
-  // Outside-click: only active when THIS row's menu is open
-  useEffect(() => {
-    if (!isMenuOpen) return;
-    const handleMouseDown = (e: MouseEvent) => {
-      if (!menuRef.current?.contains(e.target as Node)) {
-        onCloseMenu();
-      }
-    };
-    document.addEventListener('mousedown', handleMouseDown);
-    return () => document.removeEventListener('mousedown', handleMouseDown);
-  }, [isMenuOpen, onCloseMenu]);
-
-  const handleToggleMenu = useCallback(() => {
-    if (isMenuOpen) onCloseMenu();
-    else onOpenMenu();
-  }, [isMenuOpen, onOpenMenu, onCloseMenu]);
-
-  const deleteUser = useDeleteUser();
-  const updateUser = useUpdateUser(agent.userId);
-
-  const handleEdit = useCallback(() => {
-    navigate(`/settings/user/${agent.userId}`);
-    onCloseMenu();
-  }, [agent.userId, navigate, onCloseMenu]);
-
-  const handleSuspendActivate = useCallback(() => {
-    const newStatus = agent.status === 'active' ? 'suspended' : 'active';
-    updateUser.mutate(
-      { status: newStatus },
-      {
-        onSuccess: () => {
-          onCloseMenu();
-          queryClient.invalidateQueries({ queryKey: CACHE_KEY_USERS });
-        },
-        onError: (err: Error) => showToast(err.message, 'error'),
-      },
-    );
-  }, [agent.status, updateUser, onCloseMenu, queryClient, showToast]);
-
-  const handleDelete = useCallback(() => {
-    if (!isPendingDelete) {
-      onSetPendingDelete(agent.userId);
-      return;
-    }
-    deleteUser.mutate(agent.userId, {
-      onSuccess: () => {
-        onCloseMenu();
-        queryClient.invalidateQueries({ queryKey: CACHE_KEY_USERS });
-      },
-      onError: (err: Error) => showToast(err.message, 'error'),
-    });
-  }, [isPendingDelete, agent.userId, deleteUser, onCloseMenu, onSetPendingDelete, queryClient, showToast]);
-
-  const sharedProps = {
-    agent,
-    isExpanded,
-    isMenuOpen,
-    isPendingDelete,
-    menuRef,
-    onToggleExpand,
-    onToggleMenu: handleToggleMenu,
-    onEdit: handleEdit,
-    onSuspendActivate: handleSuspendActivate,
-    onDelete: handleDelete,
-  };
-
-  if (mobile) {
-    return <MobileCard {...sharedProps} />;
-  }
-
-  return <DesktopRow {...sharedProps} rowIndex={rowIndex} />;
-}
-
 // ─── Main UsersTable component ────────────────────────────────────────────────
 
-export function UsersTable({ usersQuery, rolesLoading }: UsersTableProps) {
-  const [expandedRows, setExpandedRows] = useState<Set<string>>(new Set());
-  const [actionMenuOpen, setActionMenuOpen] = useState<string | null>(null);
-  const [pendingDelete, setPendingDelete] = useState<string | null>(null);
-
-  const closeMenu = useCallback(() => {
-    setActionMenuOpen(null);
-    setPendingDelete(null);
-  }, []);
-
-  const toggleExpand = useCallback((id: string) => {
-    setExpandedRows((prev) => {
-      const next = new Set(prev);
-      if (next.has(id)) next.delete(id);
-      else next.add(id);
-      return next;
-    });
-  }, []);
-
-  const toggleMenu = useCallback((id: string) => {
-    setActionMenuOpen((prev) => (prev === id ? null : id));
-    setPendingDelete(null);
-  }, []);
-
+export function UsersTable({ usersQuery, rolesLoading, userQuery }: UsersTableProps) {
   const { data: users, isLoading } = usersQuery;
-  const allUsers = users?.pages?.flatMap((page) => page ?? []) ?? [];
+
+  // Client-side search filter (fallback when API search isn't available)
+  const searchText = userQuery.searchText?.toLowerCase() ?? '';
+  const allUsers = (users?.pages?.flatMap((page) => page ?? []) ?? []).filter((u) => {
+    if (!searchText) return true;
+    const fullName = `${u.firstName} ${u.lastName}`.toLowerCase();
+    const email = (u.email ?? '').toLowerCase();
+    return fullName.includes(searchText) || email.includes(searchText);
+  });
+
   const isEmpty = !isLoading && allUsers.length === 0;
 
   const loadingRow = (
@@ -661,20 +462,13 @@ export function UsersTable({ usersQuery, rolesLoading }: UsersTableProps) {
             {isEmpty && emptyRow}
             {users?.pages.map((page, pageIndex) => (
               <React.Fragment key={pageIndex}>
-                {page?.map((agent, rowIndex) => (
-                  <UserRowWrapper
-                    key={agent.userId}
-                    agent={agent}
-                    rowIndex={rowIndex}
-                    isExpanded={expandedRows.has(agent.userId)}
-                    isMenuOpen={actionMenuOpen === agent.userId}
-                    isPendingDelete={pendingDelete === agent.userId}
-                    onToggleExpand={() => toggleExpand(agent.userId)}
-                    onOpenMenu={() => toggleMenu(agent.userId)}
-                    onCloseMenu={closeMenu}
-                    onSetPendingDelete={setPendingDelete}
-                    mobile={false}
-                  />
+                {page?.filter((u) => {
+                  if (!searchText) return true;
+                  const fullName = `${u.firstName} ${u.lastName}`.toLowerCase();
+                  const email = (u.email ?? '').toLowerCase();
+                  return fullName.includes(searchText) || email.includes(searchText);
+                }).map((agent, rowIndex) => (
+                  <SelfContainedRow key={agent.userId} agent={agent} rowIndex={rowIndex} mobile={false} />
                 ))}
               </React.Fragment>
             ))}
@@ -704,20 +498,13 @@ export function UsersTable({ usersQuery, rolesLoading }: UsersTableProps) {
         )}
         {users?.pages.map((page, pageIndex) => (
           <React.Fragment key={pageIndex}>
-            {page?.map((agent) => (
-              <UserRowWrapper
-                key={agent.userId}
-                agent={agent}
-                rowIndex={0}
-                isExpanded={expandedRows.has(agent.userId)}
-                isMenuOpen={actionMenuOpen === agent.userId}
-                isPendingDelete={pendingDelete === agent.userId}
-                onToggleExpand={() => toggleExpand(agent.userId)}
-                onOpenMenu={() => toggleMenu(agent.userId)}
-                onCloseMenu={closeMenu}
-                onSetPendingDelete={setPendingDelete}
-                mobile={true}
-              />
+            {page?.filter((u) => {
+              if (!searchText) return true;
+              const fullName = `${u.firstName} ${u.lastName}`.toLowerCase();
+              const email = (u.email ?? '').toLowerCase();
+              return fullName.includes(searchText) || email.includes(searchText);
+            }).map((agent) => (
+              <SelfContainedRow key={agent.userId} agent={agent} rowIndex={0} mobile={true} />
             ))}
           </React.Fragment>
         ))}
@@ -731,11 +518,7 @@ export function UsersTable({ usersQuery, rolesLoading }: UsersTableProps) {
             disabled={!usersQuery.hasNextPage || usersQuery.isFetchingNextPage}
             className="px-4 py-2 text-sm font-medium text-brand border border-brand rounded-md hover:bg-brand hover:text-white transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
           >
-            {usersQuery.isFetchingNextPage
-              ? 'Loading...'
-              : usersQuery.hasNextPage
-              ? 'Load More'
-              : 'All users loaded'}
+            {usersQuery.isFetchingNextPage ? 'Loading...' : usersQuery.hasNextPage ? 'Load More' : 'All users loaded'}
           </button>
         </div>
       )}
