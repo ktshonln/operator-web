@@ -24,5 +24,6 @@ temp/
 *.sln
 *.sw?
 
-# Local secrets — never commit
-actions.env
+# Kiro IDE files
+.kiro/
+

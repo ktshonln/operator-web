@@ -40,6 +40,7 @@ export type Subjects =
   | "Ticket"
   | "Report"
   | "Home"
+  | "OrganizationApplication"
   | "all";
 
 export type AppAbility = MongoAbility<[Actions, Subjects]>;

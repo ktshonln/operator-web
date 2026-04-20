@@ -142,9 +142,7 @@ export const handlers = [
   }),
 
   // ── GET /organizations/me/logo/presigned-url ───────────────────────────────
-  http.get(`${baseUrl}/organizations/me/logo/presigned-url`, ({ request }) => {
-    const url = new URL(request.url);
-    const contentType = url.searchParams.get("content_type") ?? "image/jpeg";
+  http.get(`${baseUrl}/organizations/me/logo/presigned-url`, () => {
     const path = `logos/org_001/${crypto.randomUUID()}.jpg`;
     const uploadUrl = `${baseUrl}/uploads/${path}`;
     return HttpResponse.json({ upload_url: uploadUrl, path }, { status: 200 });
