@@ -9,6 +9,7 @@ import useUser from "../hooks/useUser";
 import { camelCaseToTitle } from "../utils/helpers";
 import { useUserAvatar } from "../hooks/useUserAvatar";
 import { useUpdateUserMe } from "../hooks/useUpdateUser";
+import { buildCdnUrl } from "../services/apiClient";
 
 export interface AgentQuery {
   branch: Branch | null;
@@ -136,7 +137,7 @@ function ProfileSettings() {
                         {avatarFile ? (
                           <img src={URL.createObjectURL(avatarFile)} alt="Preview" className="w-12 h-12 rounded-full object-cover" />
                         ) : user?.avatar_path ? (
-                          <img src={user.avatar_path} alt="Avatar" className="w-12 h-12 rounded-full object-cover" />
+                          <img src={buildCdnUrl(user.avatar_path) ?? user.avatar_path} alt="Avatar" className="w-12 h-12 rounded-full object-cover" />
                         ) : (
                           <BiSolidUserCircle size={40} />
                         )}

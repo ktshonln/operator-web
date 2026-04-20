@@ -1,7 +1,7 @@
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { axiosInstance } from "../services/apiClient";
 
-export interface GetPresignedUrlResponse {
+export interface PresignedUrlResponse {
   upload_url: string;
   path: string;
 }
@@ -9,46 +9,31 @@ export interface GetPresignedUrlResponse {
 export const useUserAvatar = () => {
   const queryClient = useQueryClient();
 
-  const getPresignedUrl = useMutation({
-    mutationFn: async ({ fileName, contentType }: { fileName: string, contentType: string }) => {
-      const response = await axiosInstance.post<GetPresignedUrlResponse>(
-        "/users/me/avatar/presigned-url",
-        { file_name: fileName, content_type: contentType }
-      );
-      return response.data;
-    },
-  });
-
   const uploadAvatar = useMutation({
     mutationFn: async (file: File) => {
-      // First get the presigned URL
-      const { upload_url, path } = await getPresignedUrl.mutateAsync({ fileName: file.name, contentType: file.type });
+      // Step 1: GET presigned URL with content_type as query param (per spec)
+      const { data } = await axiosInstance.get<PresignedUrlResponse>(
+        `/users/me/avatar/presigned-url`,
+        { params: { content_type: file.type } }
+      );
+      const { upload_url, path } = data;
 
-      // Upload the file to the presigned URL
-      const formData = new FormData();
-      formData.append("file", file);
-
+      // Step 2: PUT file directly to presigned URL (no auth headers)
       await fetch(upload_url, {
         method: "PUT",
         body: file,
-        headers: {
-          "Content-Type": file.type,
-        },
+        headers: { "Content-Type": file.type },
       });
 
-      // Update the user's avatar path
+      // Step 3: Commit path to user record
       await axiosInstance.patch("/users/me", { avatar_path: path });
 
       return path;
     },
     onSuccess: () => {
-      // Invalidate current user data
       queryClient.invalidateQueries({ queryKey: ["user"] });
     },
   });
 
-  return {
-    getPresignedUrl,
-    uploadAvatar,
-  };
+  return { uploadAvatar };
 };

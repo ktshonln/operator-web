@@ -3,7 +3,7 @@ import { useNavigate, Link } from "react-router-dom";
 import { BsArrowLeft } from "react-icons/bs";
 import { useCreateOrganization, Organization } from "../hooks/useOrganizations";
 import Can from "../components/Can";
-import APIClient from "../services/apiClient";
+import { axiosInstance, buildCdnUrl } from "../services/apiClient";
 
 const CreateOrganization = () => {
   const navigate = useNavigate();
@@ -26,15 +26,24 @@ const CreateOrganization = () => {
     let finalLogoPath = formData.logo_path;
     try {
       if (logoFile) {
-        const fileClient = new APIClient<any>("");
-        const { uploadUrl, fileUrl } = await fileClient.getPresignedUploadUrl(logoFile.name, logoFile.type);
-        await fileClient.uploadFileToUrl(uploadUrl, logoFile);
-        finalLogoPath = fileUrl;
+        // Step 1: GET presigned URL (spec: GET /organizations/me/logo/presigned-url?content_type=...)
+        const { data: presigned } = await axiosInstance.get<{ upload_url: string; path: string }>(
+          `/organizations/me/logo/presigned-url`,
+          { params: { content_type: logoFile.type } }
+        );
+        // Step 2: PUT file directly to presigned URL
+        await fetch(presigned.upload_url, {
+          method: "PUT",
+          body: logoFile,
+          headers: { "Content-Type": logoFile.type },
+        });
+        // Step 3: use the path (committed in the create payload below)
+        finalLogoPath = presigned.path;
       }
     } catch (e) {
       console.error("Failed to upload logo", e);
       setIsUploading(false);
-      return; 
+      return;
     }
 
     const payload = {
@@ -160,7 +169,7 @@ const CreateOrganization = () => {
                 {logoFile ? (
                   <img src={URL.createObjectURL(logoFile)} alt="Logo Preview" className="w-full h-full object-cover" />
                 ) : formData.logo_path ? (
-                  <img src={formData.logo_path} alt="Logo" className="w-full h-full object-cover" />
+                  <img src={buildCdnUrl(formData.logo_path) ?? formData.logo_path} alt="Logo" className="w-full h-full object-cover" />
                 ) : (
                   <span className="text-xs text-gray-400 text-center px-2">Upload</span>
                 )}

@@ -132,6 +132,29 @@ let agents = [
 ];
 
 export const handlers = [
+  // ── GET /users/:id ────────────────────────────────────────────────────────
+  http.get(`${baseUrl}/users/:id`, ({ params }) => {
+    const user = mockUsers.find((u) => u.id === params.id);
+    if (!user) {
+      return HttpResponse.json({ message: "User not found" }, { status: 404 });
+    }
+    return HttpResponse.json(user, { status: 200 });
+  }),
+
+  // ── GET /organizations/me/logo/presigned-url ───────────────────────────────
+  http.get(`${baseUrl}/organizations/me/logo/presigned-url`, ({ request }) => {
+    const url = new URL(request.url);
+    const contentType = url.searchParams.get("content_type") ?? "image/jpeg";
+    const path = `logos/org_001/${crypto.randomUUID()}.jpg`;
+    const uploadUrl = `${baseUrl}/uploads/${path}`;
+    return HttpResponse.json({ upload_url: uploadUrl, path }, { status: 200 });
+  }),
+
+  // ── PUT /uploads/* (catch-all for presigned upload simulation) ─────────────
+  http.put(`${baseUrl}/uploads/:path`, () => {
+    return new HttpResponse(null, { status: 200 });
+  }),
+
   // ── GET /users (Task 2.2) ──────────────────────────────────────────────────
   http.get(`${baseUrl}/users`, ({ request }) => {
     const url = new URL(request.url);
