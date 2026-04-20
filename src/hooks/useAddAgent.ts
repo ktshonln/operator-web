@@ -9,14 +9,14 @@ import { CACHE_KEY_AGENTS } from "../utils/constants";
 import { Agent } from "./useAgent";
 import { Role } from "./useUser";
 
-export interface AgentDetails {
-  inviteUserId: string;
-  companyId: string;
+export interface UserDetails {
   firstName: string;
   lastName: string;
+  role: Role;
+  orgId: string;
   email: string;
   phoneNumber: string;
-  role: Role;
+  locale: string;
 }
 
 interface EditAgentContext {
@@ -26,8 +26,8 @@ interface EditAgentContext {
 const useAddAgent = (orgId: string) => {
   const queryClient = useQueryClient();
   const showToast = useToastStore((state) => state.showToast);
-  return useMutation<Agent, Error, AgentDetails, EditAgentContext>({
-    mutationFn: async (routeDetails: AgentDetails) => {
+  return useMutation<Agent, Error, UserDetails, EditAgentContext>({
+    mutationFn: async (routeDetails: UserDetails) => {
       const response = await axiosInstance.post("/users/invite", {
         first_name: routeDetails.firstName,
         last_name: routeDetails.lastName,

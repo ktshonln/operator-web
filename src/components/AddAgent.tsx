@@ -1,7 +1,7 @@
 import { zodResolver } from "@hookform/resolvers/zod";
 import { Controller, useForm } from "react-hook-form";
 import { z } from "zod";
-import useAddAgent, { AgentDetails } from "../hooks/useAddAgent";
+import useAddAgent, { UserDetails } from "../hooks/useAddAgent";
 
 import { camelCaseToTitle } from "../utils/helpers";
 import DropDown from "./DropDown";
@@ -37,7 +37,7 @@ interface Props {
   roles: string[];
   rolePermissions: Record<string, GrantDisplay[]>;
 }
-const AddAgent = ({ companyId, userId, roles, rolePermissions }: Props) => {
+const AddAgent = ({ companyId, roles, rolePermissions }: Props) => {
   const [refreshKey, setRefreshKey] = useState(0);
 
   const values = {
@@ -63,10 +63,10 @@ const AddAgent = ({ companyId, userId, roles, rolePermissions }: Props) => {
   const addAgent = useAddAgent(companyId);
 
   const onSubmit = async (data: FormData) => {
-    const fullData: AgentDetails = {
+    const fullData: UserDetails = {
       ...data,
-      companyId,
-      inviteUserId: userId,
+      orgId: companyId,
+      locale: "rw",
     };
     addAgent.mutate(fullData);
     resetField("firstName");
