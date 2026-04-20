@@ -23,7 +23,5 @@ temp/
 *.njsproj
 *.sln
 *.sw?
-
-# Kiro IDE files
 .kiro/
 
