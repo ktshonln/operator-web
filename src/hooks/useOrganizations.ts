@@ -1,47 +1,66 @@
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { useToastStore } from "../stores/toastStore";
-import APIClient from "../services/apiClient";
+import { axiosInstance } from "../services/apiClient";
+
+// ─── Types aligned with spec ──────────────────────────────────────────────────
 
 export interface Organization {
   id: string;
   name: string;
   slug: string;
-  org_type: "company" | "cooperative";
-  status: "pending" | "active" | "rejected" | "suspended";
+  org_type: "company" | "cooperative" | "coop_member";
+  status: "unverified" | "pending" | "active" | "suspended" | "rejected";
+  contact_first_name: string;
+  contact_last_name: string;
   contact_email: string;
-  contact_phone?: string;
+  contact_phone: string;
+  tin?: string;
+  license_number?: string;
+  logo_path?: string | null;
+  address?: string | null;
   parent_org_id?: string | null;
-  logo_path?: string;
-  address?: string;
   created_at: string;
-  updated_at: string;
+  updated_at?: string;
 }
 
 export interface CreateOrganizationPayload {
   name: string;
-  org_type: "company" | "cooperative";
+  org_type: "company" | "cooperative" | "coop_member";
+  contact_first_name: string;
+  contact_last_name: string;
   contact_email: string;
-  contact_phone?: string;
-  parent_org_id?: string;
-  logo_path?: string;
+  contact_phone: string; // E.164 format e.g. +250788000001
+  tin: string;           // exactly 9 digits
+  license_number?: string;
   address?: string;
+  parent_org_id?: string; // required when org_type === 'coop_member'
 }
 
-export interface UpdateOrganizationPayload extends Partial<CreateOrganizationPayload> {
-  status?: Organization["status"];
+export interface UpdateOrganizationPayload {
+  name?: string;
+  contact_first_name?: string;
+  contact_last_name?: string;
+  contact_email?: string;
+  contact_phone?: string;
+  address?: string;
+  logo_path?: string | null;
+  // admin-only fields
+  status?: "active" | "suspended" | "rejected";
+  rejection_reason?: string;
 }
 
-const apiClient = new APIClient<Organization>("/organizations");
+// ─── Hooks ────────────────────────────────────────────────────────────────────
 
-// Get current user's organization
 export const useOrganization = () => {
   return useQuery({
     queryKey: ["organization", "me"],
-    queryFn: () => apiClient.get("me"),
+    queryFn: async () => {
+      const { data } = await axiosInstance.get<Organization>("/organizations/me");
+      return data;
+    },
   });
 };
 
-// Get all organizations (admin only)
 export const useOrganizations = (params?: {
   status?: Organization["status"];
   org_type?: Organization["org_type"];
@@ -50,26 +69,37 @@ export const useOrganizations = (params?: {
 }) => {
   return useQuery({
     queryKey: ["organizations", params],
-    queryFn: () => apiClient.getAll({ params }),
+    queryFn: async () => {
+      const { data } = await axiosInstance.get<{ data: Organization[]; total: number; page: number; limit: number }>(
+        "/organizations",
+        { params }
+      );
+      // Return the data array directly for backwards compatibility with existing consumers
+      return data.data ?? data;
+    },
   });
 };
 
-// Get single organization by ID
 export const useOrganizationById = (id: string) => {
   return useQuery({
     queryKey: ["organizations", id],
-    queryFn: () => apiClient.get(id),
+    queryFn: async () => {
+      const { data } = await axiosInstance.get<Organization>(`/organizations/${id}`);
+      return data;
+    },
     enabled: !!id,
   });
 };
 
-// Create organization
 export const useCreateOrganization = () => {
   const showToast = useToastStore((state) => state.showToast);
   const queryClient = useQueryClient();
 
   return useMutation({
-    mutationFn: (data: CreateOrganizationPayload) => apiClient.post(data),
+    mutationFn: async (payload: CreateOrganizationPayload) => {
+      const { data } = await axiosInstance.post<Organization>("/organizations", payload);
+      return data;
+    },
     onSuccess: () => {
       showToast("Organization created successfully", "success");
       queryClient.invalidateQueries({ queryKey: ["organizations"] });
@@ -80,19 +110,15 @@ export const useCreateOrganization = () => {
   });
 };
 
-// Update organization
 export const useUpdateOrganization = () => {
   const showToast = useToastStore((state) => state.showToast);
   const queryClient = useQueryClient();
 
   return useMutation({
-    mutationFn: ({
-      id,
-      data,
-    }: {
-      id: string;
-      data: UpdateOrganizationPayload;
-    }) => apiClient.patch(data, id),
+    mutationFn: async ({ id, data }: { id: string; data: UpdateOrganizationPayload }) => {
+      const { data: updated } = await axiosInstance.patch<Organization>(`/organizations/${id}`, data);
+      return updated;
+    },
     onSuccess: (_, { id }) => {
       showToast("Organization updated successfully", "success");
       queryClient.invalidateQueries({ queryKey: ["organizations"] });
@@ -105,13 +131,14 @@ export const useUpdateOrganization = () => {
   });
 };
 
-// Delete organization
 export const useDeleteOrganization = () => {
   const showToast = useToastStore((state) => state.showToast);
   const queryClient = useQueryClient();
 
   return useMutation({
-    mutationFn: (id: string) => apiClient.delete(id),
+    mutationFn: async (id: string) => {
+      await axiosInstance.delete(`/organizations/${id}`);
+    },
     onSuccess: () => {
       showToast("Organization deleted successfully", "success");
       queryClient.invalidateQueries({ queryKey: ["organizations"] });
@@ -122,31 +149,46 @@ export const useDeleteOrganization = () => {
   });
 };
 
-// Approve/reject organization (admin only)
+// Approve/reject via PATCH /organizations/:id { status: 'active' | 'rejected', rejection_reason? }
 export const useApproveOrganization = () => {
   const showToast = useToastStore((state) => state.showToast);
   const queryClient = useQueryClient();
 
   return useMutation({
-    mutationFn: ({
-      id,
-      action,
-      reason,
-    }: {
-      id: string;
-      action: "approve" | "reject";
-      reason?: string;
-    }) => apiClient.post({ action, reason }, `${id}/approve`),
-    onSuccess: (_, { action }) => {
-      const message =
+    mutationFn: async ({ id, action, reason }: { id: string; action: "approve" | "reject"; reason?: string }) => {
+      const payload: UpdateOrganizationPayload =
         action === "approve"
-          ? "Organization approved"
-          : "Organization rejected";
-      showToast(message, "success");
+          ? { status: "active" }
+          : { status: "rejected", rejection_reason: reason };
+      const { data } = await axiosInstance.patch<Organization>(`/organizations/${id}`, payload);
+      return data;
+    },
+    onSuccess: (_, { action }) => {
+      showToast(action === "approve" ? "Organization approved" : "Organization rejected", "success");
       queryClient.invalidateQueries({ queryKey: ["organizations"] });
     },
     onError: (error: any) => {
       showToast(error.message || "Failed to process organization", "error");
+    },
+  });
+};
+
+// Cooperative pre-approval: POST /organizations/:id/cooperative-approve
+export const useCooperativeApprove = () => {
+  const showToast = useToastStore((state) => state.showToast);
+  const queryClient = useQueryClient();
+
+  return useMutation({
+    mutationFn: async (id: string) => {
+      const { data } = await axiosInstance.post<Organization>(`/organizations/${id}/cooperative-approve`);
+      return data;
+    },
+    onSuccess: () => {
+      showToast("Cooperative pre-approval submitted", "success");
+      queryClient.invalidateQueries({ queryKey: ["organizations"] });
+    },
+    onError: (error: any) => {
+      showToast(error.message || "Failed to pre-approve", "error");
     },
   });
 };

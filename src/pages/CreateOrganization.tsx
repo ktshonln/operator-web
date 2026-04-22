@@ -1,194 +1,179 @@
 import { useState } from "react";
 import { useNavigate, Link } from "react-router-dom";
 import { BsArrowLeft } from "react-icons/bs";
-import { useCreateOrganization, Organization } from "../hooks/useOrganizations";
+import { useCreateOrganization, CreateOrganizationPayload } from "../hooks/useOrganizations";
 import Can from "../components/Can";
-import { axiosInstance, buildCdnUrl } from "../services/apiClient";
+import { axiosInstance } from "../services/apiClient";
+
+const ACCEPTED_IMAGE_TYPES = "image/jpeg,image/png,image/webp";
 
 const CreateOrganization = () => {
   const navigate = useNavigate();
   const createOrg = useCreateOrganization();
-  const [formData, setFormData] = useState<Partial<Organization>>({
-    org_type: "company",
-    status: "pending",
-  });
   const [logoFile, setLogoFile] = useState<File | null>(null);
   const [isUploading, setIsUploading] = useState(false);
+  const [form, setForm] = useState<Partial<CreateOrganizationPayload>>({
+    org_type: "company",
+  });
 
-  const handleChange = (field: keyof Organization, value: string) => {
-    setFormData((prev) => ({ ...prev, [field]: value }));
-  };
+  const set = (field: keyof CreateOrganizationPayload, value: string) =>
+    setForm((prev) => ({ ...prev, [field]: value }));
 
-  const handleSubmit = async (event: React.FormEvent<HTMLFormElement>) => {
-    event.preventDefault();
+  const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
+    e.preventDefault();
     setIsUploading(true);
 
-    let finalLogoPath = formData.logo_path;
-    try {
-      if (logoFile) {
-        // Step 1: GET presigned URL (spec: GET /organizations/me/logo/presigned-url?content_type=...)
-        const { data: presigned } = await axiosInstance.get<{ upload_url: string; path: string }>(
-          `/organizations/me/logo/presigned-url`,
-          { params: { content_type: logoFile.type } }
-        );
-        // Step 2: PUT file directly to presigned URL
-        await fetch(presigned.upload_url, {
-          method: "PUT",
-          body: logoFile,
-          headers: { "Content-Type": logoFile.type },
-        });
-        // Step 3: use the path (committed in the create payload below)
-        finalLogoPath = presigned.path;
-      }
-    } catch (e) {
-      console.error("Failed to upload logo", e);
-      setIsUploading(false);
-      return;
-    }
-
-    const payload = {
-      name: formData.name || "",
-      org_type: (formData.org_type as Organization["org_type"]) ?? "company",
-      contact_email: formData.contact_email || "",
-      contact_phone: formData.contact_phone,
-      logo_path: finalLogoPath,
-      address: formData.address,
-      parent_org_id: formData.parent_org_id ?? undefined,
+    const payload: CreateOrganizationPayload = {
+      name: form.name ?? "",
+      org_type: form.org_type ?? "company",
+      contact_first_name: form.contact_first_name ?? "",
+      contact_last_name: form.contact_last_name ?? "",
+      contact_email: form.contact_email ?? "",
+      contact_phone: form.contact_phone ?? "",
+      tin: form.tin ?? "",
+      license_number: form.license_number || undefined,
+      address: form.address || undefined,
+      parent_org_id: form.org_type === "coop_member" ? (form.parent_org_id || undefined) : undefined,
     };
 
     createOrg.mutate(payload, {
-      onSuccess: () => {
+      onSuccess: async (createdOrg) => {
+        // Upload logo after org is created (we need the org ID for the presigned URL)
+        if (logoFile && createdOrg?.id) {
+          try {
+            const accepted = ["image/jpeg", "image/png", "image/webp"];
+            const contentType = accepted.includes(logoFile.type) ? logoFile.type : "image/jpeg";
+            const { data: presigned } = await axiosInstance.get<{ upload_url: string; path: string }>(
+              `/organizations/${createdOrg.id}/logo/presigned-url`,
+              { params: { content_type: contentType } }
+            );
+            await fetch(presigned.upload_url, {
+              method: "PUT",
+              body: logoFile,
+              headers: { "Content-Type": contentType },
+            });
+            await axiosInstance.patch(`/organizations/${createdOrg.id}`, { logo_path: presigned.path });
+          } catch (err) {
+            console.error("Logo upload failed (org was created)", err);
+          }
+        }
         setIsUploading(false);
         navigate("/organizations");
       },
-      onError: () => {
-        setIsUploading(false);
-      }
+      onError: () => setIsUploading(false),
     });
   };
 
+  const inputClass = "w-full border border-gray-300 dark:border-neutral-700 rounded-lg px-3 py-2 text-sm bg-white dark:bg-neutral-900 text-gray-900 dark:text-white outline-none focus:ring-2 focus:ring-brand/20 focus:border-brand transition-colors";
+  const labelClass = "block text-sm font-medium text-gray-700 dark:text-neutral-300 mb-1";
+
   return (
-    <div className="p-6">
-      <div className="flex items-center justify-between mb-6">
-        <div className="flex items-center gap-3">
-          <Link
-            to="/organizations"
-            className="text-gray-600 hover:text-gray-900"
-          >
-            <BsArrowLeft size={20} />
-          </Link>
-          <div>
-            <h1 className="text-2xl font-bold text-gray-900">
-              Create Organization
-            </h1>
-            <p className="text-sm text-neutral-600 dark:text-neutral-400">
-              Add a new organization and configure its details.
-            </p>
-          </div>
+    <div className="p-6 max-w-3xl">
+      <div className="flex items-center gap-3 mb-6">
+        <Link to="/organizations" className="text-gray-500 hover:text-gray-900 dark:hover:text-white transition-colors">
+          <BsArrowLeft size={20} />
+        </Link>
+        <div>
+          <h1 className="text-2xl font-bold text-gray-900 dark:text-white">Create Organization</h1>
+          <p className="text-sm text-neutral-500 dark:text-neutral-400">Add a new organization to the platform.</p>
         </div>
       </div>
 
       <Can I="create" a="Organization">
-        <form onSubmit={handleSubmit} className="space-y-6 max-w-3xl">
-          <div className="grid gap-6 sm:grid-cols-2">
-            <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1">
-                Organization name
-              </label>
-              <input
-                type="text"
-                value={formData.name ?? ""}
-                onChange={(e) => handleChange("name", e.target.value)}
-                className="w-full border border-gray-300 rounded px-3 py-2"
-                required
-              />
-            </div>
+        <form onSubmit={handleSubmit} className="space-y-6">
 
+          {/* Org name + type */}
+          <div className="grid gap-4 sm:grid-cols-2">
             <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1">
-                Organization type
-              </label>
-              <select
-                value={formData.org_type ?? "company"}
-                onChange={(e) => handleChange("org_type", e.target.value)}
-                className="w-full border border-gray-300 rounded px-3 py-2"
-              >
+              <label className={labelClass}>Organization name <span className="text-red-500">*</span></label>
+              <input type="text" required value={form.name ?? ""} onChange={(e) => set("name", e.target.value)} className={inputClass} />
+            </div>
+            <div>
+              <label className={labelClass}>Organization type <span className="text-red-500">*</span></label>
+              <select required value={form.org_type ?? "company"} onChange={(e) => set("org_type", e.target.value)} className={inputClass}>
                 <option value="company">Company</option>
                 <option value="cooperative">Cooperative</option>
+                <option value="coop_member">Cooperative Member</option>
               </select>
             </div>
           </div>
 
-          <div className="grid gap-6 sm:grid-cols-2">
+          {/* coop_member: parent org */}
+          {form.org_type === "coop_member" && (
             <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1">
-                Contact email
-              </label>
-              <input
-                type="email"
-                value={formData.contact_email ?? ""}
-                onChange={(e) => handleChange("contact_email", e.target.value)}
-                className="w-full border border-gray-300 rounded px-3 py-2"
-                required
-              />
+              <label className={labelClass}>Parent Cooperative ID <span className="text-red-500">*</span></label>
+              <input type="text" required value={form.parent_org_id ?? ""} onChange={(e) => set("parent_org_id", e.target.value)}
+                placeholder="UUID of the parent cooperative" className={inputClass} />
+              <p className="text-xs text-neutral-500 mt-1">Must be an active cooperative's ID.</p>
+            </div>
+          )}
+
+          {/* Contact person */}
+          <div className="grid gap-4 sm:grid-cols-2">
+            <div>
+              <label className={labelClass}>Contact first name <span className="text-red-500">*</span></label>
+              <input type="text" required value={form.contact_first_name ?? ""} onChange={(e) => set("contact_first_name", e.target.value)} className={inputClass} />
             </div>
             <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1">
-                Contact phone
-              </label>
-              <input
-                type="tel"
-                value={formData.contact_phone ?? ""}
-                onChange={(e) => handleChange("contact_phone", e.target.value)}
-                className="w-full border border-gray-300 rounded px-3 py-2"
-              />
+              <label className={labelClass}>Contact last name <span className="text-red-500">*</span></label>
+              <input type="text" required value={form.contact_last_name ?? ""} onChange={(e) => set("contact_last_name", e.target.value)} className={inputClass} />
             </div>
           </div>
 
-          <div>
-            <label className="block text-sm font-medium text-gray-700 mb-1">
-              Address
-            </label>
-            <textarea
-              rows={4}
-              value={formData.address ?? ""}
-              onChange={(e) => handleChange("address", e.target.value)}
-              className="w-full border border-gray-300 rounded px-3 py-2"
-            />
+          {/* Contact details */}
+          <div className="grid gap-4 sm:grid-cols-2">
+            <div>
+              <label className={labelClass}>Contact email <span className="text-red-500">*</span></label>
+              <input type="email" required value={form.contact_email ?? ""} onChange={(e) => set("contact_email", e.target.value)} className={inputClass} />
+            </div>
+            <div>
+              <label className={labelClass}>Contact phone <span className="text-red-500">*</span></label>
+              <input type="tel" required value={form.contact_phone ?? ""} onChange={(e) => set("contact_phone", e.target.value)}
+                placeholder="+250788000001" pattern="^\+\d{7,15}$" title="E.164 format e.g. +250788000001" className={inputClass} />
+            </div>
           </div>
 
+          {/* TIN + License */}
+          <div className="grid gap-4 sm:grid-cols-2">
+            <div>
+              <label className={labelClass}>TIN <span className="text-red-500">*</span></label>
+              <input type="text" required value={form.tin ?? ""} onChange={(e) => set("tin", e.target.value)}
+                placeholder="123456789" pattern="^\d{9}$" maxLength={9} title="Exactly 9 digits" className={inputClass} />
+              <p className="text-xs text-neutral-500 mt-1">Exactly 9 digits.</p>
+            </div>
+            <div>
+              <label className={labelClass}>License number</label>
+              <input type="text" value={form.license_number ?? ""} onChange={(e) => set("license_number", e.target.value)} className={inputClass} />
+            </div>
+          </div>
+
+          {/* Address */}
           <div>
-            <label className="block text-sm font-medium text-gray-700 mb-1">
-              Organization Logo
-            </label>
+            <label className={labelClass}>Address</label>
+            <textarea rows={3} value={form.address ?? ""} onChange={(e) => set("address", e.target.value)} className={inputClass} />
+          </div>
+
+          {/* Logo */}
+          <div>
+            <label className={labelClass}>Logo <span className="text-xs text-neutral-400">(optional — uploaded after creation)</span></label>
             <div className="flex items-center gap-4">
-              <div 
+              <div
                 className="w-16 h-16 rounded-lg border-2 border-dashed border-gray-300 dark:border-neutral-700 flex items-center justify-center overflow-hidden bg-gray-50 dark:bg-neutral-900 cursor-pointer hover:bg-gray-100 dark:hover:bg-neutral-800 transition-colors"
                 onClick={() => document.getElementById("logo-upload")?.click()}
               >
                 {logoFile ? (
-                  <img src={URL.createObjectURL(logoFile)} alt="Logo Preview" className="w-full h-full object-cover" />
-                ) : formData.logo_path ? (
-                  <img src={buildCdnUrl(formData.logo_path) ?? formData.logo_path} alt="Logo" className="w-full h-full object-cover" />
+                  <img src={URL.createObjectURL(logoFile)} alt="Preview" className="w-full h-full object-cover" />
                 ) : (
-                  <span className="text-xs text-gray-400 text-center px-2">Upload</span>
+                  <span className="text-xs text-gray-400 text-center px-2">Click to upload</span>
                 )}
               </div>
               <div className="flex-1">
-                <input
-                  id="logo-upload"
-                  type="file"
-                  accept="image/*"
-                  className="hidden"
-                  onChange={(e) => {
-                    const file = e.target.files?.[0];
-                    if (file) setLogoFile(file);
-                  }}
-                />
-                <p className="text-xs text-neutral-500 mb-2">Recommended: 256x256px transparent PNG or JPG.</p>
+                <input id="logo-upload" type="file" accept={ACCEPTED_IMAGE_TYPES} className="hidden"
+                  onChange={(e) => { const f = e.target.files?.[0]; if (f) setLogoFile(f); }} />
+                <p className="text-xs text-neutral-500 mb-1">JPEG, PNG or WebP. Recommended 256×256px.</p>
                 {logoFile && (
-                  <button type="button" onClick={() => setLogoFile(null)} className="text-xs text-red-500 hover:text-red-700 transition-colors">
-                    Remove selected logo
+                  <button type="button" onClick={() => setLogoFile(null)} className="text-xs text-red-500 hover:text-red-700">
+                    Remove
                   </button>
                 )}
               </div>
@@ -198,7 +183,7 @@ const CreateOrganization = () => {
           <button
             type="submit"
             disabled={createOrg.isPending || isUploading}
-            className="bg-blue-500 text-white px-5 py-3 rounded hover:bg-blue-600 disabled:opacity-50"
+            className="bg-brand text-white px-6 py-2.5 rounded-lg hover:brightness-95 transition-colors disabled:opacity-50 text-sm font-medium"
           >
             {createOrg.isPending || isUploading ? "Creating..." : "Create Organization"}
           </button>

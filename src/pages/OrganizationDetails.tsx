@@ -29,13 +29,12 @@ const OrganizationDetails = () => {
     if (id && formData) {
       const updateData: UpdateOrganizationPayload = {
         name: formData.name,
-        org_type: formData.org_type,
+        contact_first_name: formData.contact_first_name,
+        contact_last_name: formData.contact_last_name,
         contact_email: formData.contact_email,
         contact_phone: formData.contact_phone,
-        logo_path: formData.logo_path,
-        address: formData.address,
-        parent_org_id: formData.parent_org_id ?? undefined,
-        status: formData.status,
+        logo_path: formData.logo_path ?? undefined,
+        address: formData.address ?? undefined,
       };
       updateOrg.mutate(
         { id, data: updateData },
@@ -59,6 +58,7 @@ const OrganizationDetails = () => {
 
   const getStatusBadge = (status: Organization["status"]): string => {
     const badges: Record<Organization["status"], string> = {
+      unverified: "bg-gray-100 text-gray-600",
       pending: "bg-yellow-100 text-yellow-800",
       active: "bg-green-100 text-green-800",
       rejected: "bg-red-100 text-red-800",
@@ -305,7 +305,7 @@ const OrganizationDetails = () => {
                 Last Updated
               </label>
               <p className="text-gray-500">
-                {new Date(organization.updated_at).toLocaleString()}
+                {organization.updated_at ? new Date(organization.updated_at).toLocaleString() : "—"}
               </p>
             </div>
           </div>
