@@ -39,7 +39,7 @@ function Settings() {
             Manage your organization's users and their access.
           </p>
         </div>
-        <Can I="create" a="User">
+        <Can I="invite" a="User">
           <button
             onClick={() => setInvitePanelOpen(true)}
             className="flex items-center gap-2 bg-brand text-white px-4 py-2 rounded-lg text-sm font-medium hover:brightness-95 transition-colors"
@@ -125,6 +125,7 @@ function Settings() {
             usersQuery={usersQuery}
             rolesLoading={rolesLoading}
             userQuery={userQuery}
+            onClearFilters={() => setUserQuery({ branch: null, sortOrder: "", searchText: "" })}
           />
         </div>
       </div>

@@ -83,6 +83,7 @@ export interface UsersTableProps {
   usersQuery: ReturnType<typeof useUsers>;
   rolesLoading: boolean;
   userQuery: UserQuery;
+  onClearFilters?: () => void;
 }
 
 // ─── Row-level action menu ────────────────────────────────────────────────────
@@ -400,7 +401,7 @@ function SelfContainedRow({ agent, rowIndex, mobile = false }: SelfContainedRowP
 
 // ─── Main UsersTable component ────────────────────────────────────────────────
 
-export function UsersTable({ usersQuery, rolesLoading, userQuery }: UsersTableProps) {
+export function UsersTable({ usersQuery, rolesLoading, userQuery, onClearFilters }: UsersTableProps) {
   const { data: users, isLoading } = usersQuery;
 
   // Client-side search filter (fallback when API search isn't available)
@@ -425,6 +426,8 @@ export function UsersTable({ usersQuery, rolesLoading, userQuery }: UsersTablePr
     </tr>
   );
 
+  const hasActiveFilters = !!(userQuery.searchText || userQuery.status || userQuery.userType);
+
   const emptyRow = (
     <tr>
       <td colSpan={6} className="px-4 py-12 text-center text-neutral-500 dark:text-neutral-400">
@@ -437,6 +440,14 @@ export function UsersTable({ usersQuery, rolesLoading, userQuery }: UsersTablePr
           </div>
           <span className="font-medium">No users found</span>
           <span className="text-sm">Try adjusting your filters or search terms</span>
+          {hasActiveFilters && onClearFilters && (
+            <button
+              onClick={onClearFilters}
+              className="mt-2 text-sm text-brand hover:underline"
+            >
+              Clear filters
+            </button>
+          )}
         </div>
       </td>
     </tr>
@@ -494,6 +505,11 @@ export function UsersTable({ usersQuery, rolesLoading, userQuery }: UsersTablePr
             </div>
             <span className="font-medium">No users found</span>
             <span className="text-sm">Try adjusting your filters or search terms</span>
+            {hasActiveFilters && onClearFilters && (
+              <button onClick={onClearFilters} className="mt-2 text-sm text-brand hover:underline">
+                Clear filters
+              </button>
+            )}
           </div>
         )}
         {users?.pages.map((page, pageIndex) => (
