@@ -2,12 +2,99 @@ import { useState, useMemo } from "react";
 import { BsBuilding } from "react-icons/bs";
 import { BiWorld, BiUser } from "react-icons/bi";
 import { useCreateRole } from "../hooks/useCreateRole";
-import { Role } from "../hooks/useRoles";
+import { Role, useRoleById } from "../hooks/useRoles";
 import { Permission } from "../hooks/usePermissions";
 
 interface RoleManagerProps {
   roles: Role[];
   permissionOptions: Permission[];
+}
+
+// Sub-component that fetches and displays grants for a single role on demand
+function RoleGrantsRow({ role, permissionOptions }: { role: Role; permissionOptions: Permission[] }) {
+  const [expanded, setExpanded] = useState(false);
+  const { data: roleDetail, isLoading } = useRoleById(expanded ? role.id : "");
+
+  const getGrantDisplay = (pattern: string) => {
+    const parts = pattern.split(":");
+    const scope = parts.length >= 3 ? parts.pop() || "" : "";
+    const code = parts.join(":");
+    const perm = permissionOptions.find((p) => p.code === code);
+    let fallbackName = code;
+    if (code === "*:*") fallbackName = "Full Access";
+    else if (code.includes(":")) {
+      const [subject, action] = code.split(":");
+      if (subject && action) {
+        const capAction = action.charAt(0).toUpperCase() + action.slice(1);
+        const pluralSubject = subject.endsWith("s") ? subject : `${subject}s`;
+        fallbackName = `${capAction} ${pluralSubject}`;
+      }
+    }
+    return { pattern, displayName: perm ? perm.display_name : fallbackName, description: perm?.description ?? "No description.", scope };
+  };
+
+  const grants = roleDetail?.grants ?? [];
+
+  return (
+    <div className="rounded-lg border border-gray-100 dark:border-neutral-800 p-3 bg-gray-50 dark:bg-neutral-950">
+      <div className="flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
+        <div className="flex items-center gap-2">
+          <button
+            type="button"
+            onClick={() => setExpanded((v) => !v)}
+            className="flex items-center gap-1.5 text-left"
+          >
+            <svg className={`w-3.5 h-3.5 transition-transform text-neutral-400 ${expanded ? "rotate-90" : ""}`} fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
+            </svg>
+            <p className="font-semibold text-sm text-neutral-900 dark:text-white">{role.name}</p>
+          </button>
+          {role.is_managed && (
+            <span className="text-[10px] bg-neutral-200 dark:bg-neutral-800 px-1.5 py-0.5 rounded-sm dark:text-neutral-300">
+              Managed
+            </span>
+          )}
+        </div>
+        <p className="text-[11px] uppercase text-neutral-500 dark:text-neutral-400">
+          {expanded && roleDetail ? `${grants.length} permissions` : "click to expand"}
+        </p>
+      </div>
+
+      {expanded && (
+        <div className="mt-2">
+          {isLoading ? (
+            <div className="flex items-center gap-2 text-xs text-neutral-400 py-2">
+              <div className="animate-spin rounded-full h-3 w-3 border border-brand border-t-transparent" />
+              Loading permissions...
+            </div>
+          ) : grants.length === 0 ? (
+            <p className="text-xs text-neutral-400 py-1">No permissions assigned.</p>
+          ) : (
+            <div className="flex flex-wrap gap-2 mt-2">
+              {grants.map((g) => {
+                const grant = getGrantDisplay(g.pattern);
+                return (
+                  <div key={grant.pattern} className="rounded-md border border-gray-200 bg-white px-2.5 py-1.5 text-xs text-neutral-600 dark:border-neutral-700 dark:bg-neutral-900 dark:text-neutral-300 flex flex-col">
+                    <div className="flex items-center font-medium text-neutral-900 dark:text-white">
+                      {grant.displayName}
+                      <div className="ml-1.5 opacity-70 flex items-center">
+                        {grant.scope === "org" && <BsBuilding title="Organization Scope" />}
+                        {grant.scope === "platform" && <BiWorld title="Platform Scope" />}
+                        {grant.scope === "own" && <BiUser title="Self Scope" />}
+                      </div>
+                    </div>
+                    <span className="text-[10px] text-neutral-500 mt-0.5 truncate max-w-[200px]" title={grant.description}>
+                      {grant.description}
+                    </span>
+                  </div>
+                );
+              })}
+            </div>
+          )}
+        </div>
+      )}
+    </div>
+  );
 }
 
 const RoleManager = ({ roles, permissionOptions }: RoleManagerProps) => {
@@ -24,31 +111,6 @@ const RoleManager = ({ roles, permissionOptions }: RoleManagerProps) => {
       return groups;
     }, {} as Record<string, Permission[]>);
   }, [permissionOptions]);
-
-  const getGrantDisplay = (pattern: string) => {
-    const parts = pattern.split(":");
-    const scope = parts.length >= 3 ? parts.pop() || "" : "";
-    const code = parts.join(":");
-    const perm = permissionOptions.find((p) => p.code === code);
-    
-    let fallbackName = code;
-    if (code === "*:*") fallbackName = "Full Access";
-    else if (code.includes(":")) {
-      const [subject, action] = code.split(":");
-      if (subject && action) {
-        const capAction = action.charAt(0).toUpperCase() + action.slice(1);
-        const pluralSubject = subject.endsWith("s") ? subject : `${subject}s`;
-        fallbackName = `${capAction} ${pluralSubject}`;
-      }
-    }
-
-    return {
-      pattern,
-      displayName: perm ? perm.display_name : fallbackName,
-      description: perm?.description ?? "No description provided by backend catalog.",
-      scope
-    };
-  };
 
   const handleCreate = () => {
     const trimmed = roleName.trim();
@@ -146,49 +208,7 @@ const RoleManager = ({ roles, permissionOptions }: RoleManagerProps) => {
           </h3>
           <div className="space-y-3">
             {roles.map((role) => (
-              <div
-                key={role.id}
-                className="rounded-lg border border-gray-100 dark:border-neutral-800 p-3 bg-gray-50 dark:bg-neutral-950"
-              >
-                <div className="flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
-                  <div className="flex items-center gap-2">
-                    <p className="font-semibold text-sm text-neutral-900 dark:text-white">
-                      {role.name}
-                    </p>
-                    {role.is_managed && (
-                      <span className="text-[10px] bg-neutral-200 dark:bg-neutral-800 px-1.5 py-0.5 rounded-sm dark:text-neutral-300">
-                        Managed
-                      </span>
-                    )}
-                  </div>
-                  <p className="text-[11px] uppercase text-neutral-500 dark:text-neutral-400">
-                    {role.grants?.length || 0} permissions
-                  </p>
-                </div>
-                <div className="flex flex-wrap gap-2 mt-2">
-                  {role.grants?.map((g) => {
-                    const grant = getGrantDisplay(g.pattern);
-                    return (
-                      <div
-                        key={grant.pattern}
-                        className="rounded-md border border-gray-200 bg-white px-2.5 py-1.5 text-xs text-neutral-600 dark:border-neutral-700 dark:bg-neutral-900 dark:text-neutral-300 flex flex-col"
-                      >
-                        <div className="flex items-center font-medium text-neutral-900 dark:text-white">
-                          {grant.displayName}
-                          <div className="ml-1.5 opacity-70 flex items-center">
-                            {grant.scope === 'org' && <BsBuilding title="Organization Scope" />}
-                            {grant.scope === 'platform' && <BiWorld title="Platform Scope" />}
-                            {grant.scope === 'own' && <BiUser title="Self Scope" />}
-                          </div>
-                        </div>
-                        <span className="text-[10px] text-neutral-500 mt-0.5 truncate max-w-[200px]" title={grant.description}>
-                          {grant.description}
-                        </span>
-                      </div>
-                    );
-                  })}
-                </div>
-              </div>
+              <RoleGrantsRow key={role.id} role={role} permissionOptions={permissionOptions} />
             ))}
           </div>
         </div>

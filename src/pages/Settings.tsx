@@ -9,7 +9,6 @@ import useUser from "../hooks/useUser";
 import Search from "../components/Search";
 import { Can } from "../contexts/AbilityContext";
 import RoleManager from "../components/RoleManager";
-import { GrantDisplay } from "../components/AddAgent";
 import { useOrganizations } from "../hooks/useOrganizations";
 import { UsersTable } from "../components/UsersTable";
 
@@ -36,48 +35,9 @@ function Settings() {
 
   const availableRoles = useMemo(() => rolesData?.data || [], [rolesData]);
 
-  const roleNames = useMemo(
-    () => availableRoles.map((role) => role.slug),
-    [availableRoles],
-  );
-
   const permissionOptions = useMemo(
     () => permissionsData?.data || [],
     [permissionsData],
-  );
-
-  const getGrantDisplay = (pattern: string): GrantDisplay => {
-    const parts = pattern.split(":");
-    const scope = parts.length >= 3 ? parts.pop() || "" : "";
-    const code = parts.join(":");
-    const perm = permissionOptions.find((p) => p.code === code);
-    
-    let fallbackName = code;
-    if (code === "*:*") fallbackName = "Full Access";
-    else if (code.includes(":")) {
-      const [subject, action] = code.split(":");
-      if (subject && action) {
-        const capAction = action.charAt(0).toUpperCase() + action.slice(1);
-        const pluralSubject = subject.endsWith("s") ? subject : `${subject}s`;
-        fallbackName = `${capAction} ${pluralSubject}`;
-      }
-    }
-
-    return {
-      pattern,
-      displayName: perm ? perm.display_name : fallbackName,
-      description: perm?.description ?? "No description provided by backend catalog.",
-      scope
-    };
-  };
-
-  const rolePermissions = useMemo(
-    () =>
-      availableRoles.reduce<Record<string, GrantDisplay[]>>((acc, role) => {
-        acc[role.slug] = role.grants ? role.grants.map((g) => getGrantDisplay(g.pattern)) : [];
-        return acc;
-      }, {}),
-    [availableRoles, permissionOptions],
   );
 
   const usersQuery = useUsers(selectedOrgId, userQuery);
@@ -157,8 +117,8 @@ function Settings() {
                     <AddAgent
                       companyId={companyId}
                       userId={userId}
-                      roles={roleNames}
-                      rolePermissions={rolePermissions}
+                      roles={availableRoles}
+                      permissionOptions={permissionOptions}
                     />
                   </Can>
                 )}
