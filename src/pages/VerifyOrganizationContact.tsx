@@ -114,9 +114,9 @@ const VerifyOrganizationContact = () => {
       >
         <path d="M0 0H614L436.5 1024H0V0Z" fill="#041D33" />
       </svg>
-      <div className="p-2 pt-10 sm:p-10 sm:pr-32 sm:pl-32">
-        <div className="bg-white relative drop-shadow-lg drop-shadow-black/25 rounded-2xl w-full max-w-screen flex justify-between">
-          <div className="w-full lg:w-1/2 xl:w-1/3 mx-auto p-8">
+      <div className="p-4 pt-8 sm:p-10">
+        <div className="bg-white relative drop-shadow-lg drop-shadow-black/25 rounded-2xl w-full max-w-lg mx-auto overflow-hidden">
+          <div className="p-8 sm:p-10">
             <img
               src="/logoOne.svg"
               className="w-28 mx-auto mb-6"

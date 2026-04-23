@@ -1,7 +1,6 @@
 import { BsTicketFill } from "react-icons/bs";
 import Footer from "../components/Footer";
 import { Link } from "react-router-dom";
-
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useForm } from "react-hook-form";
 import { z } from "zod";
@@ -9,147 +8,84 @@ import useLogin from "../hooks/useLogin";
 
 const schema = z.object({
   identifier: z.string().min(3, { message: "Please enter email or phone." }),
-  password: z
-    .string()
-    .min(8, { message: "Password must be at least 8 characters." }),
+  password: z.string().min(8, { message: "Password must be at least 8 characters." }),
 });
 type FormData = z.infer<typeof schema>;
 
-const LoginPage = () => {
-  const {
-    register,
-    handleSubmit,
-    formState: { errors },
-  } = useForm<FormData>({ resolver: zodResolver(schema) });
+// Shared decorative right panel — hidden on mobile
+const DecorativePanel = ({ tagline }: { tagline?: string }) => (
+  <div className="hidden lg:block absolute right-0 top-0 h-full pointer-events-none select-none">
+    <svg xmlns="http://www.w3.org/2000/svg" className="aspect-[838/800] -mr-1 h-full" viewBox="0 0 838 800" fill="none">
+      <path fillRule="evenodd" clipRule="evenodd" d="M741.484 799.46L242.072 704.401C221.487 700.483 204.448 686.093 197.13 666.446L4.39013 149.048C-3.0883 128.973 0.699696 106.42 14.3287 89.8773L88.3733 0H813C826.807 0 838 11.1929 838 25V774.46C838 788.267 826.807 799.46 813 799.46H741.484Z" fill="#0A4370" />
+    </svg>
+    <div className="absolute w-32 h-32 bg-[#6A717D]/25 top-8 right-24 rounded-full" />
+    <div className="absolute w-14 h-14 bg-[#6A717D]/25 top-8 right-[450px] rounded-full" />
+    <div className="absolute w-56 h-56 bg-[#6A717D]/25 top-52 right-52 rounded-full" />
+    <BsTicketFill className="absolute w-14 h-14 rotate-45 top-28 right-1/3 fill-[#6A717D]/25" />
+    <BsTicketFill className="absolute w-18 h-18 rotate-45 top-64 right-2 fill-[#6A717D]/25" />
+    <BsTicketFill className="absolute w-7 h-7 rotate-[30deg] bottom-20 right-52 fill-[#6A717D]/25" />
+    {tagline && (
+      <p className="absolute bottom-1/2 right-0 font-semibold text-2xl text-white max-w-[450px] pr-4">
+        {tagline}
+      </p>
+    )}
+  </div>
+);
 
+const LoginPage = () => {
+  const { register, handleSubmit, formState: { errors } } = useForm<FormData>({ resolver: zodResolver(schema) });
   const loginUser = useLogin();
 
-  const onSubmit = async (data: FormData) => {
-    loginUser.mutate({
-      identifier: data.identifier,
-      password: data.password,
-      device_name: "web",
-    });
+  const onSubmit = (data: FormData) => {
+    loginUser.mutate({ identifier: data.identifier, password: data.password, device_name: "web" });
   };
+
   return (
-    <div className="relative bg-[#0A4370] font-heebo">
-      <svg
-        xmlns="http://www.w3.org/2000/svg"
-        className="aspect-[614/1024] absolute lg:w-1/2 bottom-0 "
-        viewBox="0 0 614 1024"
-        fill="none"
-      >
+    <div className="relative bg-[#0A4370] font-heebo min-h-screen">
+      <svg xmlns="http://www.w3.org/2000/svg" className="aspect-[614/1024] absolute lg:w-1/2 bottom-0 pointer-events-none" viewBox="0 0 614 1024" fill="none">
         <path d="M0 0H614L436.5 1024H0V0Z" fill="#041D33" />
       </svg>
-      <div className="p-2 pt-10 sm:p-10 sm:pr-32 sm:pl-32">
-        <div className="bg-white dark:bg-neutral-900 dark:text-white relative drop-shadow-lg drop-shadow-black/25 rounded-2xl w-full max-w-screen flex justify-between">
-          <div className="w-full  lg:w-1/2 xl:w-1/3">
-            <img
-              src="/logoOne.svg"
-              className="w-32 ml-5 mt-2 pt-5 mb-7 dark:invert"
-              alt="Katisha-logo"
-            />
-            <div className="m-12 mt-0">
-              <p className="text-[#6A717D] text-sm">Welcome to</p>
-              <img
-                src="/logoTwo.svg"
-                className="mt-5  mb-7 w-32  dark:invert"
-                alt="Katisha-logo"
-              />
-              <form onSubmit={handleSubmit(onSubmit)} className="text-xs">
-                <label
-                  htmlFor="identifier"
-                  className="text-[#6A717D] block mb-0.5 text-xs"
-                >
-                  Email or Phone
-                </label>
-                <div>
-                  <div className="ring ring-gray-200 dark:ring-neutral-800 mb-5 p-2 rounded-xs">
-                    <input
-                      {...register("identifier")}
-                      type="text"
-                      id="identifier"
-                      name="identifier"
-                      className=" outline-none w-full"
-                    />
-                  </div>
-                  {errors.identifier && (
-                    <p className="text-red-500 text-xs">
-                      {errors.identifier.message}
-                    </p>
-                  )}
+      <div className="relative p-4 pt-8 sm:p-10">
+        <div className="bg-white dark:bg-neutral-900 dark:text-white relative drop-shadow-lg rounded-2xl w-full max-w-lg mx-auto lg:max-w-none lg:mx-0 overflow-hidden">
+          <div className="w-full lg:w-1/2 xl:w-2/5 p-8 sm:p-12">
+            <img src="/logoOne.svg" className="w-28 mb-6 dark:invert" alt="Katisha" />
+            <p className="text-[#6A717D] text-sm mb-1">Welcome to</p>
+            <img src="/logoTwo.svg" className="mb-8 w-28 dark:invert" alt="Katisha" />
+
+            <form onSubmit={handleSubmit(onSubmit)} className="space-y-4">
+              <div>
+                <label htmlFor="identifier" className="text-[#6A717D] block mb-1 text-xs font-medium">Email or Phone</label>
+                <div className="ring ring-gray-200 dark:ring-neutral-700 p-2 rounded-sm bg-white dark:bg-neutral-900">
+                  <input {...register("identifier")} type="text" id="identifier" className="outline-none w-full text-sm dark:text-white dark:bg-neutral-900" />
                 </div>
-                <label
-                  htmlFor="password"
-                  className="text-[#6A717D] block mb-0.5 text-xs"
-                >
-                  Password
-                </label>
-                <div>
-                  <div className="ring ring-gray-200 dark:ring-neutral-800 mb-5 p-2 rounded-xs bg-white dark:bg-neutral-900">
-                    <input
-                      {...register("password")}
-                      type="password"
-                      id="password"
-                      name="password"
-                      className=" outline-none w-full"
-                    />
-                  </div>
-                  {errors.password && (
-                    <p className="text-red-500 text-xs -mt-3 mb-2">
-                      {errors.password.message}
-                    </p>
-                  )}
-                  <div className="flex justify-end w-full mb-2">
-                    <Link
-                      to="/forgot-password"
-                      className="text-brand hover:underline"
-                    >
-                      Forgot Password?
-                    </Link>
-                  </div>
+                {errors.identifier && <p className="text-red-500 text-xs mt-1">{errors.identifier.message}</p>}
+              </div>
+
+              <div>
+                <label htmlFor="password" className="text-[#6A717D] block mb-1 text-xs font-medium">Password</label>
+                <div className="ring ring-gray-200 dark:ring-neutral-700 p-2 rounded-sm bg-white dark:bg-neutral-900">
+                  <input {...register("password")} type="password" id="password" className="outline-none w-full text-sm dark:text-white dark:bg-neutral-900" />
                 </div>
-                <button
-                  disabled={loginUser.isPending}
-                  className="bg-[#0A4370] p-2 w-full text-white mt-10 rounded-sm cursor-pointer hover:text-[#0A4370] hover:bg-white dark:hover:bg-black hover:ring hover:ring-[#0A4370] active:scale-95 disabled:active:scale-none disabled:hover:ring-0 disabled:opacity-50 disabled:hover:bg-[#0A4370] disabled:hover:text-white disabled:cursor-not-allowed"
-                >
-                  {loginUser.isPending ? "LOGING IN..." : "LOGIN"}
-                </button>
-              </form>
-            </div>
-            <p className="text-xs w-fit pb-3 mx-auto sm:ml-12">
-              No account yet?
-              <Link to={"/register"} className="text-brand cursor-pointer">
-                {" "}
-                Register
-              </Link>
+                {errors.password && <p className="text-red-500 text-xs mt-1">{errors.password.message}</p>}
+                <div className="flex justify-end mt-1">
+                  <Link to="/forgot-password" className="text-xs text-brand hover:underline">Forgot Password?</Link>
+                </div>
+              </div>
+
+              <button
+                disabled={loginUser.isPending}
+                className="w-full bg-[#0A4370] text-white py-2.5 rounded-sm font-medium hover:brightness-110 active:scale-95 disabled:opacity-50 disabled:cursor-not-allowed transition-all mt-2"
+              >
+                {loginUser.isPending ? "Logging in..." : "Login"}
+              </button>
+            </form>
+
+            <p className="text-xs text-center mt-6 text-neutral-500">
+              No account yet?{" "}
+              <Link to="/register" className="text-brand hover:underline">Register</Link>
             </p>
           </div>
-          <div className=" absolute right-0">
-            <svg
-              xmlns="http://www.w3.org/2000/svg"
-              className="aspect-[838/800] -mr-1  h-[200px] md:h-[255px] lg:h-[451px] xl:h-[547px]"
-              viewBox="0 0 838 800"
-              fill="none"
-            >
-              <path
-                fill-rule="evenodd"
-                clip-rule="evenodd"
-                d="M741.484 799.46L242.072 704.401C221.487 700.483 204.448 686.093 197.13 666.446L4.39013 149.048C-3.0883 128.973 0.699696 106.42 14.3287 89.8773L88.3733 0H813C826.807 0 838 11.1929 838 25V774.46C838 788.267 826.807 799.46 813 799.46H741.484Z"
-                fill="#0A4370"
-              />
-            </svg>
-          </div>
-          <div className="absolute w-12 h-12 lg:w-32 lg:h-32 bg-[#6A717D]/25 top-8 right-12 lg:right-24 rounded-full" />
-          <div className="absolute w-5 h-5 lg:w-14 lg:h-14 bg-[#6A717D]/25 top-8 right-40 lg:right-[450px] rounded-full" />
-          <div className="absolute w-20 h-20 -z-10 lg:z-0 lg:w-56 lg:h-56 bg-[#6A717D]/25 top-52 right-24 lg:right-52 rounded-full" />
-          <BsTicketFill className="absolute lg:w-14 lg:h-14 rotate-45 top-28 right-1/3 fill-[#6A717D]/25" />
-          <BsTicketFill className="absolute lg:w-18 lg:h-18 rotate-45 top-64 right-2 fill-[#6A717D]/25" />
-          <BsTicketFill className="absolute lg:w-7 lg:h-7 rotate-[30deg] bottom-20 right-52 fill-[#6A717D]/25" />
-          <p className="absolute md:bottom-3/4 lg:bottom-80 xl:bottom-1/2 top-5 md:top-auto -right-5 sm:-right-3 md:right-0 font-semibold md:text-lg lg:text-2xl  text-white max-w-40 md:max-w-52 lg:max-w-96 xl:max-w-[450px]">
-            Making travel simpler, smarter, and more convenient for
-            everyone.{" "}
-          </p>
+          <DecorativePanel tagline="Making travel simpler, smarter, and more convenient for everyone." />
         </div>
         <Footer />
       </div>

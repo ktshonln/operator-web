@@ -4,11 +4,13 @@ import { useToastStore } from "../stores/toastStore";
 
 export interface OrganizationApplicationPayload {
   name: string;
-  org_type: "company" | "cooperative";
-  tin: string;
-  license_number: string;
+  org_type: "company" | "cooperative" | "coop_member";
+  contact_first_name: string;
+  contact_last_name: string;
   contact_email: string;
   contact_phone: string;
+  tin: string;
+  license_number: string;
   address: string;
   parent_org_id?: string;
   business_certificate_path: string;

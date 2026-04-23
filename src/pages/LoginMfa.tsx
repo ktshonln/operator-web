@@ -92,8 +92,8 @@ const LoginMfa = () => {
         <path d="M0 0H614L436.5 1024H0V0Z" fill="#041D33" />
       </svg>
       <div className="p-2 pt-10 sm:p-10 sm:pr-32 sm:pl-32">
-        <div className="bg-white relative drop-shadow-lg drop-shadow-black/25 rounded-2xl w-full max-w-screen flex justify-between">
-          <div className="w-full  lg:w-1/2 xl:w-1/3">
+        <div className="bg-white relative drop-shadow-lg drop-shadow-black/25 rounded-2xl w-full max-w-lg mx-auto lg:max-w-none lg:mx-0 overflow-hidden">
+          <div className="w-full lg:w-1/2 xl:w-2/5 p-8 sm:p-12">
             <img
               src="/logoOne.svg"
               className="w-32 ml-5 mt-2 pt-5 mb-7"
@@ -184,8 +184,8 @@ const LoginMfa = () => {
               fill="none"
             >
               <path
-                fill-rule="evenodd"
-                clip-rule="evenodd"
+                fillRule="evenodd"
+                clipRule="evenodd"
                 d="M741.484 799.46L242.072 704.401C221.487 700.483 204.448 686.093 197.13 666.446L4.39013 149.048C-3.0883 128.973 0.699696 106.42 14.3287 89.8773L88.3733 0H813C826.807 0 838 11.1929 838 25V774.46C838 788.267 826.807 799.46 813 799.46H741.484Z"
                 fill="#0A4370"
               />

@@ -14,9 +14,9 @@ const RegisterSuccess = () => {
       >
         <path d="M0 0H614L436.5 1024H0V0Z" fill="#041D33" />
       </svg>
-      <div className="p-2 pt-10 sm:p-10 sm:pr-32 sm:pl-32">
-        <div className="bg-white relative drop-shadow-lg drop-shadow-black/25 rounded-2xl w-full max-w-screen flex justify-between">
-          <div className="w-full">
+      <div className="relative p-4 pt-8 sm:p-10">
+        <div className="bg-white relative drop-shadow-lg drop-shadow-black/25 rounded-2xl w-full max-w-2xl mx-auto">
+          <div className="p-8 sm:p-12">
             <img
               src="/logoOne.svg"
               className="w-20 ml-5 mt-2 "
@@ -41,7 +41,7 @@ const RegisterSuccess = () => {
               <div className="bg-brand/15 border border-brand rounded-full p-1 pr-5 pl-5 w-fit text-sm font-semibold flex  items-center justify-center justify-self-center mt-10">
                 <p className="text-brand">What&apos;s Next</p>
               </div>
-              <div className="justify-self-center flex items-center space-x-10 mt-7 mb-10">
+              <div className="flex flex-col sm:flex-row items-center justify-center gap-4 sm:gap-8 mt-7 mb-10">
                 <div>
                   <p className="font-semibold text-brand">Step 1:</p>
                   <p>Information Review</p>
