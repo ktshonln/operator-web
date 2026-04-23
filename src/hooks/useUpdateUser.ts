@@ -6,8 +6,10 @@ export interface UpdateUserRequest {
   last_name?: string;
   phone_number?: string;
   email?: string;
-  avatar_path?: string;
-  notif_channel?: "sms" | "email" | "app" | "all";
+  avatar_path?: string | null;
+  notif_channel?: ("sms" | "email" | "app")[]; // array per spec
+  locale?: "rw" | "en" | "fr";
+  two_factor_enabled?: boolean;
 }
 
 export interface UpdateUserMeRequest extends UpdateUserRequest {
