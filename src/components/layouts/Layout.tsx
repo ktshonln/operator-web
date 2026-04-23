@@ -26,7 +26,7 @@ const Layout = ({ children }: Props) => {
       <div className="font-heebo flex">
         <ErrorBoundary FallbackComponent={ErrorFallback}>
           <Sidebar />
-          <main className="w-full">
+          <main className="w-full min-w-0 overflow-x-hidden">
             <Header />
             {children}
             <Outlet />

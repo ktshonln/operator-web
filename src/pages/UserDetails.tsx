@@ -5,7 +5,6 @@ import { axiosInstance, buildCdnUrl } from "../services/apiClient";
 import { useUpdateUser } from "../hooks/useUpdateUser";
 import { useDeleteUser } from "../hooks/useDeleteUser";
 import { useToastStore } from "../stores/toastStore";
-import SettingsNav from "../components/SettingsNav";
 import { camelCaseToTitle } from "../utils/helpers";
 import { useRoles } from "../hooks/useRoles";
 import { Can } from "../contexts/AbilityContext";
@@ -77,7 +76,7 @@ function UserDetails() {
     deleteUser.mutate(userId ?? "", {
       onSuccess: () => {
         showToast("User deleted", "success");
-        navigate("/settings");
+        navigate("/team/users");
       },
       onError: (err: Error) => showToast(err.message, "error"),
     });
@@ -100,8 +99,7 @@ function UserDetails() {
 
   if (isLoading) {
     return (
-      <div className="max-w-4xl mx-auto px-4 py-6">
-        <SettingsNav />
+      <div className="px-4 py-6">
         <div className="flex items-center justify-center py-20">
           <div className="animate-spin rounded-full h-8 w-8 border-2 border-brand border-t-transparent" />
         </div>
@@ -111,20 +109,18 @@ function UserDetails() {
 
   if (!user) {
     return (
-      <div className="max-w-4xl mx-auto px-4 py-6">
-        <SettingsNav />
+      <div className="px-4 py-6">
         <p className="text-neutral-500 dark:text-neutral-400 mt-8">User not found.</p>
       </div>
     );
   }
 
   return (
-    <div className="max-w-4xl mx-auto px-4 py-6">
-      <SettingsNav />
+    <div className="px-4 py-6">
 
       {/* Breadcrumb */}
       <div className="flex items-center gap-2 mt-4 mb-6 text-sm text-neutral-500 dark:text-neutral-400">
-        <button onClick={() => navigate("/settings")} className="hover:text-brand transition-colors">
+        <button onClick={() => navigate("/team/users")} className="hover:text-brand transition-colors">
           Users
         </button>
         <span>/</span>

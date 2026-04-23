@@ -41,6 +41,7 @@ export type Subjects =
   | "Report"
   | "Home"
   | "OrganizationApplication"
+  | "Role"
   | "all";
 
 export type AppAbility = MongoAbility<[Actions, Subjects]>;

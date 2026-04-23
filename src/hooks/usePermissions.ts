@@ -9,6 +9,7 @@ export interface Permission {
   display_name: string;
   description?: string | null;
   group: string;
+  scopes?: ('own' | 'org' | 'platform')[];
 }
 
 export interface PermissionsResponse {

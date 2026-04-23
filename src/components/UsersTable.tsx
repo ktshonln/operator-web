@@ -253,7 +253,7 @@ function SelfContainedRow({ agent, rowIndex, mobile = false }: SelfContainedRowP
   const handleToggleExpand = () => setIsExpanded((prev) => !prev);
 
   const handleEdit = () => {
-    navigate(`/settings/user/${agent.userId}`);
+    navigate(`/team/user/${agent.userId}`);
     closeMenu();
   };
 

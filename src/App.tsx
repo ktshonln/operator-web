@@ -31,6 +31,8 @@ import Organizations from "./pages/Organizations";
 import OrganizationDetails from "./pages/OrganizationDetails";
 import CreateOrganization from "./pages/CreateOrganization";
 import UserDetails from "./pages/UserDetails";
+import RolesSettings from "./pages/RolesSettings";
+import AppearanceSettings from "./pages/AppearanceSettings";
 
 function App() {
   return (
@@ -184,6 +186,14 @@ function App() {
             />
             <Route
               path="settings"
+              element={<Navigate to="/settings/profile" replace />}
+            />
+            <Route
+              path="team"
+              element={<Navigate to="/team/users" replace />}
+            />
+            <Route
+              path="team/users"
               element={
                 <AuthGuard action="read" subject="User">
                   <Settings />
@@ -191,10 +201,18 @@ function App() {
               }
             />
             <Route
-              path="settings/user/:userId"
+              path="team/user/:userId"
               element={
                 <AuthGuard action="read" subject="User">
                   <UserDetails />
+                </AuthGuard>
+              }
+            />
+            <Route
+              path="team/roles"
+              element={
+                <AuthGuard action="read" subject="Role">
+                  <RolesSettings />
                 </AuthGuard>
               }
             />
@@ -211,6 +229,14 @@ function App() {
               element={
                 <AuthGuard action="read" subject="User">
                   <SecuritySettings />
+                </AuthGuard>
+              }
+            />
+            <Route
+              path="settings/appearance"
+              element={
+                <AuthGuard action="read" subject="User">
+                  <AppearanceSettings />
                 </AuthGuard>
               }
             />

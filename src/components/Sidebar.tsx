@@ -4,6 +4,7 @@ import { BsTicket, BsBuilding } from "react-icons/bs";
 import { RiBusFill } from "react-icons/ri";
 import { FaChartLine } from "react-icons/fa6";
 import { FiSettings } from "react-icons/fi";
+import { HiOutlineUserGroup } from "react-icons/hi";
 import { IconType } from "react-icons";
 import { HiOutlineLogout } from "react-icons/hi";
 import useUser from "../hooks/useUser";
@@ -18,29 +19,21 @@ const Sidebar = () => {
   const logout = useLogout();
   const pages: {
     link: string;
+    label: string;
     icon: IconType;
     subLinks?: string[];
+    activePrefix?: string;
     action: string;
     subject: string;
   }[] = [
-      { link: "/home", icon: BiHomeAlt, action: "read", subject: "all" },
-      {
-        link: "/organizations",
-        icon: BsBuilding,
-        action: "read",
-        subject: "Organization",
-      },
-      { link: "/ticketing", icon: BsTicket, action: "read", subject: "Ticket" },
-      {
-        link: "/fleets",
-        icon: RiBusFill,
-        subLinks: ["/buses", "/drivers"],
-        action: "read",
-        subject: "Bus",
-      },
-      { link: "/trips", icon: BiTrip, action: "read", subject: "Trip" },
-      { link: "/reports", icon: FaChartLine, action: "read", subject: "Report" },
-      { link: "/settings", icon: FiSettings, action: "read", subject: "User" },
+      { link: "/home", label: "Home", icon: BiHomeAlt, action: "read", subject: "all" },
+      { link: "/organizations", label: "Organizations", icon: BsBuilding, action: "read", subject: "Organization" },
+      { link: "/ticketing", label: "Ticketing", icon: BsTicket, action: "read", subject: "Ticket" },
+      { link: "/fleets", label: "Fleets", icon: RiBusFill, subLinks: ["/buses", "/drivers"], action: "read", subject: "Bus" },
+      { link: "/trips", label: "Trips", icon: BiTrip, action: "read", subject: "Trip" },
+      { link: "/reports", label: "Reports", icon: FaChartLine, action: "read", subject: "Report" },
+      { link: "/team", label: "Team", icon: HiOutlineUserGroup, subLinks: ["/users", "/roles"], action: "read", subject: "User" },
+      { link: "/settings/profile", label: "Settings", icon: FiSettings, activePrefix: "/settings/p", action: "read", subject: "User" },
     ];
   const { show, hideMenu } = useMenuStore();
   return (
@@ -85,7 +78,9 @@ const Sidebar = () => {
                   show={show}
                   Icon={page.icon}
                   link={page.link}
+                  label={page.label}
                   subLinks={page.subLinks}
+                  activePrefix={page.activePrefix}
                 />
               </Can>
             ))}
