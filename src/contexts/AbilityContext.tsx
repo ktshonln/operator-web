@@ -23,7 +23,6 @@ export type Actions =
   | "approve"
   | "upload"
   | "export";
-
 export type Subjects =
   | "User"
   | "Org"

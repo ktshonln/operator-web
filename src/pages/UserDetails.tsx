@@ -8,6 +8,7 @@ import { useToastStore } from "../stores/toastStore";
 import { camelCaseToTitle } from "../utils/helpers";
 import { useRoles } from "../hooks/useRoles";
 import { Can } from "../contexts/AbilityContext";
+import useUser from "../hooks/useUser";
 
 // Fetch user by ID directly from GET /users/:id
 function useUserById(userId: string) {
@@ -26,6 +27,7 @@ function UserDetails() {
   const navigate = useNavigate();
   const { showToast } = useToastStore();
   const [confirmDelete, setConfirmDelete] = useState(false);
+  const [confirmSuspend, setConfirmSuspend] = useState(false);
   const [isEditing, setIsEditing] = useState(false);
   const [editForm, setEditForm] = useState({ first_name: "", last_name: "", role_slugs: [] as string[] });
 
@@ -34,6 +36,9 @@ function UserDetails() {
   const deleteUser = useDeleteUser();
   const { data: rolesData } = useRoles();
   const availableRoles = rolesData?.data ?? [];
+
+  // Get current logged-in user to disable delete on own account
+  const { user: currentUser } = useUser();
 
   const startEditing = () => {
     if (!user) return;
@@ -61,13 +66,18 @@ function UserDetails() {
 
   const handleToggleStatus = () => {
     if (!user) return;
+    if (user.status === "active" && !confirmSuspend) {
+      setConfirmSuspend(true);
+      return;
+    }
     const newStatus = user.status === "active" ? "suspended" : "active";
     updateUser.mutate({ status: newStatus }, {
       onSuccess: () => {
         refetch();
+        setConfirmSuspend(false);
         showToast(`User ${newStatus === "active" ? "activated" : "suspended"}`, "success");
       },
-      onError: (err: Error) => showToast(err.message, "error"),
+      onError: (err: Error) => { setConfirmSuspend(false); showToast(err.message, "error"); },
     });
   };
 
@@ -81,6 +91,8 @@ function UserDetails() {
       onError: (err: Error) => showToast(err.message, "error"),
     });
   };
+
+  const isOwnAccount = currentUser?.id === userId;
 
   const toggleRole = (slug: string) => {
     setEditForm(prev => ({
@@ -216,24 +228,41 @@ function UserDetails() {
                     </Can>
                     <Can I="suspend" a="User">
                       {user.status !== "pending_verification" && (
-                        <button
-                          onClick={handleToggleStatus}
-                          disabled={updateUser.isPending}
-                          className={`px-3 py-1.5 text-sm font-medium rounded-lg border transition-colors disabled:opacity-50 ${
-                            user.status === "active"
-                              ? "border-yellow-300 text-yellow-700 hover:bg-yellow-50 dark:border-yellow-700 dark:text-yellow-400 dark:hover:bg-yellow-900/20"
-                              : "border-green-300 text-green-700 hover:bg-green-50 dark:border-green-700 dark:text-green-400 dark:hover:bg-green-900/20"
-                          }`}
-                        >
-                          {updateUser.isPending ? "..." : user.status === "active" ? "Suspend" : "Activate"}
-                        </button>
+                        <div className="flex flex-col items-end gap-1">
+                          {confirmSuspend && user.status === "active" && (
+                            <p className="text-xs text-yellow-600 dark:text-yellow-400 max-w-[200px] text-right">
+                              ⚠️ This will immediately invalidate the user's active tokens.
+                            </p>
+                          )}
+                          <div className="flex gap-2">
+                            {confirmSuspend && user.status === "active" && (
+                              <button onClick={() => setConfirmSuspend(false)} className="px-3 py-1.5 text-xs rounded-lg border border-gray-200 dark:border-neutral-700 text-neutral-500 hover:bg-gray-50 dark:hover:bg-neutral-800">
+                                Cancel
+                              </button>
+                            )}
+                            <button
+                              onClick={handleToggleStatus}
+                              disabled={updateUser.isPending}
+                              className={`px-3 py-1.5 text-sm font-medium rounded-lg border transition-colors disabled:opacity-50 ${
+                                confirmSuspend && user.status === "active"
+                                  ? "bg-yellow-600 text-white border-yellow-600 hover:bg-yellow-700"
+                                  : user.status === "active"
+                                  ? "border-yellow-300 text-yellow-700 hover:bg-yellow-50 dark:border-yellow-700 dark:text-yellow-400 dark:hover:bg-yellow-900/20"
+                                  : "border-green-300 text-green-700 hover:bg-green-50 dark:border-green-700 dark:text-green-400 dark:hover:bg-green-900/20"
+                              }`}
+                            >
+                              {updateUser.isPending ? "..." : confirmSuspend && user.status === "active" ? "Confirm Suspend" : user.status === "active" ? "Suspend" : "Activate"}
+                            </button>
+                          </div>
+                        </div>
                       )}
                     </Can>
                     <Can I="delete" a="User">
                       <button
                         onClick={handleDelete}
-                        disabled={deleteUser.isPending}
-                        className={`px-3 py-1.5 text-sm font-medium rounded-lg border transition-colors disabled:opacity-50 ${
+                        disabled={deleteUser.isPending || isOwnAccount}
+                        title={isOwnAccount ? "You cannot delete your own account" : undefined}
+                        className={`px-3 py-1.5 text-sm font-medium rounded-lg border transition-colors disabled:opacity-50 disabled:cursor-not-allowed ${
                           confirmDelete
                             ? "bg-red-600 text-white border-red-600 hover:bg-red-700"
                             : "border-red-300 text-red-600 hover:bg-red-50 dark:border-red-700 dark:text-red-400 dark:hover:bg-red-900/20"
@@ -285,33 +314,59 @@ function UserDetails() {
                   <span className="text-xs font-medium text-neutral-500 dark:text-neutral-400">Joined</span>
                   <span className="text-sm text-neutral-900 dark:text-white">{new Date(user.created_at).toLocaleDateString()}</span>
                 </div>
+                {user.driver_license_number && (
+                  <div className="flex flex-col gap-0.5">
+                    <span className="text-xs font-medium text-neutral-500 dark:text-neutral-400">Driver License</span>
+                    <span className="text-sm text-neutral-900 dark:text-white font-mono">{user.driver_license_number}</span>
+                  </div>
+                )}
+                {user.driver_license_verified_at && (
+                  <div className="flex flex-col gap-0.5">
+                    <span className="text-xs font-medium text-neutral-500 dark:text-neutral-400">License Verified</span>
+                    <span className="text-sm text-neutral-900 dark:text-white">{new Date(user.driver_license_verified_at).toLocaleDateString()}</span>
+                  </div>
+                )}
               </div>
             </div>
 
-            {/* Roles — editable when in edit mode */}
+            {/* Roles — editable only for callers with assign_role:User */}
             <div>
               <h2 className="text-xs font-semibold text-neutral-500 dark:text-neutral-400 uppercase tracking-wide mb-3">Roles</h2>
-              {isEditing ? (
-                <div className="flex flex-wrap gap-2">
-                  {availableRoles.map((role: any) => {
-                    const selected = editForm.role_slugs.includes(role.slug);
-                    return (
-                      <button
-                        key={role.slug}
-                        type="button"
-                        onClick={() => toggleRole(role.slug)}
-                        className={`px-3 py-1.5 rounded-lg text-xs font-medium border transition-colors ${
-                          selected
-                            ? "bg-brand text-white border-brand"
-                            : "bg-white dark:bg-neutral-900 text-neutral-600 dark:text-neutral-400 border-gray-200 dark:border-neutral-700 hover:border-brand hover:text-brand"
-                        }`}
-                      >
-                        {camelCaseToTitle(role.slug)}
-                      </button>
-                    );
-                  })}
-                </div>
-              ) : (
+              <Can I="assign_role" a="User">
+                {isEditing ? (
+                  <div className="flex flex-wrap gap-2">
+                    {availableRoles.map((role: any) => {
+                      const selected = editForm.role_slugs.includes(role.slug);
+                      return (
+                        <button
+                          key={role.slug}
+                          type="button"
+                          onClick={() => toggleRole(role.slug)}
+                          className={`px-3 py-1.5 rounded-lg text-xs font-medium border transition-colors ${
+                            selected
+                              ? "bg-brand text-white border-brand"
+                              : "bg-white dark:bg-neutral-900 text-neutral-600 dark:text-neutral-400 border-gray-200 dark:border-neutral-700 hover:border-brand hover:text-brand"
+                          }`}
+                        >
+                          {camelCaseToTitle(role.slug)}
+                        </button>
+                      );
+                    })}
+                  </div>
+                ) : (
+                  <div className="flex flex-wrap gap-2">
+                    {roles.length > 0 ? roles.map((role: string) => (
+                      <span key={role} className="inline-flex items-center px-3 py-1 rounded-lg text-sm font-medium bg-gray-100 text-gray-800 dark:bg-neutral-800 dark:text-gray-200 border border-gray-200 dark:border-neutral-700">
+                        {camelCaseToTitle(role)}
+                      </span>
+                    )) : (
+                      <span className="text-sm text-neutral-400">No roles assigned</span>
+                    )}
+                  </div>
+                )}
+              </Can>
+              {/* Non-assign_role callers see roles read-only */}
+              <Can I="read" a="User">
                 <div className="flex flex-wrap gap-2">
                   {roles.length > 0 ? roles.map((role: string) => (
                     <span key={role} className="inline-flex items-center px-3 py-1 rounded-lg text-sm font-medium bg-gray-100 text-gray-800 dark:bg-neutral-800 dark:text-gray-200 border border-gray-200 dark:border-neutral-700">
@@ -321,7 +376,7 @@ function UserDetails() {
                     <span className="text-sm text-neutral-400">No roles assigned</span>
                   )}
                 </div>
-              )}
+              </Can>
             </div>
           </div>
         </div>

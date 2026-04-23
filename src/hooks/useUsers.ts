@@ -11,6 +11,7 @@ export interface UserQuery {
   searchText: string;
   status?: 'active' | 'pending_verification' | 'suspended';
   userType?: 'passenger' | 'staff';
+  roleSlug?: string;
 }
 
 const useUsers = (orgId: string, userQuery: UserQuery) =>
@@ -22,6 +23,7 @@ const useUsers = (orgId: string, userQuery: UserQuery) =>
       if (userQuery.searchText) params.search = userQuery.searchText;
       if (userQuery.status) params.status = userQuery.status;
       if (userQuery.userType) params.user_type = userQuery.userType;
+      if (userQuery.roleSlug) params.role_slug = userQuery.roleSlug;
       const res = await apiClient.getAll({ params });
       const items = res.data?.data || (Array.isArray(res.data) ? res.data : []);
       return items.map((user: any) => ({

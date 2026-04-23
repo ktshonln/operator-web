@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useMemo } from "react";
 import { useRoles } from "../hooks/useRoles";
 import { usePermissions } from "../hooks/usePermissions";
 import useUsers, { UserQuery } from "../hooks/useUsers";
@@ -8,7 +8,6 @@ import Search from "../components/Search";
 import { Can } from "../contexts/AbilityContext";
 import { useOrganizations } from "../hooks/useOrganizations";
 import { UsersTable } from "../components/UsersTable";
-import { useMemo } from "react";
 
 function Settings() {
   const { user } = useUser();
@@ -19,6 +18,8 @@ function Settings() {
   const [invitePanelOpen, setInvitePanelOpen] = useState(false);
 
   const isSuperAdmin = user && "roles" in user && user.roles?.includes("platform-admin");
+  // own-scope callers (driver/passenger) should not see role filter
+  const isOwnScope = user && "roles" in user && (user.roles?.includes("driver") || user.roles?.includes("passenger"));
   const orgQueryResult = useOrganizations({});
   const allOrgs = (Array.isArray(orgQueryResult.data) ? orgQueryResult.data : []) as any[];
 
@@ -26,6 +27,13 @@ function Settings() {
   const { data: permissionsData } = usePermissions();
   const availableRoles = useMemo(() => rolesData?.data || [], [rolesData]);
   const permissionOptions = useMemo(() => permissionsData?.data || [], [permissionsData]);
+
+  const hasActiveFilters = !!(userQuery.status || userQuery.userType || userQuery.searchText || selectedOrgId !== companyId);
+
+  const clearFilters = () => {
+    setUserQuery({ branch: null, sortOrder: "", searchText: "" });
+    setSelectedOrgId(companyId);
+  };
 
   const usersQuery = useUsers(selectedOrgId, userQuery);
 
@@ -108,6 +116,32 @@ function Settings() {
                 </svg>
               </div>
             )}
+
+            {/* Role filter — hidden for own-scope callers */}
+            {!isOwnScope && availableRoles.length > 0 && (
+              <div className="relative">
+                <select
+                  value={userQuery.roleSlug || "all"}
+                  onChange={(e) => setUserQuery({ ...userQuery, roleSlug: e.target.value === "all" ? undefined : e.target.value })}
+                  className="appearance-none pl-3 pr-8 py-2 text-sm rounded-lg border border-gray-200 dark:border-neutral-700 bg-white dark:bg-neutral-900 text-neutral-700 dark:text-neutral-300 hover:border-brand focus:outline-none focus:ring-2 focus:ring-brand/20 transition-colors cursor-pointer"
+                >
+                  <option value="all">All Roles</option>
+                  {availableRoles.map((role) => (
+                    <option key={role.slug} value={role.slug}>{role.name}</option>
+                  ))}
+                </select>
+                <svg className="absolute right-2.5 top-1/2 -translate-y-1/2 w-3.5 h-3.5 text-neutral-400 pointer-events-none" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
+                </svg>
+              </div>
+            )}
+
+            {/* Clear filters */}
+            {hasActiveFilters && (
+              <button onClick={clearFilters} className="text-xs text-neutral-400 hover:text-brand transition-colors px-2 py-1 rounded-lg hover:bg-gray-50 dark:hover:bg-neutral-800">
+                Clear filters ×
+              </button>
+            )}
           </div>
 
           <div className="w-full sm:w-64">
@@ -125,7 +159,6 @@ function Settings() {
             usersQuery={usersQuery}
             rolesLoading={rolesLoading}
             userQuery={userQuery}
-            onClearFilters={() => setUserQuery({ branch: null, sortOrder: "", searchText: "" })}
           />
         </div>
       </div>
