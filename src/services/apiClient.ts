@@ -12,25 +12,30 @@ export const buildCdnUrl = (
 
 export const axiosInstance = axios.create({
   baseURL: baseUrl,
-  withCredentials: true,
+  withCredentials: true, // sends HttpOnly cookies automatically on every request
 });
 
-// Add response interceptor to handle token refresh
+// ─── Silent token refresh (web / cookie-based flow) ──────────────────────────
+//
+// Per spec: web clients use HttpOnly cookies for both access_token and
+// refresh_token. The server sets them; the browser sends them automatically.
+// On 401, we call POST /auth/refresh with NO body — the refresh_token cookie
+// is sent automatically via withCredentials. The server rotates both cookies
+// in the response. We then retry the original request.
+//
+// We never read or write tokens from localStorage in the web flow.
+
 let isRefreshing = false;
 let failedQueue: Array<{
   resolve: (value?: any) => void;
   reject: (reason?: any) => void;
 }> = [];
 
-const processQueue = (error: any, token?: string) => {
+const processQueue = (error: any) => {
   failedQueue.forEach((prom) => {
-    if (error) {
-      prom.reject(error);
-    } else {
-      prom.resolve(token);
-    }
+    if (error) prom.reject(error);
+    else prom.resolve();
   });
-
   isRefreshing = false;
   failedQueue = [];
 };
@@ -40,58 +45,37 @@ axiosInstance.interceptors.response.use(
   async (error: AxiosError) => {
     const originalRequest = error.config as any;
 
-    // Skip interceptor for auth endpoints (login, refresh, etc.)
+    // Don't intercept auth endpoints — avoids infinite loops on login/refresh failures
     if (originalRequest?.url?.includes("/auth/")) {
       return Promise.reject(error);
     }
 
-    // Check if error is 401 and not already a refresh attempt
     if (error.response?.status === 401 && !originalRequest._retry) {
+      // If a refresh is already in flight, queue this request until it resolves
       if (isRefreshing) {
         return new Promise((resolve, reject) => {
           failedQueue.push({ resolve, reject });
-        }).then((token) => {
-          originalRequest.headers.Authorization = `Bearer ${token}`;
-          return axiosInstance(originalRequest);
-        });
+        }).then(() => axiosInstance(originalRequest))
+          .catch((err) => Promise.reject(err));
       }
 
       originalRequest._retry = true;
       isRefreshing = true;
 
       try {
-        const refreshToken = localStorage.getItem("refresh_token");
-        if (!refreshToken) {
-          throw new Error("No refresh token available");
-        }
+        // Web flow: POST /auth/refresh with no body.
+        // The refresh_token HttpOnly cookie is sent automatically.
+        // The server rotates both cookies in the Set-Cookie response headers.
+        await axiosInstance.post("/auth/refresh");
 
-        // Call refresh endpoint
-        const response = await axiosInstance.post("/auth/refresh", { refresh_token: refreshToken });
-        const { tokens, user } = response.data;
-
-        // Defensive check for tokens
-        if (!tokens || !tokens.access_token || !tokens.refresh_token) {
-          throw new Error("Invalid refresh response: missing tokens");
-        }
-
-        localStorage.setItem("access_token", tokens.access_token);
-        localStorage.setItem("refresh_token", tokens.refresh_token);
-        localStorage.setItem("user", JSON.stringify(user));
-
-        axiosInstance.defaults.headers.common.Authorization = `Bearer ${tokens.access_token}`;
-        originalRequest.headers.Authorization = `Bearer ${tokens.access_token}`;
-
-        processQueue(null, tokens.access_token);
+        processQueue(null);
+        // Retry the original request — the new access_token cookie is now set
         return axiosInstance(originalRequest);
-      } catch (err) {
-        // Refresh failed, clear auth and redirect to login
-        localStorage.removeItem("access_token");
-        localStorage.removeItem("refresh_token");
-        localStorage.removeItem("user");
-        processQueue(err);
-        // Redirect to login - note: in a real app you'd use React Router's navigate
+      } catch (refreshError) {
+        processQueue(refreshError);
+        // Refresh failed (token expired/revoked) — redirect to login
         window.location.href = "/login";
-        return Promise.reject(err);
+        return Promise.reject(refreshError);
       }
     }
 
