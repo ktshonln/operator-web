@@ -95,11 +95,14 @@ function RoleDetailPanel({
   const [addingGrant, setAddingGrant] = useState(false);
   const [selectedCode, setSelectedCode] = useState("");
   const [selectedScope, setSelectedScope] = useState<"own" | "org" | "platform">("org");
+  const [grantError, setGrantError] = useState("");
+  const [confirmDelete, setConfirmDelete] = useState(false);
   const { showToast } = useToastStore();
 
   const updateRole = useUpdateRole(role.id);
   const addGrant = useAddGrant(role.id);
   const removeGrant = useRemoveGrant(role.id);
+  const deleteRole = useDeleteRole();
 
   const grants = roleDetail?.grants ?? [];
 
@@ -121,16 +124,26 @@ function RoleDetailPanel({
     if (!editName.trim()) return;
     updateRole.mutate({ name: editName.trim() }, {
       onSuccess: () => { setIsEditing(false); showToast("Role renamed", "success"); },
-      onError: (err: any) => showToast(err.message, "error"),
+      onError: (err: any) => {
+        const code = err?.response?.data?.error?.code;
+        if (code === "MANAGED_ROLE_IMMUTABLE") showToast("This role cannot be modified.", "error");
+        else showToast(err.message, "error");
+      },
     });
   };
 
   const handleAddGrant = () => {
     if (!selectedCode) return;
+    setGrantError("");
     const pattern = `${selectedCode}:${selectedScope}`;
     addGrant.mutate({ pattern }, {
       onSuccess: () => { setAddingGrant(false); setSelectedCode(""); showToast("Grant added", "success"); },
-      onError: (err: any) => showToast(err.message, "error"),
+      onError: (err: any) => {
+        const code = err?.response?.data?.error?.code;
+        if (code === "MANAGED_ROLE_IMMUTABLE") showToast("This role cannot be modified.", "error");
+        else if (code === "GRANT_SCOPE_ESCALATION") setGrantError("You cannot assign permissions beyond your own scope.");
+        else showToast(err.message, "error");
+      },
     });
   };
 
@@ -138,7 +151,26 @@ function RoleDetailPanel({
     if (isManaged) { showToast("Managed grants cannot be removed.", "error"); return; }
     removeGrant.mutate(grantId, {
       onSuccess: () => showToast("Grant removed", "success"),
-      onError: (err: any) => showToast(err.message, "error"),
+      onError: (err: any) => {
+        const code = err?.response?.data?.error?.code;
+        if (code === "MANAGED_ROLE_IMMUTABLE") showToast("This role cannot be modified.", "error");
+        else if (code === "MANAGED_GRANT_IMMUTABLE") showToast("This grant is managed and cannot be removed.", "error");
+        else showToast(err.message, "error");
+      },
+    });
+  };
+
+  const handleDelete = () => {
+    if (!confirmDelete) { setConfirmDelete(true); return; }
+    deleteRole.mutate(role.id, {
+      onSuccess: () => { showToast("Role deleted", "success"); onClose(); },
+      onError: (err: any) => {
+        const code = err?.response?.data?.error?.code;
+        if (code === "ROLE_HAS_PENDING_INVITATIONS") showToast("This role has pending invitations. Resolve them before deleting.", "error");
+        else if (code === "MANAGED_ROLE_IMMUTABLE") showToast("This role cannot be modified.", "error");
+        else showToast(err.message || "Failed to delete role.", "error");
+        setConfirmDelete(false);
+      },
     });
   };
 
@@ -205,6 +237,15 @@ function RoleDetailPanel({
 
         {/* Body */}
         <div className="flex-1 overflow-y-auto p-6 custom-scrollbar space-y-6">
+
+          {/* Managed role notice */}
+          {role.is_managed && (
+            <div className="flex items-start gap-2 p-3 rounded-lg bg-neutral-50 dark:bg-neutral-800 border border-neutral-200 dark:border-neutral-700 text-xs text-neutral-500 dark:text-neutral-400">
+              <BsLock className="w-3.5 h-3.5 mt-0.5 shrink-0" />
+              This role is managed by the platform and cannot be edited.
+            </div>
+          )}
+
           {/* Grants section */}
           <div>
             <div className="flex items-center justify-between mb-3">
@@ -214,7 +255,7 @@ function RoleDetailPanel({
               {!role.is_managed && (
                 <Can I="update" a="Role">
                   <button
-                    onClick={() => setAddingGrant((v) => !v)}
+                    onClick={() => { setAddingGrant((v) => !v); setGrantError(""); }}
                     className="text-xs text-brand hover:underline flex items-center gap-1"
                   >
                     <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -239,7 +280,7 @@ function RoleDetailPanel({
                           <button
                             key={perm.code}
                             type="button"
-                            onClick={() => { setSelectedCode(perm.code); setSelectedScope((perm.scopes?.[0] ?? "org") as any); }}
+                            onClick={() => { setSelectedCode(perm.code); setSelectedScope((perm.scopes?.[0] ?? "org") as any); setGrantError(""); }}
                             className={`rounded-full border px-2.5 py-1 text-xs transition-colors ${
                               selectedCode === perm.code
                                 ? "border-brand bg-brand text-white"
@@ -254,7 +295,7 @@ function RoleDetailPanel({
                   ))}
                 </div>
                 {selectedCode && (
-                  <div className="flex items-center gap-2">
+                  <div className="flex items-center gap-2 flex-wrap">
                     <span className="text-xs text-neutral-500">Scope:</span>
                     <div className="flex gap-1">
                       {availableScopes.map((s) => (
@@ -281,6 +322,7 @@ function RoleDetailPanel({
                     </button>
                   </div>
                 )}
+                {grantError && <p className="text-xs text-red-500">{grantError}</p>}
               </div>
             )}
 
@@ -301,13 +343,47 @@ function RoleDetailPanel({
                       key={g.id}
                       grant={display}
                       isManaged={g.is_managed}
-                      onRemove={() => handleRemoveGrant(g.id, g.is_managed)}
+                      onRemove={!role.is_managed ? () => handleRemoveGrant(g.id, g.is_managed) : undefined}
                     />
                   );
                 })}
               </div>
             )}
+
+            {/* Token refresh warning */}
+            {grants.length > 0 && (
+              <p className="text-[10px] text-neutral-400 mt-3 flex items-center gap-1">
+                <svg className="w-3 h-3 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+                </svg>
+                Changes take effect on the user's next token refresh.
+              </p>
+            )}
           </div>
+
+          {/* Delete role */}
+          {!role.is_managed && (
+            <Can I="delete" a="Role">
+              <div className="pt-4 border-t border-gray-100 dark:border-neutral-800">
+                <button
+                  onClick={handleDelete}
+                  disabled={deleteRole.isPending}
+                  className={`w-full py-2 rounded-lg text-sm font-medium border transition-colors disabled:opacity-50 ${
+                    confirmDelete
+                      ? "bg-red-600 text-white border-red-600 hover:bg-red-700"
+                      : "border-red-300 text-red-600 hover:bg-red-50 dark:border-red-700 dark:text-red-400 dark:hover:bg-red-900/20"
+                  }`}
+                >
+                  {deleteRole.isPending ? "Deleting..." : confirmDelete ? "Confirm Delete?" : "Delete Role"}
+                </button>
+                {confirmDelete && (
+                  <button onClick={() => setConfirmDelete(false)} className="w-full text-xs text-neutral-400 hover:text-neutral-600 mt-1 py-1">
+                    Cancel
+                  </button>
+                )}
+              </div>
+            </Can>
+          )}
         </div>
       </div>
     </>
