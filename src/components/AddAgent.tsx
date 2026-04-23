@@ -1,14 +1,18 @@
 import { zodResolver } from "@hookform/resolvers/zod";
-import { Controller, useForm } from "react-hook-form";
+import { useForm } from "react-hook-form";
 import { z } from "zod";
-import useAddAgent, { UserDetails } from "../hooks/useAddAgent";
 import { camelCaseToTitle } from "../utils/helpers";
-import DropDown from "./DropDown";
 import { useState } from "react";
 import { BsBuilding } from "react-icons/bs";
 import { BiWorld, BiUser } from "react-icons/bi";
 import { Role, useRoleById } from "../hooks/useRoles";
 import { Permission } from "../hooks/usePermissions";
+import { axiosInstance } from "../services/apiClient";
+import { useToastStore } from "../stores/toastStore";
+import { useQueryClient } from "@tanstack/react-query";
+import { CACHE_KEY_USERS } from "../utils/constants";
+import useUser from "../hooks/useUser";
+import { useOrganizations } from "../hooks/useOrganizations";
 
 export interface GrantDisplay {
   pattern: string;
@@ -40,14 +44,29 @@ function buildGrantDisplay(pattern: string, permissionOptions: Permission[]): Gr
   };
 }
 
+// At least one of phone or email required
 const schema = z.object({
   firstName: z.string().min(2, { message: "First name must be at least 2 characters." }),
   lastName: z.string().min(2, { message: "Last name must be at least 2 characters." }),
-  email: z.string().email({ message: "Please enter a valid email." }),
-  phoneNumber: z.string().min(11, { message: "Please enter a valid phone number, starting with country code(eg:+250)" }),
+  email: z.string().email({ message: "Please enter a valid email." }).optional().or(z.literal("")),
+  phoneNumber: z.string().regex(/^\+\d{7,15}$/, { message: "E.164 format required (e.g. +250788000001)" }).optional().or(z.literal("")),
   role: z.string().min(1, { message: "Please select a user role." }),
+  locale: z.enum(["rw", "en", "fr"]),
+  orgId: z.string().optional(),
+}).refine(d => d.email || d.phoneNumber, {
+  message: "At least one of phone or email is required.",
+  path: ["phoneNumber"],
 });
+
 type FormData = z.infer<typeof schema>;
+
+interface InviteSuccess {
+  firstName: string;
+  lastName: string;
+  maskedPhone?: string;
+  maskedEmail?: string;
+  expiresAt?: string;
+}
 
 interface Props {
   companyId: string;
@@ -56,68 +75,134 @@ interface Props {
   permissionOptions: Permission[];
 }
 
-const AddAgent = ({ companyId, roles, permissionOptions }: Props) => {
-  const [refreshKey, setRefreshKey] = useState(0);
-  const roleOptions = roles.map((r) => r.slug);
+const LOCALES = [
+  { value: "rw", label: "Kinyarwanda" },
+  { value: "en", label: "English" },
+  { value: "fr", label: "French" },
+] as const;
 
-  const { register, handleSubmit, control, resetField, watch, formState: { errors } } = useForm<FormData>({
+const inputClass = "ring ring-gray-200 dark:ring-neutral-700 p-2 rounded-sm bg-white dark:bg-neutral-900 dark:text-white w-full outline-none text-sm focus:ring-brand transition-colors";
+const labelClass = "block mb-1 font-medium dark:text-white text-sm";
+
+const AddAgent = ({ companyId, roles, permissionOptions }: Props) => {
+  const { user } = useUser();
+  const isSuperAdmin = user && "roles" in user && user.roles?.includes("platform-admin");
+  const orgQueryResult = useOrganizations({});
+  const allOrgs = (Array.isArray(orgQueryResult.data) ? orgQueryResult.data : []) as any[];
+
+  const [success, setSuccess] = useState<InviteSuccess | null>(null);
+  const [inlineError, setInlineError] = useState("");
+  const { showToast } = useToastStore();
+  const queryClient = useQueryClient();
+
+  const { register, handleSubmit, watch, reset, formState: { errors, isValid } } = useForm<FormData>({
     resolver: zodResolver(schema),
-    defaultValues: { firstName: "", lastName: "", email: "", phoneNumber: "", role: roleOptions[0] ?? "" },
+    defaultValues: { firstName: "", lastName: "", email: "", phoneNumber: "", role: roles[0]?.slug ?? "", locale: "rw", orgId: companyId },
+    mode: "onChange",
   });
 
-  const selectedRoleSlug = watch("role", roleOptions[0] ?? "");
+  const selectedRoleSlug = watch("role");
   const selectedRole = roles.find((r) => r.slug === selectedRoleSlug);
-
-  // Fetch grants for the selected role on demand via GET /roles/:id
   const { data: roleDetail, isLoading: grantsLoading } = useRoleById(selectedRole?.id ?? "");
   const grants: GrantDisplay[] = (roleDetail?.grants ?? []).map((g) => buildGrantDisplay(g.pattern, permissionOptions));
 
-  const addAgent = useAddAgent(companyId);
+  const [isPending, setIsPending] = useState(false);
 
   const onSubmit = async (data: FormData) => {
-    const fullData: UserDetails = { ...data, orgId: companyId, locale: "rw" };
-    addAgent.mutate(fullData);
-    resetField("firstName");
-    resetField("lastName");
-    resetField("email");
-    resetField("phoneNumber");
-    setRefreshKey((c) => c + 1);
+    setInlineError("");
+    setIsPending(true);
+    try {
+      const payload: Record<string, any> = {
+        first_name: data.firstName,
+        last_name: data.lastName,
+        role_slug: data.role,
+        locale: data.locale,
+      };
+      if (data.email) payload.email = data.email;
+      if (data.phoneNumber) payload.phone_number = data.phoneNumber;
+      if (isSuperAdmin && data.orgId) payload.org_id = data.orgId;
+
+      const res = await axiosInstance.post("/users/invite", payload);
+      queryClient.invalidateQueries({ queryKey: CACHE_KEY_USERS });
+
+      setSuccess({
+        firstName: data.firstName,
+        lastName: data.lastName,
+        expiresAt: res.data?.expires_at,
+      });
+    } catch (err: any) {
+      const code = err?.response?.data?.error?.code;
+      if (code === "PHONE_ALREADY_REGISTERED") setInlineError("This phone number is already registered to another account.");
+      else if (code === "EMAIL_ALREADY_REGISTERED") setInlineError("This email is already registered to another account.");
+      else showToast(err.message || "Failed to send invitation.", "error");
+    } finally {
+      setIsPending(false);
+    }
   };
+
+  const handleInviteAnother = () => {
+    setSuccess(null);
+    setInlineError("");
+    reset({ firstName: "", lastName: "", email: "", phoneNumber: "", role: roles[0]?.slug ?? "", locale: "rw", orgId: companyId });
+  };
+
+  // Success modal
+  if (success) {
+    return (
+      <div className="rounded-xl border border-green-200 dark:border-green-800 bg-green-50 dark:bg-green-900/20 p-6 text-center space-y-4">
+        <div className="w-12 h-12 bg-green-100 dark:bg-green-900/40 rounded-full flex items-center justify-center mx-auto">
+          <svg className="w-6 h-6 text-green-600 dark:text-green-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
+          </svg>
+        </div>
+        <div>
+          <p className="font-semibold text-neutral-900 dark:text-white">Invitation sent!</p>
+          <p className="text-sm text-neutral-600 dark:text-neutral-400 mt-1">
+            {success.firstName} {success.lastName} has been invited.
+          </p>
+          {success.expiresAt && (
+            <p className="text-xs text-neutral-400 mt-1">
+              Expires: {new Date(success.expiresAt).toLocaleDateString()}
+            </p>
+          )}
+        </div>
+        <div className="flex gap-3">
+          <button onClick={handleInviteAnother}
+            className="flex-1 border border-brand text-brand py-2 rounded-lg text-sm font-medium hover:bg-brand/5 transition-colors">
+            Invite Another
+          </button>
+          <button onClick={() => setSuccess(null)}
+            className="flex-1 bg-brand text-white py-2 rounded-lg text-sm font-medium hover:brightness-95 transition-colors">
+            Done
+          </button>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className="rounded-md border border-gray-200 dark:border-neutral-800 p-6 bg-white dark:bg-neutral-900">
-      <form onSubmit={handleSubmit(onSubmit)} className="text-sm space-y-4">
-        <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
-          <div className="w-full sm:w-auto">
-            <div className="ring ring-gray-200 p-0.5 rounded-sm dark:text-white">
-              <Controller
-                name="role"
-                defaultValue={roleOptions[0] ?? ""}
-                control={control}
-                render={({ field }) => (
-                  <DropDown
-                    key={refreshKey}
-                    onSelect={field.onChange}
-                    options={roleOptions}
-                    label={(choice) => camelCaseToTitle(choice)}
-                    value={field.value}
-                    style="v2"
-                  />
-                )}
-              />
-            </div>
-            {errors.role && <p className="text-red-500 text-xs">{errors.role.message}</p>}
-          </div>
+      <form onSubmit={handleSubmit(onSubmit)} className="space-y-4 text-sm">
+
+        {/* Role selector */}
+        <div>
+          <label className={labelClass}>Role <span className="text-red-500">*</span></label>
+          <select {...register("role")} className={inputClass}>
+            {roles.map((r) => (
+              <option key={r.slug} value={r.slug}>{camelCaseToTitle(r.slug)}</option>
+            ))}
+          </select>
+          {errors.role && <p className="text-red-500 text-xs mt-1">{errors.role.message}</p>}
         </div>
 
-        {/* Permissions preview — fetched on demand */}
+        {/* Permissions preview */}
         {selectedRoleSlug && (
-          <div className="mb-4 rounded-md bg-gray-50 p-3 text-xs text-neutral-700 dark:bg-neutral-900 dark:text-neutral-300">
-            <p className="font-semibold mb-3">Permissions for {camelCaseToTitle(selectedRoleSlug)}:</p>
+          <div className="rounded-md bg-gray-50 dark:bg-neutral-800 p-3 text-xs">
+            <p className="font-semibold mb-2 dark:text-white">Permissions for {camelCaseToTitle(selectedRoleSlug)}:</p>
             {grantsLoading ? (
               <div className="flex items-center gap-2 text-neutral-400">
                 <div className="animate-spin rounded-full h-3 w-3 border border-brand border-t-transparent" />
-                Loading permissions...
+                Loading...
               </div>
             ) : grants.length === 0 ? (
               <p className="text-neutral-400">No permissions assigned.</p>
@@ -143,55 +228,72 @@ const AddAgent = ({ companyId, roles, permissionOptions }: Props) => {
           </div>
         )}
 
-        <label htmlFor="firstName" className="block mb-0.5 font-medium dark:text-white">
-          First Name <span className="text-red-500 text-base">*</span>
-        </label>
-        <div className="mb-5">
-          <div className="ring ring-gray-200 p-1 rounded-xs bg-white dark:text-white dark:bg-black">
-            <input {...register("firstName")} type="text" id="firstName" className="outline-none w-full" />
+        {/* Name */}
+        <div className="grid gap-3 sm:grid-cols-2">
+          <div>
+            <label className={labelClass}>First Name <span className="text-red-500">*</span></label>
+            <input {...register("firstName")} type="text" className={inputClass} />
+            {errors.firstName && <p className="text-red-500 text-xs mt-1">{errors.firstName.message}</p>}
           </div>
-          {errors.firstName && <p className="text-red-500 text-xs">{errors.firstName.message}</p>}
+          <div>
+            <label className={labelClass}>Last Name <span className="text-red-500">*</span></label>
+            <input {...register("lastName")} type="text" className={inputClass} />
+            {errors.lastName && <p className="text-red-500 text-xs mt-1">{errors.lastName.message}</p>}
+          </div>
         </div>
 
-        <label htmlFor="lastName" className="block mb-0.5 font-medium dark:text-white">
-          Last Name <span className="text-red-500 text-base">*</span>
-        </label>
-        <div className="mb-5">
-          <div className="ring ring-gray-200 p-1 rounded-xs bg-white dark:text-white dark:bg-black">
-            <input {...register("lastName")} type="text" id="lastName" className="outline-none w-full" />
-          </div>
-          {errors.lastName && <p className="text-red-500 text-xs">{errors.lastName.message}</p>}
+        {/* Phone */}
+        <div>
+          <label className={labelClass}>Phone Number</label>
+          <input {...register("phoneNumber")} type="tel" placeholder="+250788000001" className={inputClass} />
+          {errors.phoneNumber && <p className="text-red-500 text-xs mt-1">{errors.phoneNumber.message}</p>}
         </div>
 
-        <label htmlFor="email" className="block mb-0.5 font-medium dark:text-white">
-          Email <span className="text-red-500 text-base">*</span>
-        </label>
-        <div className="mb-5">
-          <div className="ring ring-gray-200 p-1 rounded-xs bg-white dark:text-white dark:bg-black">
-            <input {...register("email")} type="email" id="email" className="outline-none w-full" />
-          </div>
-          {errors.email && <p className="text-red-500 text-xs">{errors.email.message}</p>}
+        {/* Email */}
+        <div>
+          <label className={labelClass}>Email</label>
+          <input {...register("email")} type="email" className={inputClass} />
+          {errors.email && <p className="text-red-500 text-xs mt-1">{errors.email.message}</p>}
         </div>
 
-        <label htmlFor="phoneNumber" className="block mb-0.5 font-medium dark:text-white">
-          Phone Number <span className="text-red-500 text-base">*</span>
-        </label>
-        <div className="mb-5">
-          <div className="ring ring-gray-200 p-1 rounded-xs bg-white dark:text-white dark:bg-black">
-            <input {...register("phoneNumber")} type="text" id="phoneNumber" className="outline-none w-full" />
-          </div>
-          {errors.phoneNumber && <p className="text-red-500 text-xs">{errors.phoneNumber.message}</p>}
+        <p className="text-xs text-neutral-400">At least one of phone or email is required.</p>
+
+        {/* Locale */}
+        <div>
+          <label className={labelClass}>Language</label>
+          <select {...register("locale")} className={inputClass}>
+            {LOCALES.map(l => <option key={l.value} value={l.value}>{l.label}</option>)}
+          </select>
         </div>
 
-        <div className="pt-4">
-          <button type="submit" className="bg-brand p-2 w-full text-white rounded-sm cursor-pointer hover:brightness-95 active:scale-95 transition-all">
-            Add User
-          </button>
-        </div>
+        {/* Org selector — platform-admin only */}
+        {isSuperAdmin && (
+          <div>
+            <label className={labelClass}>Organization</label>
+            <select {...register("orgId")} className={inputClass}>
+              {allOrgs.map((org) => (
+                <option key={org.id} value={org.id}>{org.name}</option>
+              ))}
+            </select>
+          </div>
+        )}
+
+        {inlineError && (
+          <div className="bg-red-50 dark:bg-red-900/20 text-red-600 dark:text-red-400 text-xs p-3 rounded-lg border border-red-100 dark:border-red-800">
+            {inlineError}
+          </div>
+        )}
+
+        <button
+          type="submit"
+          disabled={isPending || !isValid}
+          className="bg-brand p-2 w-full text-white rounded-sm cursor-pointer hover:brightness-95 active:scale-95 transition-all disabled:opacity-50 disabled:cursor-not-allowed"
+        >
+          {isPending ? "Sending invitation..." : "Send Invitation"}
+        </button>
       </form>
     </div>
   );
 };
 
 export default AddAgent;
-
