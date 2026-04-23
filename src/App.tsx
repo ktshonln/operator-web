@@ -48,6 +48,7 @@ function App() {
           />
           <Route path="/reset-password" element={<ResetPassword />} />
           <Route path="/accept-invite" element={<AcceptInvite />} />
+          <Route path="/i" element={<AcceptInvite />} />
           <Route path="/login-mfa" element={<LoginMfa />} />
           <Route path="/register" element={<RegisterPage />} />
           <Route

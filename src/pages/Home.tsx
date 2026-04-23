@@ -25,13 +25,20 @@ function HomePage() {
   const user = useRequiredUser()
   const userLoad = user ? false : true;
   const { data: company } = useCompany(user?.org_id ?? "");
-  console.log("COMPANY", company);
   const [analyticsQuery, setAnalyticsQuery] = useState<AnalyticsQuery>(
     {} as AnalyticsQuery
   );
   const [ticketQuery, setTicketQuery] = useState<TicketQuery>(
     {} as TicketQuery
   );
+
+  // Onboarding welcome — shown when last_login_at is null (first login after activation)
+  const isFirstLogin = user && (user as any).last_login_at === null;
+  const [showWelcome, setShowWelcome] = useState(false);
+  // Only show once per session
+  useState(() => {
+    if (isFirstLogin) setShowWelcome(true);
+  });
 
   const {
     data: analytics,
@@ -60,6 +67,48 @@ function HomePage() {
   console.log("The Query", analyticsQuery);
   return (
     <div className="flex space-x-3 dark:text-white">
+      {/* Onboarding welcome modal */}
+      {showWelcome && (
+        <>
+          <div className="fixed inset-0 bg-black/50 z-[70]" onClick={() => setShowWelcome(false)} />
+          <div className="fixed inset-0 flex items-center justify-center z-[71] p-4">
+            <div className="bg-white dark:bg-neutral-900 rounded-2xl shadow-2xl max-w-md w-full p-8 text-center" onClick={e => e.stopPropagation()}>
+              <div className="w-16 h-16 bg-brand/10 rounded-full flex items-center justify-center mx-auto mb-4">
+                <svg className="w-8 h-8 text-brand" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M5 3v4M3 5h4M6 17v4m-2-2h4m5-16l2.286 6.857L21 12l-5.714 2.143L13 21l-2.286-6.857L5 12l5.714-2.143L13 3z" />
+                </svg>
+              </div>
+              <h2 className="font-bold text-2xl text-neutral-900 dark:text-white mb-2">
+                Welcome to Katisha, {user?.first_name}!
+              </h2>
+              <p className="text-sm text-neutral-500 dark:text-neutral-400 mb-2">
+                Your organization account is now active. Here's what you can do to get started:
+              </p>
+              <div className="text-left space-y-3 my-5">
+                {[
+                  { icon: "👥", title: "Invite your team", desc: "Add dispatchers and drivers under Team → Users", link: "/team/users" },
+                  { icon: "🚌", title: "Add your fleet", desc: "Register buses and drivers under Fleets", link: "/fleets/buses" },
+                  { icon: "🗺️", title: "Set up routes", desc: "Define your routes and trips", link: "/trips" },
+                  { icon: "⚙️", title: "Complete your profile", desc: "Add your organization logo and details", link: "/settings/profile" },
+                ].map(({ icon, title, desc, link }) => (
+                  <button key={link} onClick={() => { setShowWelcome(false); navigate(link); }}
+                    className="w-full flex items-start gap-3 p-3 rounded-xl hover:bg-gray-50 dark:hover:bg-neutral-800 transition-colors text-left">
+                    <span className="text-xl">{icon}</span>
+                    <div>
+                      <p className="font-medium text-sm text-neutral-900 dark:text-white">{title}</p>
+                      <p className="text-xs text-neutral-500 dark:text-neutral-400">{desc}</p>
+                    </div>
+                  </button>
+                ))}
+              </div>
+              <button onClick={() => setShowWelcome(false)}
+                className="w-full bg-brand text-white py-2.5 rounded-lg font-medium hover:brightness-95 transition-colors">
+                Get Started
+              </button>
+            </div>
+          </div>
+        </>
+      )}
       {/* Dashboard */}
       <div className=" ml-3 mt-5 mb-5 grow">
         {
