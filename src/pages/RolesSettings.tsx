@@ -100,6 +100,7 @@ function RoleDetailPanel({
   const [grantError, setGrantError] = useState("");
   const [confirmDelete, setConfirmDelete] = useState(false);
   const { showToast } = useToastStore();
+  const ability = useAbility();
 
   const updateRole = useUpdateRole(role.id);
   const addGrant = useAddGrant(role.id);
@@ -108,9 +109,16 @@ function RoleDetailPanel({
 
   const grants = roleDetail?.grants ?? [];
 
-  // Available scopes for the selected permission
+  // Caller-type helpers
+  const isPlatformAdmin = ability.can("manage", "all");
+
+  // Org-admin viewing a global role → read-only with notice
+  const isGlobalReadOnly = !isPlatformAdmin && !role.org_id;
+
+  // Available scopes for the selected permission — strip "platform" for non-platform-admins
   const selectedPerm = permissionOptions.find((p) => p.code === selectedCode);
-  const availableScopes = selectedPerm?.scopes ?? ["own", "org", "platform"];
+  const rawScopes = selectedPerm?.scopes ?? ["own", "org", "platform"];
+  const availableScopes = isPlatformAdmin ? rawScopes : rawScopes.filter((s) => s !== "platform");
 
   const groupedPermissions = useMemo(() =>
     permissionOptions.reduce((groups, perm) => {
@@ -206,7 +214,7 @@ function RoleDetailPanel({
             ) : (
               <div className="flex items-center gap-2">
                 <h2 className="font-bold text-lg dark:text-white truncate">{roleDetail?.name ?? role.name}</h2>
-                {!role.is_managed && (
+                {!role.is_managed && !isGlobalReadOnly && (
                   <Can I="update" a="Role">
                     <button onClick={() => setIsEditing(true)}
                       className="text-neutral-400 hover:text-brand transition-colors shrink-0">
@@ -248,13 +256,21 @@ function RoleDetailPanel({
             </div>
           )}
 
+          {/* Global role read-only notice for org-admin */}
+          {isGlobalReadOnly && !role.is_managed && (
+            <div className="flex items-start gap-2 p-3 rounded-lg bg-amber-50 dark:bg-amber-900/20 border border-amber-200 dark:border-amber-700/50 text-xs text-amber-700 dark:text-amber-400">
+              <BiWorld className="w-3.5 h-3.5 mt-0.5 shrink-0" />
+              This is a global template role. You can view it, but only platform admins can make changes.
+            </div>
+          )}
+
           {/* Grants section */}
           <div>
             <div className="flex items-center justify-between mb-3">
               <h3 className="text-sm font-semibold text-neutral-900 dark:text-white">
                 Permissions ({grants.length})
               </h3>
-              {!role.is_managed && (
+              {!role.is_managed && !isGlobalReadOnly && (
                 <Can I="update" a="Role">
                   <button
                     onClick={() => { setAddingGrant((v) => !v); setGrantError(""); }}
@@ -345,7 +361,7 @@ function RoleDetailPanel({
                       key={g.id}
                       grant={display}
                       isManaged={g.is_managed}
-                      onRemove={!role.is_managed ? () => handleRemoveGrant(g.id, g.is_managed) : undefined}
+                      onRemove={!role.is_managed && !isGlobalReadOnly ? () => handleRemoveGrant(g.id, g.is_managed) : undefined}
                     />
                   );
                 })}
@@ -364,7 +380,7 @@ function RoleDetailPanel({
           </div>
 
           {/* Delete role */}
-          {!role.is_managed && (
+          {!role.is_managed && !isGlobalReadOnly && (
             <Can I="delete" a="Role">
               <div className="pt-4 border-t border-gray-100 dark:border-neutral-800">
                 <button
