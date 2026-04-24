@@ -2,13 +2,14 @@ import { zodResolver } from "@hookform/resolvers/zod";
 import { useForm } from "react-hook-form";
 import { Link, useNavigate } from "react-router-dom";
 import { z } from "zod";
-import { useState } from "react";
+import { useState, useMemo } from "react";
 import Footer from "../components/Footer";
 import { useToastStore } from "../stores/toastStore";
 import useSubmitOrganizationApplication, {
   getOrganizationApplicationDocumentPresignedUrl,
   OrganizationApplicationPayload,
 } from "../hooks/useOrganizationApplications";
+import { useOrganizations } from "../hooks/useOrganizations";
 
 const OrganizationSchema = z.object({
   name: z.string().min(2, { message: "Organization name must be at least 2 characters." }),
@@ -34,6 +35,7 @@ const RegisterPage = () => {
   const showToast = useToastStore((state) => state.showToast);
   const [businessCertificateFile, setBusinessCertificateFile] = useState<File | null>(null);
   const [repIdFile, setRepIdFile] = useState<File | null>(null);
+  const [submitError, setSubmitError] = useState("");
 
   const { register, handleSubmit, reset, watch, formState: { errors } } = useForm<RegistrationData>({
     resolver: zodResolver(OrganizationSchema),
@@ -41,13 +43,32 @@ const RegisterPage = () => {
   });
 
   const orgType = watch("org_type");
+  const orgName = watch("name");
   const submitApplication = useSubmitOrganizationApplication();
+
+  // Slug preview (same as CreateOrganization.tsx)
+  const slugPreview = orgName ? orgName
+    .toLowerCase()
+    .trim()
+    .replace(/[^a-z0-9\s-]/g, "")
+    .replace(/\s+/g, "-")
+    .replace(/-+/g, "-") : "";
+
+  // Fetch active cooperatives for parent org selector
+  const cooperativesQuery = useOrganizations({ status: "active", org_type: "cooperative" });
+  const activeCooperatives = useMemo(() => {
+    const result = cooperativesQuery.data as { data: any[] } | any[] | undefined;
+    if (Array.isArray(result)) return result;
+    return result?.data ?? [];
+  }, [cooperativesQuery.data]);
 
   const onSubmit = async (data: RegistrationData) => {
     if (!businessCertificateFile || !repIdFile) {
       showToast("Please upload both required documents.", "error");
       return;
     }
+
+    setSubmitError("");
 
     try {
       // Step 1: Get presigned URLs for both documents
@@ -84,15 +105,34 @@ const RegisterPage = () => {
           setBusinessCertificateFile(null);
           setRepIdFile(null);
           if (response?.org_id) {
-            navigate(`/register/verify?org_id=${encodeURIComponent(response.org_id)}`);
+            navigate(`/register/verify?org_id=${encodeURIComponent(response.org_id)}&org_name=${encodeURIComponent(data.name)}&org_type=${encodeURIComponent(data.org_type)}`);
           } else {
             navigate("/register/success");
           }
         },
+        onError: (err: any) => {
+          const code = err?.response?.data?.error?.code;
+          let message = "Failed to submit application. Please try again.";
+          
+          if (code === "ORG_ALREADY_EXISTS") {
+            message = "An organization with this name already exists.";
+          } else if (code === "CONTACT_PHONE_ALREADY_REGISTERED") {
+            message = "This contact phone number is already registered.";
+          } else if (code === "CONTACT_EMAIL_ALREADY_REGISTERED") {
+            message = "This contact email is already registered.";
+          } else {
+            message = err?.response?.data?.error?.message || err?.message || message;
+          }
+          
+          setSubmitError(message);
+          showToast(message, "error");
+        },
       });
     } catch (error) {
       console.error(error);
-      showToast("Failed to upload documents or submit application.", "error");
+      const message = "Failed to upload documents or submit application.";
+      setSubmitError(message);
+      showToast(message, "error");
     }
   };
 
@@ -106,6 +146,26 @@ const RegisterPage = () => {
         <div className="bg-white drop-shadow-lg rounded-2xl w-full max-w-2xl mx-auto">
           <div className="p-6 sm:p-10">
             <img src="/logoOne.svg" className="w-28 mb-6" alt="Katisha" />
+            
+            {/* Step Indicator */}
+            <div className="flex items-center justify-center mb-8">
+              <div className="flex items-center gap-2">
+                <div className="flex items-center">
+                  <div className="w-8 h-8 rounded-full bg-brand text-white flex items-center justify-center text-sm font-semibold">
+                    1
+                  </div>
+                  <span className="ml-2 text-sm font-medium text-brand">Application Details</span>
+                </div>
+                <div className="w-12 h-0.5 bg-gray-300 mx-2"></div>
+                <div className="flex items-center">
+                  <div className="w-8 h-8 rounded-full bg-gray-300 text-gray-500 flex items-center justify-center text-sm font-semibold">
+                    2
+                  </div>
+                  <span className="ml-2 text-sm font-medium text-gray-500">Verify Contact</span>
+                </div>
+              </div>
+            </div>
+
             <h1 className="font-bold text-2xl mb-1 text-[#0A4370]">Apply for membership</h1>
             <p className="text-sm text-[#6A717D] mb-8">Submit your organization's application to join the Katisha platform.</p>
 
@@ -117,6 +177,11 @@ const RegisterPage = () => {
                 <div>
                   <label className={labelClass}>Organization name *</label>
                   <input {...register("name")} type="text" className={inputClass} />
+                  {orgName && (
+                    <p className="mt-1 text-xs text-neutral-400 font-mono">
+                      slug: <span className="text-neutral-500">{slugPreview}</span>
+                    </p>
+                  )}
                   {errors.name && <p className={errorClass}>{errors.name.message}</p>}
                 </div>
                 <div>
@@ -132,8 +197,15 @@ const RegisterPage = () => {
 
               {orgType === "coop_member" && (
                 <div>
-                  <label className={labelClass}>Parent Cooperative ID *</label>
-                  <input {...register("parent_org_id")} type="text" placeholder="UUID of the parent cooperative" className={inputClass} />
+                  <label className={labelClass}>Parent Cooperative *</label>
+                  <select {...register("parent_org_id")} className={inputClass}>
+                    <option value="">Select a cooperative...</option>
+                    {activeCooperatives.map((coop: any) => (
+                      <option key={coop.id} value={coop.id}>{coop.name}</option>
+                    ))}
+                  </select>
+                  <p className="text-xs text-neutral-400 mt-1">Must be an active cooperative.</p>
+                  {errors.parent_org_id && <p className={errorClass}>{errors.parent_org_id.message}</p>}
                 </div>
               )}
 
@@ -201,6 +273,12 @@ const RegisterPage = () => {
                 {!repIdFile && <p className="text-xs text-neutral-400 mt-1">Required</p>}
                 {repIdFile && <p className="text-xs text-green-600 mt-1">✓ {repIdFile.name}</p>}
               </div>
+
+              {submitError && (
+                <div className="p-3 rounded-lg bg-red-50 border border-red-200 text-red-700 text-sm">
+                  {submitError}
+                </div>
+              )}
 
               <button
                 disabled={submitApplication.isPending}

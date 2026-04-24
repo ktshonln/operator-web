@@ -63,7 +63,7 @@ export const useVerifyOrganizationContact = () => {
   const showToast = useToastStore((state) => state.showToast);
 
   return useMutation({
-    mutationFn: (data: { org_id: string; otp: string }) =>
+    mutationFn: (data: { org_id: string; otp: string; channel: "phone" | "email" }) =>
       axiosInstance.post<void>("/organizations/verify-contact", data),
     onSuccess: () => {
       showToast("Organization contact verified successfully", "success");
@@ -80,9 +80,9 @@ export const useResendOrganizationVerificationOtp = () => {
   const showToast = useToastStore((state) => state.showToast);
 
   return useMutation({
-    mutationFn: (org_id: string) =>
+    mutationFn: (data: { org_id: string; channel: "phone" | "email" }) =>
       axiosInstance
-        .post<{ message: string }>("/organizations/resend-otp", { org_id })
+        .post<{ expires_in: number }>("/organizations/apply/resend-contact-otp", data)
         .then((res) => res.data),
     onSuccess: () => {
       showToast("Verification code resent successfully", "success");
