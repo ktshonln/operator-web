@@ -57,7 +57,12 @@ const useUser = () => {
   const navigate = useNavigate();
   const showToast = useToastStore((state) => state.showToast);
 
+  // Public routes that should never trigger a redirect to /login
+  const PUBLIC_PATHS = ["/register", "/login", "/forgot-password", "/reset-password", "/verify-password-reset", "/accept-invite", "/i", "/login-mfa", "/activate"];
+
   useEffect(() => {
+    const isPublicPath = PUBLIC_PATHS.some((p) => window.location.pathname.startsWith(p));
+
     setLoading(true);
     axiosInstance
       .get<User>("/users/me")
@@ -67,9 +72,11 @@ const useUser = () => {
       })
       .catch((error) => {
         console.error("Error fetching logged in user", error);
-        showToast("User not logged in", "error");
-        navigate("/login");
         setLoading(false);
+        if (!isPublicPath) {
+          showToast("User not logged in", "error");
+          navigate("/login");
+        }
       });
   }, [navigate, showToast]);
 

@@ -9,6 +9,7 @@ import {
   useConfirmLoginChannelChange,
   useResendLoginChannelOtp,
 } from "../hooks/useLoginChannel";
+import { BsPhone, BsEnvelope } from "react-icons/bs";
 
 // ─── Login Channel Change — two-step inline flow ──────────────────────────────
 function LoginChannelSection({ userId, currentChannel }: { userId: string; currentChannel: "phone" | "email" | null }) {
@@ -118,14 +119,15 @@ function LoginChannelSection({ userId, currentChannel }: { userId: string; curre
                 key={ch}
                 type="button"
                 onClick={() => setTargetChannel(ch)}
-                className={`flex-1 py-2 rounded-lg text-sm border transition-colors ${
+                className={`flex-1 py-2 rounded-lg text-sm border transition-colors flex items-center justify-center gap-2 ${
                   targetChannel === ch
                     ? "border-brand bg-brand/10 text-brand font-medium"
                     : "border-gray-200 dark:border-neutral-700 text-neutral-600 dark:text-neutral-300 hover:border-brand"
                 }`}
               >
-                {ch === "phone" ? "📱 Phone" : "✉️ Email"}
-                {ch === currentChannel && <span className="ml-1 text-[10px] opacity-60">(current)</span>}
+                {ch === "phone" ? <BsPhone className="w-4 h-4" /> : <BsEnvelope className="w-4 h-4" />}
+                {ch === "phone" ? "Phone" : "Email"}
+                {ch === currentChannel && <span className="text-[10px] opacity-60">(current)</span>}
               </button>
             ))}
           </div>
