@@ -7,7 +7,9 @@ import { useUpdateRole } from "../hooks/useUpdateRole";
 import { useAddGrant } from "../hooks/useAddGrant";
 import { useRemoveGrant } from "../hooks/useRemoveGrant";
 import { useToastStore } from "../stores/toastStore";
-import { Can } from "../contexts/AbilityContext";
+import { Can, useAbility } from "../contexts/AbilityContext";
+import { useOrganizations } from "../hooks/useOrganizations";
+import useUser from "../hooks/useUser";
 import { BsBuilding, BsLock } from "react-icons/bs";
 import { BiWorld, BiUser } from "react-icons/bi";
 
@@ -529,13 +531,45 @@ function RoleCard({
   );
 }
 
+// ─── Slug preview helper ──────────────────────────────────────────────────────
+
+function toSlug(name: string): string {
+  return name
+    .toLowerCase()
+    .trim()
+    .replace(/[^a-z0-9\s-]/g, "")
+    .replace(/\s+/g, "-")
+    .replace(/-+/g, "-");
+}
+
 // ─── Create Role slide-over ───────────────────────────────────────────────────
 
-function CreateRolePanel({ permissionOptions, onClose }: { permissionOptions: Permission[]; onClose: () => void }) {
+function CreateRolePanel({
+  permissionOptions,
+  onClose,
+  onCreated,
+}: {
+  permissionOptions: Permission[];
+  onClose: () => void;
+  onCreated: (role: Role) => void;
+}) {
   const [roleName, setRoleName] = useState("");
+  const [selectedOrgId, setSelectedOrgId] = useState<string | null>(null);
   const [selectedPermissions, setSelectedPermissions] = useState<{ code: string; scope: "own" | "org" | "platform" }[]>([]);
   const [error, setError] = useState("");
   const createRole = useCreateRole();
+  const ability = useAbility();
+  const { user } = useUser();
+  const { showToast } = useToastStore();
+
+  // Platform-admin can scope to any org or leave global; org-admin is locked to own org
+  const isPlatformAdmin = ability.can("manage", "all");
+  const orgId = user && "org_id" in user ? user.org_id : null;
+
+  const { data: orgsData } = useOrganizations({});
+  const allOrgs = (Array.isArray(orgsData) ? orgsData : []) as { id: string; name: string }[];
+
+  const slugPreview = toSlug(roleName);
 
   const groupedPermissions = useMemo(() =>
     permissionOptions.reduce((groups, perm) => {
@@ -561,15 +595,43 @@ function CreateRolePanel({ permissionOptions, onClose }: { permissionOptions: Pe
     setSelectedPermissions((prev) => prev.map((p) => p.code === code ? { ...p, scope } : p));
   };
 
+  // Filter out "platform" scope for non-platform-admin callers
+  const getAllowedScopes = (perm: Permission) => {
+    const scopes = perm.scopes ?? ["own", "org", "platform"];
+    return isPlatformAdmin ? scopes : scopes.filter((s) => s !== "platform");
+  };
+
   const handleCreate = () => {
     const trimmed = roleName.trim();
     if (!trimmed) { setError("Role name is required."); return; }
     if (selectedPermissions.length === 0) { setError("Select at least one permission."); return; }
+
     const patterns = selectedPermissions.map(({ code, scope }) => `${code}:${scope}`);
-    createRole.mutate({ name: trimmed, patterns }, {
-      onSuccess: () => { onClose(); },
-      onError: () => setError("Failed to create role."),
-    });
+
+    // org_id: platform-admin uses the selector value (null = global), org-admin always sends own org
+    const resolvedOrgId = isPlatformAdmin ? selectedOrgId : orgId;
+
+    createRole.mutate(
+      { name: trimmed, patterns, ...(resolvedOrgId ? { org_id: resolvedOrgId } : {}) },
+      {
+        onSuccess: (newRole) => {
+          showToast("Role created successfully", "success");
+          onCreated(newRole);
+        },
+        onError: (err: any) => {
+          const code = err?.response?.data?.error?.code;
+          if (code === "ROLE_ALREADY_EXISTS") {
+            setError("A role with this name already exists.");
+          } else if (code === "INVALID_GRANT_PATTERN") {
+            setError("One or more grant patterns are invalid. Check your permission selections.");
+          } else if (code === "GRANT_SCOPE_ESCALATION") {
+            setError("You cannot assign permissions beyond your own scope.");
+          } else {
+            setError("Failed to create role. Please try again.");
+          }
+        },
+      }
+    );
   };
 
   return (
@@ -589,16 +651,44 @@ function CreateRolePanel({ permissionOptions, onClose }: { permissionOptions: Pe
         </div>
 
         <div className="flex-1 overflow-y-auto p-6 custom-scrollbar space-y-5">
-          {/* Role name */}
+          {/* Role name + slug preview */}
           <div>
             <label className="block text-sm font-medium text-neutral-700 dark:text-neutral-300 mb-1">Role name</label>
             <input
               value={roleName}
-              onChange={(e) => setRoleName(e.target.value)}
+              onChange={(e) => { setRoleName(e.target.value); setError(""); }}
               placeholder="e.g. Senior Dispatcher"
               className="w-full rounded-lg border border-gray-200 dark:border-neutral-700 px-3 py-2 text-sm bg-white dark:bg-neutral-900 text-neutral-900 dark:text-white outline-none focus:ring-2 focus:ring-brand/20 focus:border-brand transition-colors"
             />
+            {roleName && (
+              <p className="mt-1 text-xs text-neutral-400 font-mono">
+                slug: <span className="text-neutral-500 dark:text-neutral-300">{slugPreview}</span>
+              </p>
+            )}
           </div>
+
+          {/* Org selector — platform-admin only */}
+          {isPlatformAdmin && (
+            <div>
+              <label className="block text-sm font-medium text-neutral-700 dark:text-neutral-300 mb-1">Organization scope</label>
+              <div className="relative">
+                <select
+                  value={selectedOrgId ?? ""}
+                  onChange={(e) => setSelectedOrgId(e.target.value || null)}
+                  className="w-full appearance-none pl-3 pr-8 py-2 text-sm rounded-lg border border-gray-200 dark:border-neutral-700 bg-white dark:bg-neutral-900 text-neutral-700 dark:text-neutral-300 outline-none focus:ring-2 focus:ring-brand/20 focus:border-brand transition-colors"
+                >
+                  <option value="">Global (no org)</option>
+                  {allOrgs.map((org) => (
+                    <option key={org.id} value={org.id}>{org.name}</option>
+                  ))}
+                </select>
+                <svg className="absolute right-2.5 top-1/2 -translate-y-1/2 w-3.5 h-3.5 text-neutral-400 pointer-events-none" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
+                </svg>
+              </div>
+              <p className="mt-1 text-xs text-neutral-400">Leave as "Global" to create a platform-wide role.</p>
+            </div>
+          )}
 
           {/* Permission picker */}
           <div>
@@ -631,7 +721,7 @@ function CreateRolePanel({ permissionOptions, onClose }: { permissionOptions: Pe
             </div>
           </div>
 
-          {/* Selected permissions with scope picker — same badge style */}
+          {/* Selected permissions with scope picker */}
           {selectedPermissions.length > 0 && (
             <div>
               <p className="text-xs font-semibold text-neutral-500 dark:text-neutral-400 uppercase tracking-wide mb-3">
@@ -641,7 +731,7 @@ function CreateRolePanel({ permissionOptions, onClose }: { permissionOptions: Pe
                 {selectedPermissions.map(({ code, scope }) => {
                   const perm = permissionOptions.find((p) => p.code === code);
                   const display = buildGrantDisplay(`${code}:${scope}`, permissionOptions);
-                  const availableScopes = perm?.scopes ?? ["own", "org", "platform"];
+                  const allowedScopes = perm ? getAllowedScopes(perm) : ["own", "org"];
                   return (
                     <div key={code} className="rounded-md border border-brand/20 bg-brand/5 px-3 py-1.5 flex flex-col">
                       <div className="flex items-center text-brand font-medium text-xs gap-1.5">
@@ -657,9 +747,9 @@ function CreateRolePanel({ permissionOptions, onClose }: { permissionOptions: Pe
                         </button>
                       </div>
                       <span className="text-[10px] text-brand/70 mt-0.5 truncate max-w-[200px]">{display.description}</span>
-                      {availableScopes.length > 1 && (
+                      {allowedScopes.length > 1 && (
                         <div className="flex gap-1 mt-1.5">
-                          {availableScopes.map((s) => (
+                          {allowedScopes.map((s) => (
                             <button
                               key={s}
                               type="button"
@@ -805,6 +895,10 @@ function RolesSettings() {
         <CreateRolePanel
           permissionOptions={permissionOptions}
           onClose={() => setCreatePanelOpen(false)}
+          onCreated={(newRole) => {
+            setCreatePanelOpen(false);
+            setSelectedRole(newRole);
+          }}
         />
       )}
 

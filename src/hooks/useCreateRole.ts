@@ -1,7 +1,6 @@
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { axiosInstance } from "../services/apiClient";
 import { Role } from "./useRoles";
-import { useToastStore } from "../stores/toastStore";
 
 export interface CreateRoleRequest {
   name: string;
@@ -12,7 +11,6 @@ export interface CreateRoleRequest {
 
 export const useCreateRole = () => {
   const queryClient = useQueryClient();
-  const showToast = useToastStore((state) => state.showToast);
 
   return useMutation({
     mutationFn: async (data: CreateRoleRequest) => {
@@ -20,9 +18,6 @@ export const useCreateRole = () => {
       return response.data;
     },
     onSuccess: () => {
-      showToast(`Successfully created a new role!`, "success");
-
-      // Invalidate roles list
       queryClient.invalidateQueries({ queryKey: ["roles"] });
     },
   });
