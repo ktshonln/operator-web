@@ -13,6 +13,11 @@ dist-ssr
 *.local
 temp/
 
+# Envs
+.env
+.env.*
+!.env.example
+
 # Editor directories and files
 .vscode/*
 !.vscode/extensions.json
@@ -23,5 +28,6 @@ temp/
 *.njsproj
 *.sln
 *.sw?
-.kiro/
+.kiro/        
+*.kiro
 

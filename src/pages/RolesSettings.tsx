@@ -117,7 +117,7 @@ function RoleDetailPanel({
 
   // Available scopes for the selected permission — strip "platform" for non-platform-admins
   const selectedPerm = permissionOptions.find((p) => p.code === selectedCode);
-  const rawScopes = selectedPerm?.scopes ?? ["own", "org", "platform"];
+  const rawScopes: ("own" | "org" | "platform")[] = selectedPerm?.scopes ?? ["own", "org", "platform"];
   const availableScopes = isPlatformAdmin ? rawScopes : rawScopes.filter((s) => s !== "platform");
 
   const groupedPermissions = useMemo(() =>
@@ -612,8 +612,8 @@ function CreateRolePanel({
   };
 
   // Filter out "platform" scope for non-platform-admin callers
-  const getAllowedScopes = (perm: Permission) => {
-    const scopes = perm.scopes ?? ["own", "org", "platform"];
+  const getAllowedScopes = (perm: Permission): ("own" | "org" | "platform")[] => {
+    const scopes: ("own" | "org" | "platform")[] = perm.scopes ?? ["own", "org", "platform"];
     return isPlatformAdmin ? scopes : scopes.filter((s) => s !== "platform");
   };
 

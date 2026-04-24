@@ -33,7 +33,7 @@ const Sidebar = () => {
       { link: "/fleets", label: "Fleets", icon: RiBusFill, subLinks: ["/buses", "/drivers"], action: "read", subject: "Bus" },
       { link: "/trips", label: "Trips", icon: BiTrip, action: "read", subject: "Trip" },
       { link: "/reports", label: "Reports", icon: FaChartLine, action: "read", subject: "Report" },
-      { link: "/team", label: "Team", icon: HiOutlineUserGroup, subLinks: ["/users", "/roles"], action: "read", subject: "User" },
+      { link: "/team", label: "Team", icon: HiOutlineUserGroup, subLinks: ["/users", "/roles", "/invitations"], action: "read", subject: "User" },
       { link: "/settings/profile", label: "Settings", icon: FiSettings, activePrefix: "/settings/p", action: "read", subject: "User" },
     ];
   const { show, hideMenu } = useMenuStore();

@@ -33,6 +33,8 @@ import CreateOrganization from "./pages/CreateOrganization";
 import UserDetails from "./pages/UserDetails";
 import RolesSettings from "./pages/RolesSettings";
 import AppearanceSettings from "./pages/AppearanceSettings";
+import Invitations from "./pages/Invitations";
+import InvitationDetails from "./pages/InvitationDetails";
 
 function App() {
   return (
@@ -214,6 +216,22 @@ function App() {
               element={
                 <AuthGuard action="read" subject="Role">
                   <RolesSettings />
+                </AuthGuard>
+              }
+            />
+            <Route
+              path="team/invitations"
+              element={
+                <AuthGuard action="invite" subject="User">
+                  <Invitations />
+                </AuthGuard>
+              }
+            />
+            <Route
+              path="team/invitations/:id"
+              element={
+                <AuthGuard action="invite" subject="User">
+                  <InvitationDetails />
                 </AuthGuard>
               }
             />

@@ -7,8 +7,6 @@ import {
   useSuspendOrganization,
 } from "../hooks/useOrganizations";
 import { Can, useAbility } from "../contexts/AbilityContext";
-import useUser from "../hooks/useUser";
-import { useToastStore } from "../stores/toastStore";
 
 // ─── Helpers ──────────────────────────────────────────────────────────────────
 
@@ -284,9 +282,7 @@ const PAGE_SIZE_OPTIONS = [20, 50, 100];
 
 const Organizations = () => {
   const navigate = useNavigate();
-  const { user } = useUser();
   const ability = useAbility();
-  const { showToast } = useToastStore();
 
   const [search, setSearch] = useState("");
   const [statusFilter, setStatusFilter] = useState<Organization["status"] | "all">("all");
