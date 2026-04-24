@@ -6,7 +6,17 @@ import Can from "../components/Can";
 import { axiosInstance } from "../services/apiClient";
 import { useToastStore } from "../stores/toastStore";
 
-const ACCEPTED_IMAGE_TYPES = "image/jpeg,image/png,image/webp";
+const ACCEPTED_IMAGE_TYPES = "image/jpeg,image/png,image/webp,image/gif";
+
+// Slug generation helper (same as RolesSettings.tsx)
+function toSlug(name: string): string {
+  return name
+    .toLowerCase()
+    .trim()
+    .replace(/[^a-z0-9\s-]/g, "")
+    .replace(/\s+/g, "-")
+    .replace(/-+/g, "-");
+}
 
 const CreateOrganization = () => {
   const navigate = useNavigate();
@@ -15,6 +25,7 @@ const CreateOrganization = () => {
   const [logoFile, setLogoFile] = useState<File | null>(null);
   const [isUploading, setIsUploading] = useState(false);
   const [error, setError] = useState("");
+  const [fieldErrors, setFieldErrors] = useState<Record<string, string>>({});
   const [form, setForm] = useState<Partial<CreateOrganizationPayload>>({
     org_type: "company",
   });
@@ -27,9 +38,61 @@ const CreateOrganization = () => {
     return result?.data ?? [];
   }, [cooperativesQuery.data]);
 
+  // Slug preview
+  const slugPreview = form.name ? toSlug(form.name) : "";
+
+  // Form validation
+  const isFormValid = useMemo(() => {
+    const hasName = !!form.name?.trim();
+    const hasOrgType = !!form.org_type;
+    const hasContactFirstName = !!form.contact_first_name?.trim();
+    const hasContactLastName = !!form.contact_last_name?.trim();
+    const hasContactEmail = !!form.contact_email?.trim();
+    const hasContactPhone = !!form.contact_phone?.trim();
+    const hasTin = !!form.tin?.trim();
+    
+    // Validate phone format
+    const phoneValid = form.contact_phone ? /^\+\d{7,15}$/.test(form.contact_phone) : false;
+    
+    // Validate TIN format
+    const tinValid = form.tin ? /^\d{9}$/.test(form.tin) && form.tin.length === 9 : false;
+    
+    // Parent org required for coop_member
+    const parentOrgValid = form.org_type === "coop_member" ? !!form.parent_org_id : true;
+
+    return hasName && hasOrgType && hasContactFirstName && hasContactLastName && 
+           hasContactEmail && hasContactPhone && phoneValid && hasTin && tinValid && parentOrgValid;
+  }, [form]);
+
   const set = (field: keyof CreateOrganizationPayload, value: string) => {
     setError("");
+    setFieldErrors((prev) => ({ ...prev, [field]: "" }));
     setForm((prev) => ({ ...prev, [field]: value }));
+  };
+
+  // Inline validation
+  const validateField = (field: keyof CreateOrganizationPayload, value: string) => {
+    let errorMsg = "";
+    
+    switch (field) {
+      case "contact_phone":
+        if (value && !/^\+\d{7,15}$/.test(value)) {
+          errorMsg = "Phone must be in E.164 format (e.g., +250788000001)";
+        }
+        break;
+      case "tin":
+        if (value && (!/^\d{9}$/.test(value) || value.length !== 9)) {
+          errorMsg = "TIN must be exactly 9 digits";
+        }
+        break;
+      case "contact_email":
+        if (value && !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(value)) {
+          errorMsg = "Please enter a valid email address";
+        }
+        break;
+    }
+    
+    setFieldErrors((prev) => ({ ...prev, [field]: errorMsg }));
   };
 
   const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
@@ -55,7 +118,7 @@ const CreateOrganization = () => {
         // Upload logo after org is created (we need the org ID for the presigned URL)
         if (logoFile && createdOrg?.id) {
           try {
-            const accepted = ["image/jpeg", "image/png", "image/webp"];
+            const accepted = ["image/jpeg", "image/png", "image/webp", "image/gif"];
             const contentType = accepted.includes(logoFile.type) ? logoFile.type : "image/jpeg";
             const { data: presigned } = await axiosInstance.get<{ upload_url: string; path: string }>(
               `/organizations/${createdOrg.id}/logo/presigned-url`,
@@ -78,12 +141,14 @@ const CreateOrganization = () => {
       onError: (err: any) => {
         setIsUploading(false);
         const code = err?.response?.data?.error?.code;
-        if (code === "ORG_NAME_EXISTS") {
+        if (code === "ORG_ALREADY_EXISTS") {
           setError("An organization with this name already exists.");
-        } else if (code === "CONTACT_PHONE_EXISTS") {
+        } else if (code === "CONTACT_PHONE_ALREADY_REGISTERED") {
           setError("This contact phone number is already registered.");
-        } else if (code === "CONTACT_EMAIL_EXISTS") {
+        } else if (code === "CONTACT_EMAIL_ALREADY_REGISTERED") {
           setError("This contact email is already registered.");
+        } else if (code === "TIN_EXISTS") {
+          setError("This TIN is already registered to another organization.");
         } else {
           setError("Failed to create organization. Please try again.");
         }
@@ -113,7 +178,18 @@ const CreateOrganization = () => {
           <div className="grid gap-4 sm:grid-cols-2">
             <div>
               <label className={labelClass}>Organization name <span className="text-red-500">*</span></label>
-              <input type="text" required value={form.name ?? ""} onChange={(e) => set("name", e.target.value)} className={inputClass} />
+              <input 
+                type="text" 
+                required 
+                value={form.name ?? ""} 
+                onChange={(e) => set("name", e.target.value)} 
+                className={inputClass} 
+              />
+              {form.name && (
+                <p className="mt-1 text-xs text-neutral-400 font-mono">
+                  slug: <span className="text-neutral-500 dark:text-neutral-300">{slugPreview}</span>
+                </p>
+              )}
             </div>
             <div>
               <label className={labelClass}>Organization type <span className="text-red-500">*</span></label>
@@ -160,12 +236,34 @@ const CreateOrganization = () => {
           <div className="grid gap-4 sm:grid-cols-2">
             <div>
               <label className={labelClass}>Contact email <span className="text-red-500">*</span></label>
-              <input type="email" required value={form.contact_email ?? ""} onChange={(e) => set("contact_email", e.target.value)} className={inputClass} />
+              <input 
+                type="email" 
+                required 
+                value={form.contact_email ?? ""} 
+                onChange={(e) => set("contact_email", e.target.value)}
+                onBlur={(e) => validateField("contact_email", e.target.value)}
+                className={inputClass} 
+              />
+              {fieldErrors.contact_email && (
+                <p className="text-xs text-red-500 mt-1">{fieldErrors.contact_email}</p>
+              )}
             </div>
             <div>
               <label className={labelClass}>Contact phone <span className="text-red-500">*</span></label>
-              <input type="tel" required value={form.contact_phone ?? ""} onChange={(e) => set("contact_phone", e.target.value)}
-                placeholder="+250788000001" pattern="^\+\d{7,15}$" title="E.164 format e.g. +250788000001" className={inputClass} />
+              <input 
+                type="tel" 
+                required 
+                value={form.contact_phone ?? ""} 
+                onChange={(e) => set("contact_phone", e.target.value)}
+                onBlur={(e) => validateField("contact_phone", e.target.value)}
+                placeholder="+250788000001" 
+                pattern="^\+\d{7,15}$" 
+                title="E.164 format e.g. +250788000001" 
+                className={inputClass} 
+              />
+              {fieldErrors.contact_phone && (
+                <p className="text-xs text-red-500 mt-1">{fieldErrors.contact_phone}</p>
+              )}
             </div>
           </div>
 
@@ -173,9 +271,23 @@ const CreateOrganization = () => {
           <div className="grid gap-4 sm:grid-cols-2">
             <div>
               <label className={labelClass}>TIN <span className="text-red-500">*</span></label>
-              <input type="text" required value={form.tin ?? ""} onChange={(e) => set("tin", e.target.value)}
-                placeholder="123456789" pattern="^\d{9}$" maxLength={9} title="Exactly 9 digits" className={inputClass} />
-              <p className="text-xs text-neutral-500 mt-1">Exactly 9 digits.</p>
+              <input 
+                type="text" 
+                required 
+                value={form.tin ?? ""} 
+                onChange={(e) => set("tin", e.target.value)}
+                onBlur={(e) => validateField("tin", e.target.value)}
+                placeholder="123456789" 
+                pattern="^\d{9}$" 
+                maxLength={9} 
+                title="Exactly 9 digits" 
+                className={inputClass} 
+              />
+              {fieldErrors.tin ? (
+                <p className="text-xs text-red-500 mt-1">{fieldErrors.tin}</p>
+              ) : (
+                <p className="text-xs text-neutral-500 mt-1">Exactly 9 digits.</p>
+              )}
             </div>
             <div>
               <label className={labelClass}>License number</label>
@@ -206,7 +318,7 @@ const CreateOrganization = () => {
               <div className="flex-1">
                 <input id="logo-upload" type="file" accept={ACCEPTED_IMAGE_TYPES} className="hidden"
                   onChange={(e) => { const f = e.target.files?.[0]; if (f) setLogoFile(f); }} />
-                <p className="text-xs text-neutral-500 mb-1">JPEG, PNG or WebP. Recommended 256×256px.</p>
+                <p className="text-xs text-neutral-500 mb-1">JPEG, PNG, WebP, or GIF. Recommended 256×256px.</p>
                 {logoFile && (
                   <button type="button" onClick={() => setLogoFile(null)} className="text-xs text-red-500 hover:text-red-700">
                     Remove
@@ -220,7 +332,7 @@ const CreateOrganization = () => {
 
           <button
             type="submit"
-            disabled={createOrg.isPending || isUploading}
+            disabled={!isFormValid || createOrg.isPending || isUploading}
             className="bg-brand text-white px-6 py-2.5 rounded-lg hover:brightness-95 transition-colors disabled:opacity-50 text-sm font-medium"
           >
             {createOrg.isPending || isUploading ? "Creating..." : "Create Organization"}
