@@ -1,26 +1,40 @@
-import { useState } from "react";
+import { useState, useMemo } from "react";
 import { useNavigate, Link } from "react-router-dom";
 import { BsArrowLeft } from "react-icons/bs";
-import { useCreateOrganization, CreateOrganizationPayload } from "../hooks/useOrganizations";
+import { useCreateOrganization, CreateOrganizationPayload, useOrganizations } from "../hooks/useOrganizations";
 import Can from "../components/Can";
 import { axiosInstance } from "../services/apiClient";
+import { useToastStore } from "../stores/toastStore";
 
 const ACCEPTED_IMAGE_TYPES = "image/jpeg,image/png,image/webp";
 
 const CreateOrganization = () => {
   const navigate = useNavigate();
   const createOrg = useCreateOrganization();
+  const { showToast } = useToastStore();
   const [logoFile, setLogoFile] = useState<File | null>(null);
   const [isUploading, setIsUploading] = useState(false);
+  const [error, setError] = useState("");
   const [form, setForm] = useState<Partial<CreateOrganizationPayload>>({
     org_type: "company",
   });
 
-  const set = (field: keyof CreateOrganizationPayload, value: string) =>
+  // Fetch active cooperatives for parent org selector
+  const cooperativesQuery = useOrganizations({ status: "active", org_type: "cooperative" });
+  const activeCooperatives = useMemo(() => {
+    const result = cooperativesQuery.data as { data: any[] } | any[] | undefined;
+    if (Array.isArray(result)) return result;
+    return result?.data ?? [];
+  }, [cooperativesQuery.data]);
+
+  const set = (field: keyof CreateOrganizationPayload, value: string) => {
+    setError("");
     setForm((prev) => ({ ...prev, [field]: value }));
+  };
 
   const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
+    setError("");
     setIsUploading(true);
 
     const payload: CreateOrganizationPayload = {
@@ -58,9 +72,22 @@ const CreateOrganization = () => {
           }
         }
         setIsUploading(false);
-        navigate("/organizations");
+        showToast("Organization created successfully", "success");
+        navigate(`/organizations/${createdOrg.id}`);
       },
-      onError: () => setIsUploading(false),
+      onError: (err: any) => {
+        setIsUploading(false);
+        const code = err?.response?.data?.error?.code;
+        if (code === "ORG_NAME_EXISTS") {
+          setError("An organization with this name already exists.");
+        } else if (code === "CONTACT_PHONE_EXISTS") {
+          setError("This contact phone number is already registered.");
+        } else if (code === "CONTACT_EMAIL_EXISTS") {
+          setError("This contact email is already registered.");
+        } else {
+          setError("Failed to create organization. Please try again.");
+        }
+      },
     });
   };
 
@@ -98,13 +125,22 @@ const CreateOrganization = () => {
             </div>
           </div>
 
-          {/* coop_member: parent org */}
+          {/* coop_member: parent org dropdown */}
           {form.org_type === "coop_member" && (
             <div>
-              <label className={labelClass}>Parent Cooperative ID <span className="text-red-500">*</span></label>
-              <input type="text" required value={form.parent_org_id ?? ""} onChange={(e) => set("parent_org_id", e.target.value)}
-                placeholder="UUID of the parent cooperative" className={inputClass} />
-              <p className="text-xs text-neutral-500 mt-1">Must be an active cooperative's ID.</p>
+              <label className={labelClass}>Parent Cooperative <span className="text-red-500">*</span></label>
+              <select
+                required
+                value={form.parent_org_id ?? ""}
+                onChange={(e) => set("parent_org_id", e.target.value)}
+                className={inputClass}
+              >
+                <option value="">Select a cooperative...</option>
+                {activeCooperatives.map((coop: any) => (
+                  <option key={coop.id} value={coop.id}>{coop.name}</option>
+                ))}
+              </select>
+              <p className="text-xs text-neutral-500 mt-1">Must be an active cooperative.</p>
             </div>
           )}
 
@@ -179,6 +215,8 @@ const CreateOrganization = () => {
               </div>
             </div>
           </div>
+
+          {error && <p className="text-red-500 text-sm">{error}</p>}
 
           <button
             type="submit"

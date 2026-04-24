@@ -19,6 +19,7 @@ export interface Organization {
   logo_path?: string | null;
   address?: string | null;
   parent_org_id?: string | null;
+  cooperative_approved_at?: string | null;
   created_at: string;
   updated_at?: string;
 }
@@ -64,18 +65,22 @@ export const useOrganization = () => {
 export const useOrganizations = (params?: {
   status?: Organization["status"];
   org_type?: Organization["org_type"];
+  search?: string;
   page?: number;
   limit?: number;
 }) => {
   return useQuery({
     queryKey: ["organizations", params],
     queryFn: async () => {
-      const { data } = await axiosInstance.get<{ data: Organization[]; total: number; page: number; limit: number }>(
-        "/organizations",
-        { params }
-      );
-      // Return the data array directly for backwards compatibility with existing consumers
-      return data.data ?? data;
+      const { data } = await axiosInstance.get<
+        | { data: Organization[]; total: number; page: number; limit: number }
+        | Organization[]
+      >("/organizations", { params });
+      // Handle both paginated and legacy array responses
+      if (Array.isArray(data)) {
+        return { data, total: data.length, page: 1, limit: data.length };
+      }
+      return data;
     },
   });
 };
@@ -189,6 +194,26 @@ export const useCooperativeApprove = () => {
     },
     onError: (error: any) => {
       showToast(error.message || "Failed to pre-approve", "error");
+    },
+  });
+};
+
+// Suspend: PATCH /organizations/:id { status: 'suspended' }
+export const useSuspendOrganization = () => {
+  const showToast = useToastStore((state) => state.showToast);
+  const queryClient = useQueryClient();
+
+  return useMutation({
+    mutationFn: async (id: string) => {
+      const { data } = await axiosInstance.patch<Organization>(`/organizations/${id}`, { status: "suspended" });
+      return data;
+    },
+    onSuccess: () => {
+      showToast("Organization suspended", "success");
+      queryClient.invalidateQueries({ queryKey: ["organizations"] });
+    },
+    onError: (error: any) => {
+      showToast(error.message || "Failed to suspend organization", "error");
     },
   });
 };

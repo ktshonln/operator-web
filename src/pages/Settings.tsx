@@ -21,7 +21,11 @@ function Settings() {
   // own-scope callers (driver/passenger) should not see role filter
   const isOwnScope = user && "roles" in user && (user.roles?.includes("driver") || user.roles?.includes("passenger"));
   const orgQueryResult = useOrganizations({});
-  const allOrgs = (Array.isArray(orgQueryResult.data) ? orgQueryResult.data : []) as any[];
+  const allOrgs = useMemo(() => {
+    const result = orgQueryResult.data as { data: any[] } | any[] | undefined;
+    if (Array.isArray(result)) return result;
+    return result?.data ?? [];
+  }, [orgQueryResult.data]);
 
   const { data: rolesData, isLoading: rolesLoading } = useRoles();
   const { data: permissionsData } = usePermissions();
