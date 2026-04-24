@@ -1,5 +1,6 @@
 import { BiHomeAlt, BiSolidUserCircle, BiTrip } from "react-icons/bi";
 import SidebarItem from "./SidebarItem";
+import { buildCdnUrl } from "../services/apiClient";
 import { BsTicket, BsBuilding } from "react-icons/bs";
 import { RiBusFill } from "react-icons/ri";
 import { FaChartLine } from "react-icons/fa6";
@@ -88,8 +89,16 @@ const Sidebar = () => {
         </div>
         <div className="mb-3 w-fit mx-auto md:w-full">
           <div className="flex items-center gap-2">
-            <div>
-              <BiSolidUserCircle size={40} className="text-neutral-400" />
+            <div className="flex-shrink-0">
+              {user?.avatar_path ? (
+                <img
+                  src={buildCdnUrl(user.avatar_path) ?? user.avatar_path}
+                  alt={user.first_name}
+                  className="w-10 h-10 rounded-full object-cover"
+                />
+              ) : (
+                <BiSolidUserCircle size={40} className="text-neutral-400" />
+              )}
             </div>
             <div className="hidden md:block">
               <p className="text-sm dark:text-white">
