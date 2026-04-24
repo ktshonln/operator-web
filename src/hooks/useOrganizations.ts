@@ -14,12 +14,22 @@ export interface Organization {
   contact_last_name: string;
   contact_email: string;
   contact_phone: string;
-  tin?: string;
-  license_number?: string;
+  contact_phone_verified_at?: string | null;
+  contact_email_verified_at?: string | null;
+  tin?: string | null;
+  license_number?: string | null;
   logo_path?: string | null;
   address?: string | null;
   parent_org_id?: string | null;
+  parent_org?: { id: string; name: string; slug: string; status: string } | null;
+  child_orgs?: { id: string; name: string; slug: string; status: string }[];
   cooperative_approved_at?: string | null;
+  cooperative_approved_by?: string | null;
+  approved_at?: string | null;
+  approved_by?: string | null;
+  business_certificate_path?: string | null;
+  rep_id_path?: string | null;
+  rejection_reason?: string | null;
   created_at: string;
   updated_at?: string;
 }
@@ -216,4 +226,36 @@ export const useSuspendOrganization = () => {
       showToast(error.message || "Failed to suspend organization", "error");
     },
   });
+};
+
+// Cooperative rejection: POST /organizations/:id/cooperative-reject
+export const useCooperativeReject = () => {
+  const showToast = useToastStore((state) => state.showToast);
+  const queryClient = useQueryClient();
+
+  return useMutation({
+    mutationFn: async ({ id, reason }: { id: string; reason?: string }) => {
+      await axiosInstance.post(`/organizations/${id}/cooperative-reject`, reason ? { reason } : {});
+    },
+    onSuccess: (_, { id }) => {
+      showToast("Application rejected", "success");
+      queryClient.invalidateQueries({ queryKey: ["organizations"] });
+      queryClient.invalidateQueries({ queryKey: ["organizations", id] });
+    },
+    onError: (error: any) => {
+      showToast(error.message || "Failed to reject", "error");
+    },
+  });
+};
+
+// Logo presigned URL
+export const getOrgLogoPresignedUrl = async (
+  contentType: string,
+  orgId?: string // if provided → admin endpoint, else → me endpoint
+): Promise<{ upload_url: string; path: string }> => {
+  const url = orgId
+    ? `/organizations/${orgId}/logo/presigned-url`
+    : `/organizations/me/logo/presigned-url`;
+  const { data } = await axiosInstance.get(url, { params: { content_type: contentType } });
+  return data;
 };
