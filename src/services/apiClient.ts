@@ -73,8 +73,12 @@ axiosInstance.interceptors.response.use(
         return axiosInstance(originalRequest);
       } catch (refreshError) {
         processQueue(refreshError);
-        // Refresh failed (token expired/revoked) — redirect to login
-        window.location.href = "/login";
+        // Refresh failed (token expired/revoked) — only redirect if on a protected page
+        const PUBLIC_PATHS = ["/register", "/login", "/forgot-password", "/reset-password", "/verify-password-reset", "/accept-invite", "/i", "/login-mfa", "/activate"];
+        const isPublic = PUBLIC_PATHS.some((p) => window.location.pathname.startsWith(p));
+        if (!isPublic) {
+          window.location.href = "/login";
+        }
         return Promise.reject(refreshError);
       }
     }

@@ -1,19 +1,32 @@
 import { axiosInstance } from "./apiClient";
 
+// Map raw API error codes to user-friendly messages
+export function friendlyAuthError(error: any): string {
+  const code = error?.response?.data?.error?.code ?? error?.response?.data?.code;
+  const serverMessage = error?.response?.data?.error?.message ?? error?.response?.data?.message;
+
+  switch (code) {
+    case "VALIDATION_ERROR": return "Please check your input and try again.";
+    case "INVALID_CREDENTIALS": return "Incorrect email/phone or password.";
+    case "INVALID_OTP": return "The verification code is incorrect.";
+    case "OTP_EXPIRED": return "The verification code has expired. Please request a new one.";
+    case "USER_NOT_FOUND": return "No account found with these details.";
+    case "PHONE_ALREADY_REGISTERED": return "This phone number is already registered.";
+    case "EMAIL_ALREADY_REGISTERED": return "This email address is already registered.";
+    case "ACCOUNT_SUSPENDED": return "Your account has been suspended. Please contact support.";
+    case "RATE_LIMIT_EXCEEDED": return "Too many attempts. Please wait a few minutes and try again.";
+    case "TOKEN_EXPIRED": return "This link has expired. Please request a new one.";
+    case "INVALID_TOKEN": return "This link is invalid or has already been used.";
+    case "NO_PENDING_RESET": return "No password reset was requested. Please start over.";
+    case "PASSWORD_TOO_WEAK": return "Password is too weak. Use at least 8 characters with a mix of letters and numbers.";
+    default:
+      return serverMessage || error?.message || "Something went wrong. Please try again.";
+  }
+}
+
 // Helper function to extract error message from axios error
 const extractErrorMessage = (error: any): string => {
-  if (error.response && error.response.data) {
-    // Check for nested error structure first (like { error: { message: "..." } })
-    if (error.response.data.error && error.response.data.error.message) {
-      return error.response.data.error.message;
-    }
-    // Check for direct message
-    else if (error.response.data.message) {
-      return error.response.data.message;
-    }
-  }
-  // Fallback to axios default message or generic message
-  return error.message || "An error occurred";
+  return friendlyAuthError(error);
 };
 
 // Wrapper function for auth requests with proper error handling

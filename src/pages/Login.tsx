@@ -37,7 +37,7 @@ const LoginPage = () => {
   const loginUser = useLogin();
 
   const onSubmit = (data: FormData) => {
-    loginUser.mutate({ identifier: data.identifier, password: data.password, device_name: "web" });
+    loginUser.mutate({ identifier: data.identifier, password: data.password, user_type: "staff", device_name: "web" });
   };
 
   return (

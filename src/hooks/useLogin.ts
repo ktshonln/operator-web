@@ -6,6 +6,7 @@ import { useToastStore } from "../stores/toastStore";
 export interface LoginDetails {
   identifier: string;
   password: string;
+  user_type: "staff" | "passenger";
   device_name?: string;
 }
 
@@ -36,7 +37,7 @@ export interface Tokens {
 
 export interface LoginResponse {
   user: AuthUser;
-  tokens?: Tokens; // Optional - only present for mobile clients
+  tokens?: Tokens;
 }
 
 export interface Login2FAResponse {
@@ -45,44 +46,66 @@ export interface Login2FAResponse {
   expires_in: number;
 }
 
-const apiClient = new APIClient<LoginResponse | Login2FAResponse>(
+export interface LoginVerificationResponse {
+  requires_verification: true;
+  user_id: string;
+  channel: "phone" | "email";
+  expires_in: number;
+}
+
+// Map raw API error codes to user-friendly messages
+function friendlyLoginError(code: string | undefined, fallback: string): string {
+  switch (code) {
+    case "INVALID_CREDENTIALS": return "Incorrect email/phone or password.";
+    case "PHONE_LOGIN_REQUIRED": return "This account uses phone number to log in.";
+    case "EMAIL_LOGIN_REQUIRED": return "This account uses email to log in.";
+    case "ACCOUNT_SUSPENDED": return "Your account has been suspended. Please contact support.";
+    case "VALIDATION_ERROR": return "Please check your email/phone and password and try again.";
+    case "RATE_LIMIT_EXCEEDED": return "Too many login attempts. Please wait a few minutes and try again.";
+    case "USER_NOT_FOUND": return "No account found with these credentials.";
+    default: return fallback || "Login failed. Please try again.";
+  }
+}
+
+const apiClient = new APIClient<LoginResponse | Login2FAResponse | LoginVerificationResponse>(
   "/auth/login",
 );
+
 const useLogin = () => {
   const showToast = useToastStore((state) => state.showToast);
   const navigate = useNavigate();
-  return useMutation<LoginResponse | Login2FAResponse, Error, LoginDetails>({
+
+  return useMutation<LoginResponse | Login2FAResponse | LoginVerificationResponse, any, LoginDetails>({
     mutationFn: apiClient.loginUser<LoginDetails>,
-    onSuccess: (response: LoginResponse | Login2FAResponse) => {
-      // Clear any sensitive data from memory on successful login
+    onSuccess: (response) => {
       if ("requires_2fa" in response && response.requires_2fa) {
         localStorage.setItem("user_id_pending_2fa", response.user_id);
-        navigate(`/login-2fa?expires_in=${response.expires_in}`);
-      } else {
-        const loginResponse = response as LoginResponse;
-
-        localStorage.setItem("user", JSON.stringify(loginResponse.user));
-
-        // For web clients, tokens are set as HttpOnly cookies by the server
-        // For mobile clients, tokens are in the response body
-        if (loginResponse.tokens) {
-          // Mobile client - tokens in response body
-          localStorage.setItem(
-            "access_token",
-            loginResponse.tokens.access_token,
-          );
-          localStorage.setItem(
-            "refresh_token",
-            loginResponse.tokens.refresh_token,
-          );
-        }
-        // For web clients, tokens are automatically available via cookies
-
-        showToast("Successfully logged in", "success");
-        navigate("/home");
+        navigate(`/login-mfa?expires_in=${response.expires_in}`);
+        return;
       }
+
+      if ("requires_verification" in response && response.requires_verification) {
+        localStorage.setItem("user_id_pending_verification", response.user_id);
+        navigate(`/login-mfa?user_id=${response.user_id}&channel=${response.channel}&expires_in=${response.expires_in}&mode=verify`);
+        return;
+      }
+
+      const loginResponse = response as LoginResponse;
+      localStorage.setItem("user", JSON.stringify(loginResponse.user));
+
+      if (loginResponse.tokens) {
+        localStorage.setItem("access_token", loginResponse.tokens.access_token);
+        localStorage.setItem("refresh_token", loginResponse.tokens.refresh_token);
+      }
+
+      showToast("Successfully logged in", "success");
+      navigate("/home");
     },
-    onError: (error) => showToast(error.message, "error"),
+    onError: (error: any) => {
+      const code = error?.response?.data?.error?.code ?? error?.response?.data?.code;
+      const rawMessage = error?.response?.data?.error?.message ?? error?.message ?? "";
+      showToast(friendlyLoginError(code, rawMessage), "error");
+    },
   });
 };
 
