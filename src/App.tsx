@@ -35,6 +35,9 @@ import RolesSettings from "./pages/RolesSettings";
 import AppearanceSettings from "./pages/AppearanceSettings";
 import Invitations from "./pages/Invitations";
 import InvitationDetails from "./pages/InvitationDetails";
+import Locations from "./pages/Locations";
+import CreateLocation from "./pages/CreateLocation";
+import LocationDetails from "./pages/LocationDetails";
 
 function App() {
   return (
@@ -176,6 +179,30 @@ function App() {
               element={
                 <AuthGuard action="read" subject="Trip">
                   <TripDetails />
+                </AuthGuard>
+              }
+            />
+            <Route
+              path="locations"
+              element={
+                <AuthGuard action="read" subject="Location">
+                  <Locations />
+                </AuthGuard>
+              }
+            />
+            <Route
+              path="locations/create"
+              element={
+                <AuthGuard action="create" subject="Location">
+                  <CreateLocation />
+                </AuthGuard>
+              }
+            />
+            <Route
+              path="locations/:id"
+              element={
+                <AuthGuard action="read" subject="Location">
+                  <LocationDetails />
                 </AuthGuard>
               }
             />

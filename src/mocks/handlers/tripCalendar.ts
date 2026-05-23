@@ -8,12 +8,85 @@ import { http, HttpResponse } from "msw";
 import { baseUrl } from "../../services/apiClient";
 import { addDays, format, startOfWeek } from "date-fns";
 
+// ─── Mock ticket store ────────────────────────────────────────────────────────
+
+const MOCK_STOPS_KGL_GIS = [
+  { id: "stop-kgl", name: "Kigali" },
+  { id: "stop-mus", name: "Musanze" },
+  { id: "stop-gis", name: "Gisenyi" },
+];
+
+const MOCK_STOPS_KGL_HUY = [
+  { id: "stop-kgl", name: "Kigali" },
+  { id: "stop-huy", name: "Huye" },
+];
+
+const MOCK_PRICES: Record<string, { amount: number; currency: string }> = {
+  "stop-kgl|stop-mus": { amount: 2000, currency: "RWF" },
+  "stop-kgl|stop-gis": { amount: 3500, currency: "RWF" },
+  "stop-mus|stop-gis": { amount: 1500, currency: "RWF" },
+  "stop-kgl|stop-huy": { amount: 2500, currency: "RWF" },
+};
+
+let mockTickets: Record<string, any[]> = {};
+
+function getTicketsForTrip(tripId: string): any[] {
+  if (!mockTickets[tripId]) {
+    // Generate some seed tickets for the trip
+    const trip = mockTrips.find((t) => t.id === tripId);
+    if (!trip) return [];
+    const stops = trip.route_id === "route-kgl-gis" ? MOCK_STOPS_KGL_GIS : MOCK_STOPS_KGL_HUY;
+    const methods = ["mtn", "airtel", "wallet", "cash"] as const;
+    const statuses = ["confirmed", "confirmed", "confirmed", "pending", "cancelled"] as const;
+    const names = ["Kalisa Nkusi", "Uwimana Jean", "Mukamana Alice", "Habimana Eric", "Niyonzima Paul"];
+    const phones = ["+250788111111", "+250788222222", "+250788333333", "+250788444444", "+250788555555"];
+    const count = Math.min(trip.booked_seats, 5);
+    mockTickets[tripId] = Array.from({ length: count }, (_, i) => ({
+      id: `ticket-${tripId}-${i}`,
+      passenger_name: names[i % names.length],
+      phone: phones[i % phones.length],
+      boarding_stop: stops[0],
+      alighting_stop: stops[stops.length - 1],
+      seats_count: 1,
+      amount: 2000,
+      currency: "RWF",
+      payment_method: methods[i % methods.length],
+      status: statuses[i % statuses.length],
+      created_by: i % 2 === 0 ? "passenger" : "staff",
+      booked_at: new Date(Date.now() - i * 3600000).toISOString(),
+    }));
+  }
+  return mockTickets[tripId];
+}
+
 // ─── Seed data ────────────────────────────────────────────────────────────────
 
 const MOCK_ROUTES = [
-  { id: "route-kgl-gis", name: "Kigali — Gisenyi" },
-  { id: "route-kgl-huy", name: "Kigali — Huye" },
-  { id: "route-kgl-mus", name: "Kigali — Musanze" },
+  {
+    id: "route-kgl-gis",
+    name: "Kigali — Gisenyi",
+    route_stops: [
+      { order: 1, stop: { id: "stop-kgl", name: "Kigali" } },
+      { order: 2, stop: { id: "stop-mus", name: "Musanze" } },
+      { order: 3, stop: { id: "stop-gis", name: "Gisenyi" } },
+    ],
+  },
+  {
+    id: "route-kgl-huy",
+    name: "Kigali — Huye",
+    route_stops: [
+      { order: 1, stop: { id: "stop-kgl", name: "Kigali" } },
+      { order: 2, stop: { id: "stop-huy", name: "Huye" } },
+    ],
+  },
+  {
+    id: "route-kgl-mus",
+    name: "Kigali — Musanze",
+    route_stops: [
+      { order: 1, stop: { id: "stop-kgl", name: "Kigali" } },
+      { order: 2, stop: { id: "stop-mus", name: "Musanze" } },
+    ],
+  },
 ];
 
 const MOCK_BUSES = [
@@ -210,6 +283,71 @@ function filterTrips(params: URLSearchParams) {
 // ─── Handlers ─────────────────────────────────────────────────────────────────
 
 export const tripCalendarHandlers = [
+
+  // ── GET /trips/:id ──────────────────────────────────────────────────────────
+  http.get(`${baseUrl}/trips/:id`, ({ params }) => {
+    const { id } = params as { id: string };
+    const trip = mockTrips.find((t) => t.id === id);
+    if (!trip) {
+      return HttpResponse.json(
+        { error: { code: "TRIP_NOT_FOUND", message: "Trip not found" } },
+        { status: 404 }
+      );
+    }
+    // Enrich with full route (including route_stops)
+    const fullRoute = MOCK_ROUTES.find((r) => r.id === trip.route_id) ?? trip.route;
+    return HttpResponse.json({
+      ...trip,
+      route: fullRoute,
+      created_at: trip.departure_at,
+      updated_at: trip.departure_at,
+    });
+  }),
+
+  // ── GET /trips/:id/tickets ──────────────────────────────────────────────────
+  http.get(`${baseUrl}/trips/:id/tickets`, ({ params, request }) => {
+    const { id } = params as { id: string };
+    const url = new URL(request.url);
+    const page = parseInt(url.searchParams.get("page") ?? "1");
+    const limit = parseInt(url.searchParams.get("limit") ?? "20");
+    const status = url.searchParams.get("status") ?? "";
+
+    let tickets = getTicketsForTrip(id);
+    if (status) {
+      tickets = tickets.filter((t) => t.status === status);
+    }
+
+    const start = (page - 1) * limit;
+    const paged = tickets.slice(start, start + limit);
+
+    return HttpResponse.json({
+      data: paged,
+      total: tickets.length,
+      page,
+      limit,
+    });
+  }),
+
+  // ── GET /prices ─────────────────────────────────────────────────────────────
+  http.get(`${baseUrl}/prices`, ({ request }) => {
+    const url = new URL(request.url);
+    const boardingId = url.searchParams.get("boarding_stop_id") ?? "";
+    const alightingId = url.searchParams.get("alighting_stop_id") ?? "";
+    const key = `${boardingId}|${alightingId}`;
+    const price = MOCK_PRICES[key];
+    if (!price) {
+      return HttpResponse.json(
+        { error: { code: "PRICE_NOT_FOUND", message: "Price not found for this stop combination" } },
+        { status: 404 }
+      );
+    }
+    return HttpResponse.json({
+      boarding_stop_id: boardingId,
+      alighting_stop_id: alightingId,
+      amount: price.amount,
+      currency: price.currency,
+    });
+  }),
 
   // ── GET /trips ──────────────────────────────────────────────────────────────
   http.get(`${baseUrl}/trips`, ({ request }) => {
@@ -476,6 +614,85 @@ export const tripCalendarHandlers = [
 
     // Fall through for non-driver user requests
     return HttpResponse.json({ data: [], total: 0, page: 1, limit: 20 });
+  }),
+
+  // ── POST /tickets (cash ticket creation) ────────────────────────────────────
+  http.post(`${baseUrl}/tickets`, async ({ request }) => {
+    const body = await request.json() as any;
+    const {
+      trip_id,
+      boarding_stop_id,
+      alighting_stop_id,
+      seats_count = 1,
+      payment_method = "cash",
+      phone,
+      passenger_name,
+    } = body;
+
+    const trip = mockTrips.find((t) => t.id === trip_id);
+    if (!trip) {
+      return HttpResponse.json(
+        { error: { code: "TRIP_NOT_FOUND", message: "Trip not found" } },
+        { status: 404 }
+      );
+    }
+
+    if (trip.remaining_seats < seats_count) {
+      return HttpResponse.json(
+        { error: { code: "NO_SEATS_AVAILABLE", available: trip.remaining_seats } },
+        { status: 400 }
+      );
+    }
+
+    const priceKey = `${boarding_stop_id}|${alighting_stop_id}`;
+    const price = MOCK_PRICES[priceKey];
+    if (!price) {
+      return HttpResponse.json(
+        { error: { code: "PRICE_NOT_FOUND", message: "Price not found for this stop combination" } },
+        { status: 404 }
+      );
+    }
+
+    // Find stop names
+    const allStops = [
+      ...MOCK_STOPS_KGL_GIS,
+      ...MOCK_STOPS_KGL_HUY,
+    ];
+    const boardingStop = allStops.find((s) => s.id === boarding_stop_id) ?? { id: boarding_stop_id, name: boarding_stop_id };
+    const alightingStop = allStops.find((s) => s.id === alighting_stop_id) ?? { id: alighting_stop_id, name: alighting_stop_id };
+
+    // Update trip seat counts
+    const tripIndex = mockTrips.findIndex((t) => t.id === trip_id);
+    if (tripIndex !== -1) {
+      mockTrips[tripIndex] = {
+        ...mockTrips[tripIndex],
+        booked_seats: mockTrips[tripIndex].booked_seats + seats_count,
+        remaining_seats: mockTrips[tripIndex].remaining_seats - seats_count,
+      };
+    }
+
+    const newTicket = {
+      id: crypto.randomUUID(),
+      status: "confirmed",
+      passenger_name,
+      phone,
+      seats_count,
+      amount: price.amount * seats_count,
+      currency: price.currency,
+      payment_method,
+      boarding_stop: boardingStop,
+      alighting_stop: alightingStop,
+    };
+
+    // Store in ticket store
+    if (!mockTickets[trip_id]) mockTickets[trip_id] = [];
+    mockTickets[trip_id].unshift({
+      ...newTicket,
+      created_by: "staff",
+      booked_at: new Date().toISOString(),
+    });
+
+    return HttpResponse.json(newTicket, { status: 201 });
   }),
 ];
 

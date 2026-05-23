@@ -1,4 +1,5 @@
 import { BiHomeAlt, BiSolidUserCircle, BiTrip } from "react-icons/bi";
+import { MdLocationOn } from "react-icons/md";
 import SidebarItem from "./SidebarItem";
 import { buildCdnUrl } from "../services/apiClient";
 import { BsTicket, BsBuilding } from "react-icons/bs";
@@ -32,6 +33,7 @@ const Sidebar = () => {
       { link: "/ticketing", label: "Ticketing", icon: BsTicket, action: "read", subject: "Ticket" },
       { link: "/fleets", label: "Fleets", icon: RiBusFill, subLinks: ["/buses", "/drivers"], action: "read", subject: "Bus" },
       { link: "/trips", label: "Trips", icon: BiTrip, action: "read", subject: "Trip" },
+      { link: "/locations", label: "Locations", icon: MdLocationOn, action: "read", subject: "Location" },
       { link: "/reports", label: "Reports", icon: FaChartLine, action: "read", subject: "Report" },
       { link: "/team", label: "Team", icon: HiOutlineUserGroup, subLinks: ["/users", "/roles", "/invitations"], action: "read", subject: "User" },
       { link: "/settings/profile", label: "Settings", icon: FiSettings, activePrefix: "/settings/p", action: "read", subject: "User" },
