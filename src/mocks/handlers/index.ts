@@ -9,6 +9,8 @@ import { handlers as busHandlers } from "./buses";
 import { handlers as driverHandlers } from "./drivers";
 import { handlers as agentHandlers } from "./agents";
 import { handlers as locationHandlers } from "./locations";
+import { handlers as routesV2Handlers } from "./routesV2";
+import { handlers as pricesHandlers } from "./prices";
 import { tripCalendarHandlers } from "./tripCalendar";
 import { corsHeaders } from "./utils";
 
@@ -31,4 +33,6 @@ export const handlers = [
   ...driverHandlers,
   ...agentHandlers,
   ...locationHandlers,
+  ...routesV2Handlers,
+  ...pricesHandlers,
 ];

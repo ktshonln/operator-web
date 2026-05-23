@@ -38,6 +38,10 @@ import InvitationDetails from "./pages/InvitationDetails";
 import Locations from "./pages/Locations";
 import CreateLocation from "./pages/CreateLocation";
 import LocationDetails from "./pages/LocationDetails";
+import RoutesV2 from "./pages/RoutesV2";
+import CreateRoute from "./pages/CreateRoute";
+import RouteDetails from "./pages/RouteDetails";
+import PriceMatrix from "./pages/PriceMatrix";
 
 function App() {
   return (
@@ -203,6 +207,38 @@ function App() {
               element={
                 <AuthGuard action="read" subject="Location">
                   <LocationDetails />
+                </AuthGuard>
+              }
+            />
+            <Route
+              path="routes"
+              element={
+                <AuthGuard action="read" subject="Route">
+                  <RoutesV2 />
+                </AuthGuard>
+              }
+            />
+            <Route
+              path="routes/create"
+              element={
+                <AuthGuard action="create" subject="Route">
+                  <CreateRoute />
+                </AuthGuard>
+              }
+            />
+            <Route
+              path="routes/:id"
+              element={
+                <AuthGuard action="read" subject="Route">
+                  <RouteDetails />
+                </AuthGuard>
+              }
+            />
+            <Route
+              path="prices"
+              element={
+                <AuthGuard action="read" subject="Price">
+                  <PriceMatrix />
                 </AuthGuard>
               }
             />
