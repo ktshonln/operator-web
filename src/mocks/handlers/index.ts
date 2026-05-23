@@ -8,6 +8,7 @@ import { handlers as routeHandlers } from "./routes";
 import { handlers as busHandlers } from "./buses";
 import { handlers as driverHandlers } from "./drivers";
 import { handlers as agentHandlers } from "./agents";
+import { tripCalendarHandlers } from "./tripCalendar";
 import { corsHeaders } from "./utils";
 
 export const handlers = [
@@ -17,6 +18,8 @@ export const handlers = [
       headers: corsHeaders,
     });
   }),
+  // Trip calendar handlers first — they override the old-shape trip/route/bus handlers
+  ...tripCalendarHandlers,
   ...authHandlers,
   ...analyticsHandlers,
   ...ticketingHandlers,

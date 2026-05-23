@@ -1,46 +1,39 @@
-import { InfiniteData, useInfiniteQuery } from "@tanstack/react-query";
-import APIClient from "../services/apiClient";
-import { CACHE_KEY_ROUTES } from "../utils/constants";
+import { useQuery } from "@tanstack/react-query";
+import { axiosInstance } from "../services/apiClient";
 
-export interface RouteQuery {
-  searchText: string;
-  branch?: string;
-}
-
-export interface IntermediateStop {
-  stopId: string;
+export interface FleetRoute {
+  id: string;
   name: string;
-  price: number;
+  org_id?: string;
+  is_active?: boolean;
+  color?: string;
+  route_stops?: Array<{
+    order: number;
+    stop: { id: string; name: string; lat?: number; lng?: number; city?: string };
+  }>;
 }
 
-export interface Route {
-  routeId: string;
-  route: { startId: string; start: string; endId: string; end: string }; // origin stop id and destination id included
-  price: number;
-  intermediateStops: IntermediateStop[];
-}
+// Keep backward compat alias
+export type Route = FleetRoute;
 
-const apiClient = new APIClient<Route[]>("/organizations");
-
-const useRoutes = (orgId: string, routeQuery: RouteQuery) =>
-  useInfiniteQuery<Route[], Error, InfiniteData<Route[], number>>({
-    queryKey: [CACHE_KEY_ROUTES, routeQuery],
-    queryFn: ({ pageParam = 1 }) =>
-      apiClient.getAllRoutes(orgId, {
-        params: {
-          branch: routeQuery.branch,
-          search: routeQuery.searchText,
-          page: pageParam,
-        },
-      }),
-    initialPageParam: 1,
-    staleTime: 10 * 1000,
-    placeholderData: (previousData, _previousQuery) =>
-      previousData || { pages: [], pageParams: [] },
-    getNextPageParam: (_lastPage, allPages) => {
-      return allPages.length + 1;
+export const useRoutes = (q?: string) => {
+  return useQuery({
+    queryKey: ["routes", q],
+    queryFn: async () => {
+      const { data } = await axiosInstance.get("/routes", {
+        params: q ? { q } : {},
+      });
+      if (Array.isArray(data)) return data as Route[];
+      return (data as any).data ?? (data as any).routes ?? [];
     },
-    enabled: !!orgId,
   });
+};
+
+// Legacy compat — old components import useRoutes as default with RouteQuery
+export interface RouteQuery {
+  branch?: any;
+  sortOrder?: string;
+  searchText?: string;
+}
 
 export default useRoutes;

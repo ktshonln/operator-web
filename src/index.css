@@ -40,3 +40,265 @@
 }
 
  
+
+/* ─── React Big Calendar overrides ─────────────────────────────────────────── */
+@import "react-big-calendar/lib/css/react-big-calendar.css";
+
+.rbc-calendar {
+  font-family: 'Heebo', sans-serif;
+  background-color: white;
+}
+
+.rbc-event {
+  border-radius: 4px !important;
+  border: none !important;
+  font-size: 11px !important;
+  font-weight: 500 !important;
+  padding: 0 !important;
+}
+
+.rbc-event-content {
+  padding: 0 !important;
+  height: 100%;
+}
+
+.rbc-toolbar {
+  display: none !important;
+}
+
+.rbc-time-header {
+  border-bottom: 1px solid #f1f3f4 !important;
+  background-color: white !important;
+}
+
+.rbc-time-header-content {
+  border-left: 1px solid #f1f3f4 !important;
+}
+
+.rbc-time-view .rbc-header {
+  padding: 0 !important;
+  border-bottom: none !important;
+  border-left: 1px solid #f1f3f4 !important;
+  background-color: white !important;
+}
+
+.rbc-time-content {
+  border-top: none !important;
+  background-color: white;
+}
+
+.rbc-timeslot-group {
+  border-bottom: 1px solid #f8f9fa !important;
+  min-height: 50px !important;
+}
+
+.rbc-time-slot {
+  border-top: none !important;
+}
+
+.rbc-label {
+  font-size: 11px;
+  color: #70757a;
+}
+
+.rbc-today {
+  background-color: #f0f7ff !important;
+}
+
+.rbc-slot-selection {
+  background-color: rgba(0, 139, 255, 0.1) !important;
+  border: 1px solid rgba(0, 139, 255, 0.3) !important;
+}
+
+.dark .rbc-calendar {
+  background-color: #0a0a0a;
+  color: white;
+}
+
+.dark .rbc-time-header,
+.dark .rbc-time-header-content,
+.dark .rbc-time-view .rbc-header {
+  background-color: #0a0a0a !important;
+  border-color: #262626 !important;
+}
+
+.dark .rbc-time-content {
+  background-color: #0a0a0a;
+}
+
+.dark .rbc-timeslot-group {
+  border-bottom-color: #1a1a1a !important;
+}
+
+.dark .rbc-today {
+  background-color: rgba(0, 139, 255, 0.05) !important;
+}
+
+.dark .rbc-label {
+  color: #737373;
+}
+
+.trip-calendar-wrapper {
+  height: 100%;
+  overflow: hidden;
+}
+
+.trip-calendar-wrapper .rbc-calendar {
+  height: 100%;
+}
+
+/* Express shimmer animation */
+.express-shimmer {
+  position: relative;
+  overflow: hidden;
+}
+
+.express-shimmer::after {
+  content: "";
+  position: absolute;
+  top: 0;
+  right: 0;
+  bottom: 0;
+  left: 0;
+  transform: translateX(-100%);
+  background-image: linear-gradient(
+    90deg,
+    transparent 0,
+    rgba(255, 255, 255, 0.2) 20%,
+    rgba(255, 255, 255, 0.4) 60%,
+    transparent 100%
+  );
+  animation: shimmer 2.5s infinite;
+}
+
+@keyframes shimmer {
+  100% {
+    transform: translateX(100%);
+  }
+}
+
+/* ─── Calendar header height fix ─────────────────────────────────────────── */
+.rbc-time-header {
+  min-height: 88px !important;
+  overflow: visible !important;
+}
+
+.rbc-time-header-content {
+  display: flex !important;
+  flex-direction: column !important;
+  overflow: visible !important;
+}
+
+.rbc-time-header-cell {
+  overflow: visible !important;
+}
+
+.rbc-time-view .rbc-header {
+  min-height: 88px !important;
+  height: 88px !important;
+  display: flex !important;
+  flex-direction: column !important;
+  align-items: center !important;
+  justify-content: center !important;
+  overflow: visible !important;
+}
+
+/* ─── Time gutter ─────────────────────────────────────────────────────────── */
+.rbc-time-gutter .rbc-timeslot-group {
+  border-bottom: none !important;
+}
+
+.rbc-time-gutter .rbc-label {
+  font-family: 'Heebo', sans-serif !important;
+  font-size: 10px !important;
+  font-weight: 500 !important;
+  color: #9ca3af !important;
+  padding-right: 8px !important;
+  padding-top: 0 !important;
+  line-height: 1 !important;
+}
+
+.dark .rbc-time-gutter .rbc-label {
+  color: #6b7280 !important;
+}
+
+/* ─── Day column borders ──────────────────────────────────────────────────── */
+.rbc-day-slot .rbc-time-slot {
+  border-top: 1px solid #f9fafb !important;
+}
+
+.dark .rbc-day-slot .rbc-time-slot {
+  border-top-color: #171717 !important;
+}
+
+.rbc-day-bg + .rbc-day-bg {
+  border-left: 1px solid #f3f4f6 !important;
+}
+
+.dark .rbc-day-bg + .rbc-day-bg {
+  border-left-color: #262626 !important;
+}
+
+/* ─── Current time indicator ──────────────────────────────────────────────── */
+.rbc-current-time-indicator {
+  background-color: #008BFF !important;
+  height: 2px !important;
+}
+
+.rbc-current-time-indicator::before {
+  background-color: #008BFF !important;
+  width: 8px !important;
+  height: 8px !important;
+  border-radius: 50% !important;
+  content: "" !important;
+  position: absolute !important;
+  left: -4px !important;
+  top: -3px !important;
+}
+
+/* ─── Event hover / focus states ─────────────────────────────────────────── */
+.rbc-event:focus,
+.rbc-event:hover {
+  outline: none !important;
+  filter: brightness(0.95) !important;
+}
+
+.rbc-selected {
+  background-color: transparent !important;
+}
+
+/* ─── Slot selection highlight ───────────────────────────────────────────── */
+.rbc-slot-selection {
+  background-color: rgba(0, 139, 255, 0.08) !important;
+  border: 1px solid rgba(0, 139, 255, 0.25) !important;
+  border-radius: 4px !important;
+}
+
+/* ─── Time gutter width ───────────────────────────────────────────────────── */
+.rbc-time-view .rbc-time-gutter {
+  min-width: 52px !important;
+}
+
+/* ─── Remove default RBC header border artifacts ─────────────────────────── */
+.rbc-header + .rbc-header {
+  border-left: 1px solid #f1f3f4 !important;
+}
+
+.dark .rbc-header + .rbc-header {
+  border-left-color: #262626 !important;
+}
+
+/* ─── All-day row ─────────────────────────────────────────────────────────── */
+.rbc-allday-cell {
+  display: none !important;
+}
+
+.rbc-time-header-content > .rbc-row.rbc-row-resource {
+  display: none !important;
+}
+
+/* ─── Event border-left accent ───────────────────────────────────────────── */
+.rbc-event {
+  border-left: 3px solid rgba(255,255,255,0.3) !important;
+}
+
