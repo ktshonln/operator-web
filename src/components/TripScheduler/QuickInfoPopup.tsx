@@ -1,5 +1,6 @@
 import { useState } from "react";
 import { format } from "date-fns";
+import { useNavigate } from "react-router-dom";
 import { BsExclamationTriangle } from "react-icons/bs";
 import { useCancelTrip } from "../../hooks/useFleetTrips";
 import type { Trip } from "../../types/trips";
@@ -12,6 +13,7 @@ interface Props {
 }
 
 export default function QuickInfoPopup({ trip, onClose, onEdit, onDeleted }: Props) {
+  const navigate = useNavigate();
   const cancelTrip = useCancelTrip(trip.id);
   const [showScopeDialog, setShowScopeDialog] = useState(false);
 
@@ -102,6 +104,12 @@ export default function QuickInfoPopup({ trip, onClose, onEdit, onDeleted }: Pro
           </div>
 
           <div className="flex gap-2 pt-2">
+            <button
+              onClick={() => navigate(`/trips/${trip.id}`)}
+              className="flex-1 px-4 py-2 text-sm font-medium bg-brand text-white rounded-lg hover:brightness-95 transition-colors"
+            >
+              View Details
+            </button>
             <button
               onClick={onEdit}
               className="flex-1 px-4 py-2 text-sm font-medium text-brand border border-brand rounded-lg hover:bg-brand/5 transition-colors"

@@ -23,9 +23,10 @@ export const handlers = [
   }),
   // Trip calendar handlers first — they override the old-shape trip/route/bus handlers
   ...tripCalendarHandlers,
+  // Print handlers before the generic ticketing catch-alls
+  ...ticketingHandlers,
   ...authHandlers,
   ...analyticsHandlers,
-  ...ticketingHandlers,
   ...organizationHandlers,
   ...tripHandlers,
   ...routeHandlers,

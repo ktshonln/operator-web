@@ -1,13 +1,13 @@
 import { useState, useEffect, useRef } from "react";
 import { useNavigate, useParams } from "react-router-dom";
 import { format } from "date-fns";
-import { Zap, ChevronLeft, Info } from "lucide-react";
+import { Zap, ChevronLeft, Info, Printer, X } from "lucide-react";
 import { BsExclamationTriangle } from "react-icons/bs";
 import { useQuery } from "@tanstack/react-query";
 import Can from "./Can";
 import { useUpdateTrip, useCancelTrip } from "../hooks/useFleetTrips";
 import { useFleetBusesPaginated } from "../hooks/useFleetBus";
-import { buildCdnUrl, axiosInstance } from "../services/apiClient";
+import { buildCdnUrl, axiosInstance, baseUrl } from "../services/apiClient";
 import { useToastStore } from "../stores/toastStore";
 import {
   useTripDetail,
@@ -104,6 +104,259 @@ function CreatedByBadge({ by }: { by: string }) {
 function Skeleton({ className }: { className?: string }) {
   return (
     <div className={`animate-pulse bg-gray-200 dark:bg-neutral-800 rounded ${className ?? ""}`} />
+  );
+}
+
+// ─── Print helpers ────────────────────────────────────────────────────────────
+
+type PrintSize = "58mm" | "80mm" | "a4";
+const PRINT_SIZE_KEY = "katisha_print_size";
+const VALID_PRINT_SIZES: PrintSize[] = ["58mm", "80mm", "a4"];
+
+function getSavedPrintSize(): PrintSize | null {
+  try {
+    const v = localStorage.getItem(PRINT_SIZE_KEY);
+    return VALID_PRINT_SIZES.includes(v as PrintSize) ? (v as PrintSize) : null;
+  } catch {
+    return null;
+  }
+}
+
+// ─── Print size selector popup ────────────────────────────────────────────────
+
+interface PrintSizeSelectorProps {
+  initialSize?: PrintSize | null;
+  onConfirm: (size: PrintSize, remember: boolean) => void;
+  onCancel: () => void;
+}
+
+const SIZE_OPTIONS: { value: PrintSize; label: string; sub: string }[] = [
+  { value: "58mm", label: "58mm", sub: "Small POS / Mobile terminal" },
+  { value: "80mm", label: "80mm", sub: "Standard POS / Receipt printer" },
+  { value: "a4",   label: "A4",   sub: "Office printer / Save as PDF" },
+];
+
+function PrintSizeSelector({ initialSize, onConfirm, onCancel }: PrintSizeSelectorProps) {
+  const [selected, setSelected] = useState<PrintSize | null>(initialSize ?? null);
+  const [remember, setRemember] = useState(false);
+
+  return (
+    <>
+      <div className="fixed inset-0 bg-black/40 z-[90]" onClick={onCancel} />
+      <div className="fixed top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 bg-white dark:bg-neutral-900 rounded-xl shadow-2xl w-full max-w-sm z-[100] p-6">
+        <div className="flex items-center justify-between mb-5">
+          <h3 className="font-bold text-base text-neutral-900 dark:text-white">Select paper size</h3>
+          <button onClick={onCancel} className="p-1.5 hover:bg-gray-100 dark:hover:bg-neutral-800 rounded-lg transition-colors">
+            <X className="w-4 h-4 text-neutral-500" />
+          </button>
+        </div>
+        <div className="flex gap-3 mb-5">
+          {SIZE_OPTIONS.map((opt) => (
+            <button
+              key={opt.value}
+              onClick={() => setSelected(opt.value)}
+              className={`flex-1 flex flex-col items-center gap-2 p-3 rounded-xl border-2 transition-colors text-center ${
+                selected === opt.value
+                  ? "border-brand bg-brand/5 dark:bg-brand/10"
+                  : "border-gray-200 dark:border-neutral-700 hover:border-brand/40"
+              }`}
+            >
+              {/* SVG thumbnail */}
+              {opt.value === "58mm" && (
+                <svg viewBox="0 0 29 50" className="w-7 h-12 text-neutral-400 dark:text-neutral-500" fill="none" stroke="currentColor" strokeWidth="2">
+                  <rect x="1" y="1" width="27" height="48" rx="2" />
+                  <line x1="5" y1="8" x2="24" y2="8" strokeWidth="1.5" />
+                  <line x1="5" y1="13" x2="24" y2="13" strokeWidth="1" />
+                  <line x1="5" y1="17" x2="18" y2="17" strokeWidth="1" />
+                  <rect x="7" y="24" width="15" height="15" rx="1" strokeWidth="1.5" />
+                </svg>
+              )}
+              {opt.value === "80mm" && (
+                <svg viewBox="0 0 40 50" className="w-9 h-12 text-neutral-400 dark:text-neutral-500" fill="none" stroke="currentColor" strokeWidth="2">
+                  <rect x="1" y="1" width="38" height="48" rx="2" />
+                  <line x1="6" y1="8" x2="34" y2="8" strokeWidth="1.5" />
+                  <line x1="6" y1="13" x2="34" y2="13" strokeWidth="1" />
+                  <line x1="6" y1="17" x2="24" y2="17" strokeWidth="1" />
+                  <rect x="10" y="24" width="20" height="18" rx="1" strokeWidth="1.5" />
+                </svg>
+              )}
+              {opt.value === "a4" && (
+                <svg viewBox="0 0 42 60" className="w-9 h-14 text-neutral-400 dark:text-neutral-500" fill="none" stroke="currentColor" strokeWidth="2">
+                  <rect x="1" y="1" width="40" height="58" rx="2" />
+                  <rect x="11" y="6" width="20" height="48" rx="1" strokeWidth="1" strokeDasharray="2 2" />
+                  <line x1="14" y1="14" x2="28" y2="14" strokeWidth="1" />
+                  <line x1="14" y1="18" x2="28" y2="18" strokeWidth="1" />
+                  <rect x="16" y="26" width="10" height="10" rx="1" strokeWidth="1.5" />
+                </svg>
+              )}
+              <span className="text-xs font-bold text-neutral-900 dark:text-white">{opt.label}</span>
+              <span className="text-[10px] text-neutral-500 dark:text-neutral-400 leading-tight">{opt.sub}</span>
+            </button>
+          ))}
+        </div>
+        <label className="flex items-center gap-2 text-sm text-neutral-700 dark:text-neutral-300 mb-5 cursor-pointer select-none">
+          <input
+            type="checkbox"
+            checked={remember}
+            onChange={(e) => setRemember(e.target.checked)}
+            className="rounded border-gray-300 dark:border-neutral-600 text-brand focus:ring-brand"
+          />
+          Remember my choice
+        </label>
+        <div className="flex gap-3">
+          <button onClick={onCancel} className="flex-1 px-4 py-2.5 text-sm font-medium text-neutral-700 dark:text-neutral-300 border border-gray-200 dark:border-neutral-700 rounded-lg hover:bg-gray-50 dark:hover:bg-neutral-800 transition-colors">
+            Cancel
+          </button>
+          <button
+            onClick={() => selected && onConfirm(selected, remember)}
+            disabled={!selected}
+            className="flex-1 px-4 py-2.5 text-sm font-medium bg-brand text-white rounded-lg hover:brightness-95 disabled:opacity-50 transition-colors"
+          >
+            Print
+          </button>
+        </div>
+      </div>
+    </>
+  );
+}
+
+// ─── Ticket drawer ────────────────────────────────────────────────────────────
+
+interface TicketDrawerProps {
+  ticket: TripTicket;
+  tripDepartureAt: string;
+  onClose: () => void;
+}
+
+function TicketDrawer({ ticket, tripDepartureAt, onClose }: TicketDrawerProps) {
+  const showToast = useToastStore((s) => s.showToast);
+  const [showSizeSelector, setShowSizeSelector] = useState(false);
+  const [savedSize, setSavedSize] = useState<PrintSize | null>(getSavedPrintSize);
+
+  const triggerPrint = async (size: PrintSize) => {
+    // Preflight check
+    try {
+      await axiosInstance.head(`/tickets/${ticket.id}/print`, { params: { size } });
+    } catch (err: any) {
+      const status = err?.response?.status;
+      const code = err?.response?.data?.error?.code;
+      if (status === 404 || code === "TICKET_NOT_FOUND") {
+        showToast("Ticket not found", "error");
+      } else if (status === 403 || code === "FORBIDDEN") {
+        showToast("You do not have permission to print this ticket", "error");
+      } else {
+        showToast("Failed to print ticket", "error");
+      }
+      return;
+    }
+    // Fetch the HTML and load via blob URL so MSW can intercept in dev
+    let html: string;
+    try {
+      const res = await axiosInstance.get<string>(`/tickets/${ticket.id}/print`, {
+        params: { size },
+        responseType: "text",
+      });
+      html = res.data;
+    } catch {
+      showToast("Failed to print ticket", "error");
+      return;
+    }
+    const blob = new Blob([html], { type: "text/html" });
+    const blobUrl = URL.createObjectURL(blob);
+    const iframe = document.createElement("iframe");
+    iframe.style.display = "none";
+    iframe.src = blobUrl;
+    document.body.appendChild(iframe);
+    const cleanup = () => {
+      if (document.body.contains(iframe)) iframe.remove();
+      URL.revokeObjectURL(blobUrl);
+    };
+    iframe.contentWindow?.addEventListener("afterprint", cleanup);
+    iframe.onload = () => { setTimeout(cleanup, 60_000); };
+  };
+
+  const handlePrintClick = () => {
+    const saved = getSavedPrintSize();
+    if (saved) {
+      triggerPrint(saved);
+    } else {
+      setShowSizeSelector(true);
+    }
+  };
+
+  const handleSizeConfirmed = (size: PrintSize, remember: boolean) => {
+    if (remember) {
+      localStorage.setItem(PRINT_SIZE_KEY, size);
+      setSavedSize(size);
+    }
+    setShowSizeSelector(false);
+    triggerPrint(size);
+  };
+
+  const rows: { label: string; value: React.ReactNode }[] = [
+    { label: "Ticket ID", value: <span className="font-mono text-xs">{ticket.id}</span> },
+    { label: "Passenger", value: ticket.passenger_name },
+    { label: "Phone", value: ticket.phone },
+    { label: "From", value: ticket.boarding_stop.name },
+    { label: "To", value: ticket.alighting_stop.name },
+    { label: "Departure", value: format(new Date(tripDepartureAt), "MMM d, yyyy · HH:mm") },
+    { label: "Seats", value: ticket.seats_count },
+    { label: "Amount", value: `${ticket.currency} ${ticket.amount.toLocaleString()}` },
+    { label: "Payment", value: <PaymentBadge method={ticket.payment_method} /> },
+    { label: "Created by", value: <CreatedByBadge by={ticket.created_by} /> },
+    { label: "Status", value: <TicketStatusBadge status={ticket.status} /> },
+    { label: "Booked at", value: format(new Date(ticket.booked_at), "MMM d, yyyy HH:mm") },
+  ];
+
+  return (
+    <>
+      {/* Backdrop */}
+      <div className="fixed inset-0 bg-black/30 z-[60]" onClick={onClose} />
+      {/* Drawer */}
+      <div className="fixed right-0 top-0 h-full w-full max-w-sm bg-white dark:bg-neutral-900 shadow-2xl z-[70] flex flex-col">
+        {/* Header */}
+        <div className="flex items-center justify-between px-5 py-4 border-b border-gray-100 dark:border-neutral-800 shrink-0">
+          <h2 className="font-bold text-base text-neutral-900 dark:text-white">Ticket Details</h2>
+          <button onClick={onClose} className="p-1.5 hover:bg-gray-100 dark:hover:bg-neutral-800 rounded-lg transition-colors">
+            <X className="w-4 h-4 text-neutral-500" />
+          </button>
+        </div>
+        {/* Body */}
+        <div className="flex-1 overflow-y-auto p-5 space-y-3">
+          {rows.map(({ label, value }) => (
+            <div key={label} className="flex items-start justify-between gap-4 text-sm">
+              <span className="text-neutral-500 dark:text-neutral-400 shrink-0 w-24">{label}</span>
+              <span className="text-neutral-900 dark:text-white text-right">{value}</span>
+            </div>
+          ))}
+        </div>
+        {/* Footer */}
+        <div className="px-5 py-4 border-t border-gray-100 dark:border-neutral-800 shrink-0 space-y-2">
+          <button
+            onClick={handlePrintClick}
+            className="w-full flex items-center justify-center gap-2 px-4 py-2.5 text-sm font-medium bg-brand text-white rounded-lg hover:brightness-95 transition-colors"
+          >
+            <Printer className="w-4 h-4" />
+            Print Ticket
+          </button>
+          {savedSize && (
+            <button
+              onClick={() => setShowSizeSelector(true)}
+              className="w-full text-xs text-neutral-500 dark:text-neutral-400 hover:text-brand transition-colors"
+            >
+              Change size (currently {savedSize})
+            </button>
+          )}
+        </div>
+      </div>
+      {showSizeSelector && (
+        <PrintSizeSelector
+          initialSize={savedSize}
+          onConfirm={handleSizeConfirmed}
+          onCancel={() => setShowSizeSelector(false)}
+        />
+      )}
+    </>
   );
 }
 
@@ -554,6 +807,7 @@ function TripDetails() {
   const [showDeleteScope, setShowDeleteScope] = useState(false);
   const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
   const [showCreateTicket, setShowCreateTicket] = useState(false);
+  const [selectedTicket, setSelectedTicket] = useState<TripTicket | null>(null);
 
   // ── Local ticket list (prepend newly created) ─────────────────────────────
   const [newTickets, setNewTickets] = useState<TripTicket[]>([]);
@@ -930,7 +1184,7 @@ function TripDetails() {
                     {allTickets.map((ticket) => (
                       <tr
                         key={ticket.id}
-                        onClick={() => navigate(`/ticketing/${ticket.id}`)}
+                        onClick={() => setSelectedTicket(ticket)}
                         className={`border-b border-gray-50 dark:border-neutral-800/50 hover:bg-gray-50 dark:hover:bg-neutral-800/50 cursor-pointer transition-colors ${
                           ticket.status === "cancelled" ? "opacity-50" : ""
                         }`}
@@ -1054,6 +1308,15 @@ function TripDetails() {
           remainingSeats={trip.remaining_seats}
           onClose={() => setShowCreateTicket(false)}
           onCreated={(ticket) => setNewTickets((prev) => [ticket, ...prev])}
+        />
+      )}
+
+      {/* ── Ticket detail drawer ── */}
+      {selectedTicket && (
+        <TicketDrawer
+          ticket={selectedTicket}
+          tripDepartureAt={trip.departure_at}
+          onClose={() => setSelectedTicket(null)}
         />
       )}
     </div>

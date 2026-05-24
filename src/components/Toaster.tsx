@@ -52,7 +52,7 @@ const Toaster = () => {
   return (
     <div
       ref={toastRef}
-      className={`text-xs font-heebo ${color[type].main} ${color[type].bg} p-2 border ${color[type].border} rounded-lg fixed top-2 left-1/2 -translate-x-1/2 flex items-center space-x-3 max-w-[90vw] w-fit break-words whitespace-pre-line z-50`}
+      className={`text-xs font-heebo ${color[type].main} ${color[type].bg} p-2 border ${color[type].border} rounded-lg fixed top-2 left-1/2 -translate-x-1/2 flex items-center space-x-3 max-w-[90vw] w-fit break-words whitespace-pre-line z-[500]`}
     >
       <div className={`${color[type].bgAlt} rounded-md p-1.5`}>
         <div className="rounded-full p-1 bg-white">
