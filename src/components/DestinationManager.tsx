@@ -2,7 +2,7 @@ import React, { useEffect, useState } from "react";
 import DropDown from "./DropDown";
 import Search from "./Search";
 import useCompany from "../hooks/useCompany";
-import useRoutes, { RouteQuery } from "../hooks/useRoutes";
+import useRoutes, { RouteQuery, FleetRoute } from "../hooks/useRoutes";
 import { z } from "zod";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
@@ -112,9 +112,9 @@ const DestinationManager = ({ companyId }: { companyId: string }) => {
             </tr>
           </thead>
           <tbody>
-            {routes?.pages?.map((page, index) => (
+            {routes?.pages?.map((page: FleetRoute[], index: number) => (
               <React.Fragment key={index}>
-                {page.map((route, i) => (
+                {page.map((route: FleetRoute, i: number) => (
                   <RouteForm
                     key={route.routeId}
                     route={route}

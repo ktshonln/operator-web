@@ -18,7 +18,11 @@ interface Props {
     i: number; // index
 }
 
-const RouteForm = ({route: { routeId, route, price, intermediateStops }, companyId, routesLoading, i}: Props) => {
+const RouteForm = ({route: routeProp, companyId, routesLoading, i}: Props) => {
+  const routeId = routeProp.routeId ?? routeProp.id ?? '';
+  const route = routeProp.route ?? { start: '', end: '', startId: '', endId: '' };
+  const price = routeProp.price ?? 0;
+  const intermediateStops = routeProp.intermediateStops ?? [];
       const [editRow, setEditRow] = useState<number | null>(null);
       const [editDest, setEditDest] = useState<string>(""); // The current destination to edit(it's id)
       const [deleteDest, setDeleteDest] = useState<string>(""); // The current destination to deleted(it's id)

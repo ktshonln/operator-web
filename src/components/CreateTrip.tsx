@@ -12,7 +12,7 @@ import { Controller, useForm } from "react-hook-form";
 import { z } from "zod";
 import useAddTrip, { TripDetails } from "../hooks/useAddTrip";
 import useBuses, { BusQuery } from "../hooks/useBuses";
-import useRoutes, { RouteQuery } from "../hooks/useRoutes";
+import useRoutes, { RouteQuery, FleetRoute as Route } from "../hooks/useRoutes";
 
 const schema = z
   .object({
@@ -154,13 +154,13 @@ const CreateTrip = ({ effectTwo }: { effectTwo: () => void }) => {
   useEffect(() => {
     const ends =
       routes?.pages
-        .map((page) =>
+        .map((page: Route[]) =>
           page
             .filter(
-              (r) =>
-                r.route.start.toLowerCase() === currentOrigin.toLowerCase(),
+              (r: Route) =>
+                r.route?.start?.toLowerCase() === currentOrigin.toLowerCase(),
             )
-            .map((o) => o.route.end),
+            .map((o: Route) => o.route?.end ?? ''),
         )
         .flat(1) ?? [];
     setMatchingEnds(ends); // Matching destinations. Later, filter by id.

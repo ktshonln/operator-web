@@ -15,7 +15,7 @@ interface IntermediateStopDetails {
 }
 
 export interface RouteDetails {
-  route: { start: string; end: string }; // origin stop id and destination id included
+  route: { start: string; end: string };
   price: number;
   intermediateStops?: IntermediateStopDetails[];
 }
@@ -33,13 +33,14 @@ const useAddRoute = (orgId: string) => {
     mutationFn: (routeDetails: RouteDetails) =>
       apiClient.addRoute<RouteDetails>(routeDetails, orgId),
     onMutate: (newData) => {
-      // Optimistic updates
       const previousData = queryClient.getQueryData<InfiniteData<Route[]>>([
         CACHE_KEY_ROUTES,
       ]);
-      // Create optimistic route object
+      const tempId = `temp-${Date.now()}`;
       const optimisticRoute: Route = {
-        routeId: `temp-${Date.now()}`,
+        id: tempId,
+        name: `${newData.route.start} - ${newData.route.end}`,
+        routeId: tempId,
         route: {
           startId: "temp-start",
           start: newData.route.start,
@@ -48,13 +49,12 @@ const useAddRoute = (orgId: string) => {
         },
         price: newData.price,
         intermediateStops: (newData.intermediateStops || []).map((stop) => ({
-          stopId: `temp-stop-${Date.now()}`, // Generate temporary ID
+          stopId: `temp-stop-${Date.now()}`,
           name: stop.name,
           price: stop.price,
         })),
       };
 
-      // Update cache for infinite query
       queryClient.setQueryData<InfiniteData<Route[]>>(
         [CACHE_KEY_ROUTES],
         (oldData) => ({
@@ -65,19 +65,6 @@ const useAddRoute = (orgId: string) => {
         }),
       );
 
-      /*  const previousRoutes =
-        queryClient.getQueryData<Route[]>(CACHE_KEY_ROUTES) || [];
-      queryClient.setQueryData<Route[]>(CACHE_KEY_ROUTES, (routes) => routes?.map(route=>({
-         ...route,  price: newData.price,
-          intermediateStops: [...route.intermediateStops], // !! aren't we neglecting newData intermediate stops?
-          route: {
-            ...route.route, // preserve startId and endId
-            start: newData.route.start,
-            end: newData.route.end,
-          }, 
-      }))
-
-      ); */
       return { previousRoutes: previousData?.pages?.flat() || [] };
     },
     onSuccess: (savedRoute) => {
@@ -87,17 +74,15 @@ const useAddRoute = (orgId: string) => {
           pages:
             oldData?.pages?.map((page) =>
               page.map((route) => {
-                // Find matching temp route
                 if (route.routeId === savedRoute.routeId) {
                   return {
                     ...savedRoute,
-                    intermediateStops: savedRoute.intermediateStops.map(
+                    intermediateStops: (savedRoute.intermediateStops ?? []).map(
                       (serverStop, index) => ({
                         ...serverStop,
-                        // Preserve temp ID if server ID missing (fallback)
                         stopId:
                           serverStop.stopId ||
-                          route.intermediateStops[index]?.stopId,
+                          (route.intermediateStops ?? [])[index]?.stopId,
                       }),
                     ),
                   };

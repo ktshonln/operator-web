@@ -7,7 +7,7 @@ import { useQuery } from "@tanstack/react-query";
 import Can from "./Can";
 import { useUpdateTrip, useCancelTrip } from "../hooks/useFleetTrips";
 import { useFleetBusesPaginated } from "../hooks/useFleetBus";
-import { buildCdnUrl, axiosInstance, baseUrl } from "../services/apiClient";
+import { buildCdnUrl, axiosInstance } from "../services/apiClient";
 import { useToastStore } from "../stores/toastStore";
 import {
   useTripDetail,
@@ -794,7 +794,7 @@ function TripDetails() {
   useEffect(() => {
     if (selectedBusId) {
       const bus = buses.find((b) => b.id === selectedBusId);
-      if (bus) setTotalSeats(bus.capacity ?? bus.total_seats ?? totalSeats);
+      if (bus) setTotalSeats(bus.capacity ?? totalSeats);
     }
   }, [selectedBusId]);
 
@@ -1038,14 +1038,14 @@ function TripDetails() {
                   {suggestedBuses.length > 0 && (
                     <optgroup label="Suggested for this route">
                       {suggestedBuses.map((b) => (
-                        <option key={b.id} value={b.id}>{b.plate} · {b.type} · {b.capacity ?? b.total_seats} seats</option>
+                        <option key={b.id} value={b.id}>{b.plate} · {b.type} · {b.capacity} seats</option>
                       ))}
                     </optgroup>
                   )}
                   {otherBuses.length > 0 && (
                     <optgroup label="Other buses">
                       {otherBuses.map((b) => (
-                        <option key={b.id} value={b.id}>{b.plate} · {b.type} · {b.capacity ?? b.total_seats} seats</option>
+                        <option key={b.id} value={b.id}>{b.plate} · {b.type} · {b.capacity} seats</option>
                       ))}
                     </optgroup>
                   )}

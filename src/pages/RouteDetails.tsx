@@ -8,7 +8,6 @@ import {
   useRouteById,
   useUpdateRoute,
   useDeleteRoute,
-  RouteStop,
 } from "../hooks/useRoutesV2";
 import { useLocationsList, Location } from "../hooks/useLocations";
 import { useAbility } from "../contexts/AbilityContext";

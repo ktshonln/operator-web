@@ -49,7 +49,7 @@ export default function EditPanel({ trip, onClose, onUpdated }: Props) {
   useEffect(() => {
     if (selectedBusId) {
       const bus = buses.find((b) => b.id === selectedBusId);
-      if (bus) setTotalSeats(bus.capacity ?? bus.total_seats ?? totalSeats);
+      if (bus) setTotalSeats(bus.capacity ?? totalSeats);
     }
   }, [selectedBusId]);
 
@@ -132,7 +132,7 @@ export default function EditPanel({ trip, onClose, onUpdated }: Props) {
             <select value={selectedBusId} onChange={(e) => setSelectedBusId(e.target.value)} className={inputClass}>
               <option value="">No bus assigned</option>
               {buses.map((b) => (
-                <option key={b.id} value={b.id}>{b.plate} · {b.type} · {b.capacity ?? b.total_seats} seats</option>
+                <option key={b.id} value={b.id}>{b.plate} · {b.type} · {b.capacity} seats</option>
               ))}
             </select>
           </div>

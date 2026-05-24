@@ -107,10 +107,10 @@ export const handlers = [
     `${baseUrl}/organizations/:orgId/routes`,
     async ({ request }) => {
       // ...and respond to them using this JSON response.
-      const newRoute = await request.json();
+      const newRoute = await request.json() as any;
       const newId = crypto.randomUUID();
       newRoute.routeId = newId;
-      routes.push(newRoute);
+      routes.push(newRoute as any);
       return HttpResponse.json(newRoute, { status: 201 });
     },
   ),

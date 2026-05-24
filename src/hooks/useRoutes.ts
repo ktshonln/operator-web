@@ -11,12 +11,26 @@ export interface FleetRoute {
     order: number;
     stop: { id: string; name: string; lat?: number; lng?: number; city?: string };
   }>;
+  // Legacy fields (old API shape — kept for backward compat with legacy hooks)
+  routeId?: string;
+  route?: {
+    startId: string;
+    start: string;
+    endId: string;
+    end: string;
+  };
+  price?: number;
+  intermediateStops?: Array<{
+    stopId: string;
+    name: string;
+    price: number;
+  }>;
 }
 
 // Keep backward compat alias
 export type Route = FleetRoute;
 
-export const useRoutes = (q?: string) => {
+export const useRoutes = (q?: string, _query?: RouteQuery) => {
   return useQuery({
     queryKey: ["routes", q],
     queryFn: async () => {

@@ -17,37 +17,35 @@ const useEditRoute = (orgId: string, routeId: string) => {
     mutationFn: (routeDetails: RouteDetails) =>
       apiClient.editRoute<RouteDetails>(routeDetails, orgId, routeId),
     onMutate: (newData) => {
-      // Optimistic updates
       const previousRoutes =
         queryClient.getQueryData<Route[]>(CACHE_KEY_ROUTES) || [];
       queryClient.setQueryData<Route[]>(CACHE_KEY_ROUTES, (routes) =>
-        routes?.map((route) =>
+        (routes?.map((route) =>
           route.routeId === routeId
-            ? {
+            ? ({
                 ...route,
                 price: newData.price,
-                intermediateStops: [...route.intermediateStops], // !! aren't we neglecting newData intermediate stops?
+                intermediateStops: [...(route.intermediateStops ?? [])],
                 route: {
-                  ...route.route, // preserve startId and endId
+                  ...(route.route ?? {}),
                   start: newData.route.start,
                   end: newData.route.end,
                 },
-              }
+              } as Route)
             : route,
-        ),
+        )) as Route[] | undefined,
       );
       return { previousRoutes };
     },
-    onSuccess: (savedData, newData) => {
-      // Invalidating cache for freshness
+    onSuccess: (savedData) => {
       queryClient.setQueryData<Route[]>(CACHE_KEY_ROUTES, (routes) =>
         routes?.map((route) =>
-          route.routeId === routeId && route === newData ? savedData : route,
+          route.routeId === routeId ? savedData : route,
         ),
       );
       queryClient.invalidateQueries({
         queryKey: ["organization", orgId, "route", routeId],
-      }); // Invalidate single route to get fresh data
+      });
       queryClient.invalidateQueries({
         queryKey: [CACHE_KEY_ROUTES],
         refetchType: "active",
@@ -56,7 +54,7 @@ const useEditRoute = (orgId: string, routeId: string) => {
     },
     onError: (error, _newData, context) => {
       if (!context) return;
-      queryClient.setQueryData<RouteDetails[]>(
+      queryClient.setQueryData<Route[]>(
         CACHE_KEY_ROUTES,
         context.previousRoutes,
       );

@@ -15,7 +15,7 @@ import { format } from "date-fns";
 import useUser from "../hooks/useUser";
 import useCompany from "../hooks/useCompany";
 import useBuses, { BusQuery } from "../hooks/useBuses";
-import useRoutes, { RouteQuery } from "../hooks/useRoutes";
+import useRoutes, { RouteQuery, FleetRoute } from "../hooks/useRoutes";
 import { RiFlashlightLine } from "react-icons/ri";
 import { BiCalendarAlt, BiTime } from "react-icons/bi";
 import CustomDatePicker from "./CustomDatePicker";
@@ -189,13 +189,13 @@ const EditTrip = ({ effectTwo, trip }: Props) => {
   useEffect(() => {
     const ends =
       routes?.pages
-        .map((page) =>
+        .map((page: FleetRoute[]) =>
           page
             .filter(
-              (r) =>
-                r.route.start.toLowerCase() === currentOrigin.toLowerCase(),
+              (r: FleetRoute) =>
+                r.route?.start?.toLowerCase() === currentOrigin.toLowerCase(),
             )
-            .map((o) => o.route.end),
+            .map((o: FleetRoute) => o.route?.end ?? ''),
         )
         .flat(1) ?? [];
     setMatchingEnds(ends); // Matching destinations. Later, filter by id.

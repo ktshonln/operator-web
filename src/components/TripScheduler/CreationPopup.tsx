@@ -233,14 +233,14 @@ export default function CreationPopup({ route, date, time, onClose, onCreated }:
                   {suggestedBuses.length > 0 && (
                     <optgroup label="Suggested for this route">
                       {suggestedBuses.map((b) => (
-                        <option key={b.id} value={b.id}>{b.plate} · {b.type} · {b.capacity ?? b.total_seats} seats</option>
+                        <option key={b.id} value={b.id}>{b.plate} · {b.type} · {b.capacity} seats</option>
                       ))}
                     </optgroup>
                   )}
                   {otherBuses.length > 0 && (
                     <optgroup label="Other buses">
                       {otherBuses.map((b) => (
-                        <option key={b.id} value={b.id}>{b.plate} · {b.type} · {b.capacity ?? b.total_seats} seats</option>
+                        <option key={b.id} value={b.id}>{b.plate} · {b.type} · {b.capacity} seats</option>
                       ))}
                     </optgroup>
                   )}
