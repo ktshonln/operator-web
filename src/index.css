@@ -37,6 +37,15 @@
   @apply bg-neutral-300 dark:bg-neutral-700 rounded-full border-none;
 }
 
+/* Hide scrollbar entirely while keeping scroll functionality */
+.no-scrollbar {
+  scrollbar-width: none; /* Firefox */
+  -ms-overflow-style: none; /* IE/Edge */
+}
+.no-scrollbar::-webkit-scrollbar {
+  display: none; /* Chrome/Safari/Opera */
+}
+
 }
 
  

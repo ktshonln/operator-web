@@ -74,7 +74,7 @@ const Sidebar = () => {
 
         {/* ── Nav items — scrollable ── */}
         <div
-          className={`mt-8 flex-1 overflow-y-auto scrollbar-none mx-auto ${show ? "w-full" : "w-fit"} md:w-full`}
+          className={`mt-8 flex-1 overflow-y-auto no-scrollbar mx-auto ${show ? "w-full" : "w-fit"} md:w-full`}
         >
           {pages.map((page) => (
             <Can key={page.link} I={page.action as any} a={page.subject as any}>
