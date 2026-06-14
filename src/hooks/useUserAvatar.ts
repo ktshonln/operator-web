@@ -1,5 +1,6 @@
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { axiosInstance } from "../services/apiClient";
+import { USER_ME_KEY } from "./useUser";
 
 export interface PresignedUrlResponse {
   upload_url: string;
@@ -31,7 +32,7 @@ export const useUserAvatar = () => {
       return path;
     },
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ["user"] });
+      queryClient.invalidateQueries({ queryKey: USER_ME_KEY });
     },
   });
 

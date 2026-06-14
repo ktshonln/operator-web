@@ -1,5 +1,6 @@
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { axiosInstance } from "../services/apiClient";
+import { USER_ME_KEY } from "./useUser";
 
 export interface UpdateUserRequest {
   first_name?: string;
@@ -51,8 +52,8 @@ export const useUpdateUserMe = () => {
       return response.data;
     },
     onSuccess: () => {
-      // Invalidate current user data
-      queryClient.invalidateQueries({ queryKey: ["user"] });
+      // Invalidate current user data so useUser() re-fetches fresh profile
+      queryClient.invalidateQueries({ queryKey: USER_ME_KEY });
     },
   });
 };

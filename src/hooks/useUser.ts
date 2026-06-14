@@ -1,4 +1,5 @@
-import { useEffect, useState } from "react";
+import { useQuery, useQueryClient } from "@tanstack/react-query";
+import { useEffect } from "react";
 import { useToastStore } from "../stores/toastStore";
 import { useNavigate } from "react-router-dom";
 import { axiosInstance } from "../services/apiClient";
@@ -51,36 +52,69 @@ export interface PassengerUser {
 
 export type User = StaffUser | PassengerUser;
 
+// ─── Shared query key ─────────────────────────────────────────────────────────
+// All components that call useUser() share this key — one fetch, one cache entry.
+export const USER_ME_KEY = ["user-me"] as const;
+
+// ─── Public paths that don't require auth ─────────────────────────────────────
+const PUBLIC_PATHS = [
+  "/register",
+  "/login",
+  "/forgot-password",
+  "/reset-password",
+  "/verify-password-reset",
+  "/accept-invite",
+  "/i",
+  "/login-mfa",
+  "/activate",
+];
+
+// ─── Hook ─────────────────────────────────────────────────────────────────────
+
 const useUser = () => {
-  const [user, setUser] = useState<User | null>(null);
-  const [loading, setLoading] = useState(true);
   const navigate = useNavigate();
   const showToast = useToastStore((state) => state.showToast);
 
-  // Public routes that should never trigger a redirect to /login
-  const PUBLIC_PATHS = ["/register", "/login", "/forgot-password", "/reset-password", "/verify-password-reset", "/accept-invite", "/i", "/login-mfa", "/activate"];
+  const isPublicPath = PUBLIC_PATHS.some((p) =>
+    window.location.pathname.startsWith(p)
+  );
 
+  const { data: user, isLoading: loading, error } = useQuery<User, Error>({
+    queryKey: USER_ME_KEY,
+    queryFn: async () => {
+      const res = await axiosInstance.get<User>("/users/me");
+      return res.data;
+    },
+    // Don't retry on 401 — just redirect to login
+    retry: (failureCount, err: any) => {
+      if (err?.response?.status === 401) return false;
+      return failureCount < 2;
+    },
+    // Cache for 5 minutes — user data rarely changes mid-session
+    staleTime: 5 * 60 * 1000,
+    // Keep cached data in memory for 10 minutes after component unmounts
+    gcTime: 10 * 60 * 1000,
+    // Don't fetch on public pages
+    enabled: !isPublicPath,
+  });
+
+  // Handle auth errors — redirect to login if not on a public path
   useEffect(() => {
-    const isPublicPath = PUBLIC_PATHS.some((p) => window.location.pathname.startsWith(p));
+    if (!error || isPublicPath) return;
+    const status = (error as any)?.response?.status;
+    if (status === 401 || !user) {
+      showToast("User not logged in", "error");
+      navigate("/login");
+    }
+  }, [error, isPublicPath, navigate, showToast, user]);
 
-    setLoading(true);
-    axiosInstance
-      .get<User>("/users/me")
-      .then((res) => {
-        setUser(res.data);
-        setLoading(false);
-      })
-      .catch((error) => {
-        console.error("Error fetching logged in user", error);
-        setLoading(false);
-        if (!isPublicPath) {
-          showToast("User not logged in", "error");
-          navigate("/login");
-        }
-      });
-  }, [navigate, showToast]);
+  return { user: user ?? null, loading };
+};
 
-  return { user, loading };
+// ─── Helper to invalidate the user cache (call after profile updates) ─────────
+export const useInvalidateUser = () => {
+  const queryClient = useQueryClient();
+  return () => queryClient.invalidateQueries({ queryKey: USER_ME_KEY });
 };
 
 export default useUser;
