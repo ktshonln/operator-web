@@ -31,7 +31,7 @@ function TicketDetails() {
           <div className="space-y-2">
           <h1 className="font-bold text-lg w-fit mx-auto mb-7">{ticket?.origin} - {ticket?.destination}</h1>
             <p><span className="text-neutral-500">T-ID: </span>{ticket?.ticketId}</p>
-            <p><span className="text-neutral-500">Passenger name: </span>{ticket?.passenger.firstName} {ticket?.passenger?.lastName}</p>
+            <p><span className="text-neutral-500">Passenger name: </span>{ticket?.passenger?.firstName} {ticket?.passenger?.lastName}</p>
             <p className="font-light"><span className="text-neutral-500 font-normal">Bought: </span> {ticket?.purchaseTime ? isValid(new Date(ticket?.purchaseTime??0)) ? format(new Date(ticket?.purchaseTime??0), "HH'H'mm"): 'Invalid date': ''}</p>
             <p className="font-light"><span className="text-neutral-500 font-normal">Departure: </span>{ticket?.departureTime ? isValid(new Date(ticket?.departureTime??0)) ? format(new Date(ticket?.departureTime??0), "HH'H'mm"): 'Invalid date': ''}</p>
             <p className="font-light"><span className="text-neutral-500 font-normal">Arrival: </span>{ticket?.arrivalTime ? isValid(new Date(ticket?.arrivalTime??0)) ? format(new Date(ticket?.arrivalTime??0), "HH'H'mm"): 'Invalid date': ''}</p>

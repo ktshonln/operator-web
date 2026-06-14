@@ -34,7 +34,7 @@ const TableTwo = ({ tableData, click }: Props) => {
           ({ ticketId, passenger, origin, destination, status, departureTime }) => (
             <tr onClick={()=>{click && navigate(`/ticketing/${ticketId}`)}} className={`odd:bg-gray-100 dark:odd:bg-neutral-900 text-neutral-600 hover:bg-gray-200 dark:hover:bg-neutral-800 ${click && 'cursor-pointer'}`}>
               <td className="p-3">{ticketId}</td>
-              <td className="p-3">{passenger.firstName + " " + passenger.lastName}</td>
+              <td className="p-3">{(passenger?.firstName ?? '') + " " + (passenger?.lastName ?? '')}</td>
               <td className="p-3">
                 {origin} - {destination}
               </td>

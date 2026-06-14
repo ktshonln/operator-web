@@ -4,19 +4,19 @@ import APIClient from "../services/apiClient";
 export interface Ticket {
   ticketId: string;
   tripId: string;
-  passenger: {
-    passengerId: string; // this is possible on the passenger client because they are logged in
-    firstName: string;
-    lastName: string;
+  passenger?: {
+    passengerId?: string;
+    firstName?: string;
+    lastName?: string;
   };
-  ticketQuantity:number; // ticket quantity to be added
+  ticketQuantity: number;
   seatNumber: number | number[];
   origin: string;
   destination: string;
   departureTime: string;
   arrivalTime: string;
-  busId: string; // bus id not plate
-  companyId:string; // company id is enough
+  busId: string;
+  companyId: string;
   pricing: {
     basePrice: number;
     vatIncluded: number;
