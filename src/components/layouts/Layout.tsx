@@ -24,14 +24,14 @@ const Layout = ({ children }: Props) => {
       }
     >
       <div className="font-heebo flex">
-        <ErrorBoundary FallbackComponent={ErrorFallback}>
-          <Sidebar />
-          <main className="w-full min-w-0 overflow-x-hidden">
-            <Header />
+        <Sidebar />
+        <main className="w-full min-w-0 overflow-x-hidden">
+          <Header />
+          <ErrorBoundary FallbackComponent={ErrorFallback}>
             {children}
             <Outlet />
-          </main>
-        </ErrorBoundary>
+          </ErrorBoundary>
+        </main>
       </div>
     </AbilityProvider>
   );

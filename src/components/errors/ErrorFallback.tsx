@@ -1,3 +1,4 @@
+import { useNavigate } from "react-router-dom";
 import { BiSolidConfused } from "react-icons/bi";
 
 interface FallbackProps {
@@ -6,20 +7,30 @@ interface FallbackProps {
 }
 
 const ErrorFallback = ({ error, resetErrorBoundary }: FallbackProps) => {
+  const navigate = useNavigate();
+
   return (
-    <div className="font-heebo">
-      <div className="w-fit">
-        <img src="/logoOne.svg" className="w-32 ml-5 mt-2 pt-5" alt="Katisha-logo" />
-      </div>
-      <div className="fixed w-full mt-20 text-center">
-        <p className="font-black text-red-500 text-7xl mb-3 w-fit mx-auto">
-          <BiSolidConfused />
-        </p>
-        <p className="font-semibold text-red-700 mb-5">Something went wrong</p>
-        <p className="text-brand2  mb-10 ml-32 mr-32">{error.message}</p>
+    <div className="font-heebo flex flex-col items-center justify-center min-h-[60vh] px-6 text-center">
+      <BiSolidConfused className="text-red-400 mb-4" size={64} />
+      <h2 className="font-bold text-xl text-neutral-900 dark:text-white mb-2">
+        Something went wrong
+      </h2>
+      <p className="text-sm text-neutral-500 dark:text-neutral-400 mb-1 max-w-md">
+        This page ran into an error. The rest of the app is still working.
+      </p>
+      <p className="text-xs text-red-500 mb-8 max-w-md font-mono bg-red-50 dark:bg-red-900/20 px-3 py-2 rounded-lg">
+        {error.message}
+      </p>
+      <div className="flex gap-3">
+        <button
+          onClick={() => { navigate("/home"); resetErrorBoundary(); }}
+          className="px-4 py-2 text-sm font-medium text-neutral-700 dark:text-neutral-300 border border-gray-200 dark:border-neutral-700 rounded-lg hover:bg-gray-50 dark:hover:bg-neutral-800 transition-colors"
+        >
+          Go to Home
+        </button>
         <button
           onClick={resetErrorBoundary}
-          className="bg-brand text-white p-2 pl-8 pr-8 rounded-sm text-sm hover:opacity-90 font-semibold cursor-pointer  active:scale-95"
+          className="px-4 py-2 text-sm font-medium bg-brand text-white rounded-lg hover:brightness-95 transition-colors"
         >
           Try again
         </button>
@@ -29,13 +40,3 @@ const ErrorFallback = ({ error, resetErrorBoundary }: FallbackProps) => {
 };
 
 export default ErrorFallback;
-
-/* 
- 
-   <div className="p-4 border-2 border-red-500 w-full rounded-lg">
-            <h2 className="text-lg font-semibold text-red-700">Something went wrong:</h2>
-            <p className="my-2 text-sm text-red-600">{error.message}</p>
-            <button className="bg-white rounded-lg cursor-pointer border p-1" onClick={resetErrorBoundary}>Try again</button>
-        </div>
-        
- */
