@@ -149,6 +149,17 @@ export default function TripScheduler() {
   const goPrev = () => setCurrentDate((d) => addDays(d, -7));
   const goNext = () => setCurrentDate((d) => addDays(d, 7));
 
+  // Lock body scroll when any popup/panel is open
+  useEffect(() => {
+    const isOpen = !!(creationSlot || selectedTrip || editingTrip);
+    if (isOpen) {
+      document.body.style.overflow = "hidden";
+    } else {
+      document.body.style.overflow = "";
+    }
+    return () => { document.body.style.overflow = ""; };
+  }, [creationSlot, selectedTrip, editingTrip]);
+
   // ─── Slot click ──────────────────────────────────────────────────────────────
   const handleSelectSlot = useCallback((slot: SlotInfo) => {
     if (!selectedRoute) return;

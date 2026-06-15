@@ -16,7 +16,7 @@ export interface TripRouteStop {
 export interface TripDetailRoute {
   id: string;
   name: string;
-  route_stops: TripRouteStop[];
+  route_stops?: TripRouteStop[];
 }
 
 export interface TripDetailBus {
@@ -122,7 +122,9 @@ export const useTripDetail = (id: string | undefined) => {
     queryKey: ["trip-detail", id],
     queryFn: async () => {
       const { data } = await axiosInstance.get<TripDetail>(`/trips/${id}`);
-      return data;
+      // Normalize: some backends wrap the trip in { trip: ... }
+      const trip = (data as any).trip ?? data;
+      return trip as TripDetail;
     },
     enabled: !!id,
   });

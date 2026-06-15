@@ -107,6 +107,19 @@ function Skeleton({ className }: { className?: string }) {
   );
 }
 
+// ─── Body scroll lock hook ────────────────────────────────────────────────────
+
+function useBodyScrollLock(active: boolean) {
+  useEffect(() => {
+    if (!active) return;
+    const original = document.body.style.overflow;
+    document.body.style.overflow = "hidden";
+    return () => {
+      document.body.style.overflow = original;
+    };
+  }, [active]);
+}
+
 // ─── Print helpers ────────────────────────────────────────────────────────────
 
 type PrintSize = "58mm" | "80mm" | "a4";
@@ -232,6 +245,8 @@ function TicketDrawer({ ticket, tripDepartureAt, onClose }: TicketDrawerProps) {
   const showToast = useToastStore((s) => s.showToast);
   const [showSizeSelector, setShowSizeSelector] = useState(false);
   const [savedSize, setSavedSize] = useState<PrintSize | null>(getSavedPrintSize);
+
+  useBodyScrollLock(true);
 
   const triggerPrint = async (size: PrintSize) => {
     // Preflight check
@@ -475,6 +490,8 @@ interface CreateTicketPopupProps {
 function CreateTicketPopup({ tripId, stops, remainingSeats, onClose, onCreated }: CreateTicketPopupProps) {
   const showToast = useToastStore((s) => s.showToast);
   const createTicket = useCreateCashTicket();
+
+  useBodyScrollLock(true);
 
   const [step, setStep] = useState<1 | 2>(1);
   const [passengerName, setPassengerName] = useState("");
@@ -813,6 +830,10 @@ function TripDetails() {
   const [newTickets, setNewTickets] = useState<TripTicket[]>([]);
 
   const isSeries = !!trip?.series && !trip.series.is_only_in_series;
+
+  // Lock body scroll whenever any modal/dialog is open
+  const anyModalOpen = showSaveScope || showDeleteScope || showDeleteConfirm || showCreateTicket || !!selectedTicket;
+  useBodyScrollLock(anyModalOpen);
 
   const hasChanges = trip
     ? departureTime !== format(new Date(trip.departure_at), "HH:mm") ||
