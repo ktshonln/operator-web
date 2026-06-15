@@ -898,9 +898,11 @@ function TripDetails() {
       : "bg-green-500";
 
   // ── Stops for ticket creation ─────────────────────────────────────────────
-  // Real backend returns stops as a flat top-level array sorted by order.
-  // MSW mock uses route.route_stops[].stop — support both.
+  // Feature spec: stops come from the trip's route stops in order.
+  // Real backend returns them as a flat top-level `stops[]` array.
+  // MSW mock uses route.route_stops[].stop — support both shapes.
   const stops: TripStop[] = (() => {
+    if (!trip) return [];
     if (trip.stops && trip.stops.length > 0) {
       return [...trip.stops]
         .sort((a, b) => a.order - b.order)
