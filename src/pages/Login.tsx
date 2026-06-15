@@ -1,8 +1,10 @@
 import { BsTicketFill } from "react-icons/bs";
+import { Eye, EyeOff } from "lucide-react";
 import Footer from "../components/Footer";
 import { Link } from "react-router-dom";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useForm } from "react-hook-form";
+import { useState } from "react";
 import { z } from "zod";
 import useLogin from "../hooks/useLogin";
 
@@ -35,6 +37,7 @@ const DecorativePanel = ({ tagline }: { tagline?: string }) => (
 const LoginPage = () => {
   const { register, handleSubmit, formState: { errors } } = useForm<FormData>({ resolver: zodResolver(schema) });
   const loginUser = useLogin();
+  const [showPassword, setShowPassword] = useState(false);
 
   const onSubmit = (data: FormData) => {
     loginUser.mutate({ identifier: data.identifier, password: data.password, user_type: "staff", device_name: "web" });
@@ -63,8 +66,21 @@ const LoginPage = () => {
 
               <div>
                 <label htmlFor="password" className="text-[#6A717D] block mb-1 text-xs font-medium">Password</label>
-                <div className="ring ring-gray-200 dark:ring-neutral-700 p-2 rounded-sm bg-white dark:bg-neutral-900">
-                  <input {...register("password")} type="password" id="password" className="outline-none w-full text-sm dark:text-white dark:bg-neutral-900" />
+                <div className="ring ring-gray-200 dark:ring-neutral-700 p-2 rounded-sm bg-white dark:bg-neutral-900 flex items-center gap-2">
+                  <input
+                    {...register("password")}
+                    type={showPassword ? "text" : "password"}
+                    id="password"
+                    className="outline-none flex-1 text-sm dark:text-white dark:bg-neutral-900"
+                  />
+                  <button
+                    type="button"
+                    onClick={() => setShowPassword((v) => !v)}
+                    className="shrink-0 text-neutral-400 hover:text-neutral-600 dark:hover:text-neutral-300 transition-colors"
+                    aria-label={showPassword ? "Hide password" : "Show password"}
+                  >
+                    {showPassword ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
+                  </button>
                 </div>
                 {errors.password && <p className="text-red-500 text-xs mt-1">{errors.password.message}</p>}
                 <div className="flex justify-end mt-1">

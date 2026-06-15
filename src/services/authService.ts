@@ -70,7 +70,8 @@ export interface ForgotPasswordPayload {
 }
 
 export interface ResendOtpPayload {
-  phone_number: string;
+  user_id: string;
+  channel: "phone" | "email";
 }
 
 export interface ResendOtp2FAPayload {
