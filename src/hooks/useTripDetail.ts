@@ -19,6 +19,15 @@ export interface TripDetailRoute {
   route_stops?: TripRouteStop[];
 }
 
+// Stop as returned directly on the trip (real backend shape)
+export interface TripDetailStop {
+  id: string;
+  name: string;
+  lat?: number;
+  lng?: number;
+  order: number;
+}
+
 export interface TripDetailBus {
   id: string;
   plate: string;
@@ -53,6 +62,8 @@ export interface TripDetail {
   bus: TripDetailBus | null;
   driver: TripDetailDriver | null;
   series: TripDetailSeries | null;
+  // Real backend returns stops as a flat top-level array
+  stops?: TripDetailStop[];
   created_at: string;
   updated_at: string;
 }

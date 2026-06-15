@@ -294,11 +294,16 @@ export const tripCalendarHandlers = [
         { status: 404 }
       );
     }
-    // Enrich with full route (including route_stops)
+    // Enrich with full route (including route_stops) and flat stops array
     const fullRoute = MOCK_ROUTES.find((r) => r.id === trip.route_id) ?? trip.route;
+    const stops = (fullRoute?.route_stops ?? [])
+      .sort((a: any, b: any) => a.order - b.order)
+      .map((rs: any) => ({ ...rs.stop, order: rs.order }));
+
     return HttpResponse.json({
       ...trip,
       route: fullRoute,
+      stops,
       created_at: trip.departure_at,
       updated_at: trip.departure_at,
     });

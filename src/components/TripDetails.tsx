@@ -898,10 +898,19 @@ function TripDetails() {
       : "bg-green-500";
 
   // ── Stops for ticket creation ─────────────────────────────────────────────
-  const stops = (trip?.route?.route_stops ?? [])
-    .slice()
-    .sort((a, b) => a.order - b.order)
-    .map((rs) => rs.stop);
+  // Real backend returns stops as a flat top-level array sorted by order.
+  // MSW mock uses route.route_stops[].stop — support both.
+  const stops: TripStop[] = (() => {
+    if (trip.stops && trip.stops.length > 0) {
+      return [...trip.stops]
+        .sort((a, b) => a.order - b.order)
+        .map((s) => ({ id: s.id, name: s.name }));
+    }
+    return (trip.route?.route_stops ?? [])
+      .slice()
+      .sort((a, b) => a.order - b.order)
+      .map((rs) => rs.stop);
+  })();
 
   // ── Merged ticket list ────────────────────────────────────────────────────
   const allTickets: TripTicket[] = [
