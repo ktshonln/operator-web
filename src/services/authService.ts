@@ -71,7 +71,8 @@ export interface ForgotPasswordPayload {
 
 export interface ResendOtpPayload {
   user_id: string;
-  channel: "phone" | "email";
+  purpose: "phone_verification" | "email_verification" | "2fa" | "password_reset" | "login_channel_change";
+  channel?: "phone" | "email";
 }
 
 export interface ResendOtp2FAPayload {
@@ -105,7 +106,7 @@ export default {
     ),
   resendOtp2FA: (data: ResendOtp2FAPayload) =>
     authRequest(
-      axiosInstance.post("/auth/resend-otp", data).then((res) => res.data),
+      axiosInstance.post("/auth/resend-otp", { ...data, purpose: "2fa" }).then((res) => res.data),
     ),
   forgotPassword: (data: ForgotPasswordPayload) =>
     authRequest(

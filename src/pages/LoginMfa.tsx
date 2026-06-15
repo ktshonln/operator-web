@@ -85,8 +85,10 @@ const LoginMfa = () => {
   const handleResend = () => {
     if (timeLeft !== 0 || isPending) return;
     if (mode === "verify") {
+      // requires_verification flow: account pending verification after first login
+      const purpose = channel === "email" ? "email_verification" : "phone_verification";
       resendOtp.mutate(
-        { user_id: userId, channel },
+        { user_id: userId, purpose, channel },
         { onSuccess: () => setTimeLeft(60) }
       );
     } else {
