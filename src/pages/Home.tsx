@@ -2,14 +2,9 @@ import { useState } from "react";
 import { BsTicket } from "react-icons/bs";
 import { MdRoute } from "react-icons/md";
 import DonutChart from "../components/DonutChart";
-import Filter from "../components/Filter";
 import InsightCard from "../components/InsightCard";
 import TableOne from "../components/TableOne";
 import TableTwo from "../components/TableTwo";
-import useAnalytics, { AnalyticsQuery } from "../hooks/useAnalytics";
-import usePeakTimes from "../hooks/usePeakTimes";
-import usePopularRoutes from "../hooks/usePopularRoutes";
-import useRevenueAnalytics from "../hooks/useRevenueAnalytics";
 import useTickets, { TicketQuery } from "../hooks/useTickets";
 import { Role } from "../hooks/useUser";
 import { camelCaseToTitle } from "../utils/helpers";
@@ -20,14 +15,22 @@ import { useMenuStore } from "../stores/menuStore";
 import { AiOutlineClose } from "react-icons/ai";
 import { LuPanelRightClose, LuPanelRightOpen } from "react-icons/lu";
 import { useRequiredUser } from "../hooks/useRequiredUser";
+import { useAnalyticsOverview, AnalyticsOverviewParams } from "../hooks/useAnalyticsOverview";
+import Filter from "../components/Filter";
+
+// Period selector for the analytics overview
+const PERIOD_OPTIONS: { label: string; value: AnalyticsOverviewParams["period"] }[] = [
+  { label: "Today", value: "today" },
+  { label: "This week", value: "this_week" },
+  { label: "This month", value: "this_month" },
+];
 
 function HomePage() {
   const user = useRequiredUser()
   const userLoad = user ? false : true;
   const { data: company } = useCompany(user?.org_id ?? "");
-  const [analyticsQuery, setAnalyticsQuery] = useState<AnalyticsQuery>(
-    {} as AnalyticsQuery
-  );
+
+  const [period, setPeriod] = useState<AnalyticsOverviewParams["period"]>("today");
   const [ticketQuery, setTicketQuery] = useState<TicketQuery>(
     {} as TicketQuery
   );
@@ -41,20 +44,13 @@ function HomePage() {
   });
 
   const {
-    data: analytics,
+    overview,
+    revAnalytics,
+    popularRoutes,
+    peakTimes,
     isLoading: analyticsLoad,
-  } = useAnalytics(user?.org_id ?? "", analyticsQuery);
-  const { data: revAns } = useRevenueAnalytics(
-    user?.org_id ?? "",
-    analyticsQuery
-  );
-  const revAnalytics = Array.isArray(revAns) ? revAns : [];
+  } = useAnalyticsOverview({ period, tz: "Africa/Kigali" }, !!user?.org_id);
 
-  const { data: popularRoutes } = usePopularRoutes(
-    user?.org_id ?? "",
-    analyticsQuery
-  );
-  const { data: peakTimes } = usePeakTimes(user?.org_id ?? "", analyticsQuery);
   const { data: tickets } = useTickets(ticketQuery);
 
   const [dest, setDest] = useState<number | null>(null);
@@ -64,7 +60,7 @@ function HomePage() {
     showMenu2,
     hideMenu2,
   } = useMenuStore();
-  console.log("The Query", analyticsQuery);
+
   return (
     <div className="flex space-x-3 dark:text-white">
       {/* Onboarding welcome modal */}
@@ -128,52 +124,74 @@ function HomePage() {
         <p className="text-sm text-brand2">
           Checkout real-time analytics and insights
         </p>
-        <Filter
-          userRole={user?.roles[0] as Role}
-          branches={company?.branches}
-          onSelectFilter={(filter) => {
-            setAnalyticsQuery({
-              ...analyticsQuery,
-              startDate: filter.startDate,
-              endDate: filter.endDate,
-              branch: filter.branch?.name,
-            });
-            setTicketQuery({
-              ...ticketQuery,
-              startDate: filter.startDate,
-              endDate: filter.endDate,
-              branch: filter.branch,
-            });
-          }}
-        />
+
+        {/* Period selector */}
+        <div className="flex items-center border rounded-xl border-neutral-200 dark:border-neutral-800 font-medium text-xs text-brand2 p-1 mt-2 gap-1">
+          {PERIOD_OPTIONS.map((opt) => (
+            <button
+              key={opt.value}
+              onClick={() => setPeriod(opt.value)}
+              className={`flex-1 text-center p-1 pl-4 pr-4 rounded-lg cursor-pointer transition-colors ${
+                period === opt.value ? "bg-brand text-white" : "hover:bg-gray-100 dark:hover:bg-neutral-800"
+              }`}
+            >
+              {opt.label}
+            </button>
+          ))}
+          {/* Branch filter still uses the old Filter only for ticket query */}
+          {company?.branches && user?.roles[0] === "admin" && (
+            <Filter
+              userRole={user?.roles[0] as Role}
+              branches={company?.branches}
+              onSelectFilter={(filter) => {
+                setTicketQuery({
+                  ...ticketQuery,
+                  startDate: filter.startDate,
+                  endDate: filter.endDate,
+                  branch: filter.branch,
+                });
+              }}
+            />
+          )}
+        </div>
+
         <div className="flex items-baseline justify-between gap-1">
           <InsightCard
             loading={userLoad || analyticsLoad}
-            metric={analytics?.totalTicketsSold ?? 0}
+            metric={overview?.summary.sold_tickets.value ?? 0}
             Icon={BsTicket}
             title="Sold Tickets"
             action="View"
             effect={() => navigate("/ticketing/history")}
-            variation={{ type: "up", value: 12 }}
+            variation={{
+              type: (overview?.summary.sold_tickets.delta_pct ?? 0) >= 0 ? "up" : "down",
+              value: Math.abs(overview?.summary.sold_tickets.delta_pct ?? 12),
+            }}
           />
           <InsightCard
             loading={userLoad || analyticsLoad}
-            metric={analytics?.totalRevenue?.amount ?? 0}
+            metric={overview?.summary.revenue.value ?? 0}
             custIcon="/RWFIcon.svg"
             Icon={BsTicket}
             title="Total Revenue"
-            variation={{ type: "down", value: 2 }}
+            variation={{
+              type: (overview?.summary.revenue.delta_pct ?? 0) >= 0 ? "up" : "down",
+              value: Math.abs(overview?.summary.revenue.delta_pct ?? 2),
+            }}
             options={["money"]}
           />
           <InsightCard
             loading={analyticsLoad}
-            metric={845}
+            metric={overview?.summary.capacity.total_seats ?? 845}
             Icon={BsTicket}
             title="Total Tickets"
-            subtitle="500 available"
+            subtitle={`${overview?.summary.capacity.available ?? 500} available`}
             action="- Sell ticket"
             effect={() => navigate("/ticketing")}
-            variation={{ type: "up", value: 8 }}
+            variation={{
+              type: (overview?.summary.capacity.delta_pct ?? 0) >= 0 ? "up" : "down",
+              value: Math.abs(overview?.summary.capacity.delta_pct ?? 8),
+            }}
           />
         </div>
         <h2 className="font-semibold text-brand2 text-sm mt-5 mb-5">
@@ -236,10 +254,9 @@ function HomePage() {
           <h2 className="font-semibold text-brand2 text-sm mt-5 mb-5">
             Peak Times
           </h2>
-          {peakTimes && <PeakTrafficChart peakTimes={peakTimes ?? []} />}
+          {peakTimes && <PeakTrafficChart peakTimes={peakTimes} />}
         </div>
       </div>}
-      {/* {sellTicket && <SellTicket  effectTwo={() => setSellTicket(false)} />} */}
     </div>
   );
 }

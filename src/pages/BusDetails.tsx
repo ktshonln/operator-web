@@ -14,6 +14,21 @@ import useUsers, { UserQuery } from "../hooks/useUsers";
 import useUser from "../hooks/useUser";
 import { axiosInstance } from "../services/apiClient";
 import { useQuery } from "@tanstack/react-query";
+import { useBusLocationStream } from "../hooks/useBusLocationStream";
+import { MapContainer, TileLayer, Marker, Popup, useMap } from "react-leaflet";
+import L from "leaflet";
+import "leaflet/dist/leaflet.css";
+
+// Fix Leaflet default icon broken by webpack/vite
+import markerIcon2x from "leaflet/dist/images/marker-icon-2x.png";
+import markerIcon from "leaflet/dist/images/marker-icon.png";
+import markerShadow from "leaflet/dist/images/marker-shadow.png";
+
+L.Icon.Default.mergeOptions({
+  iconUrl: markerIcon,
+  iconRetinaUrl: markerIcon2x,
+  shadowUrl: markerShadow,
+});
 
 // ─── Helpers ──────────────────────────────────────────────────────────────────
 
@@ -69,6 +84,111 @@ function useRoutes(search: string) {
       return (data as any).data ?? (data as any).routes ?? [];
     },
   });
+}
+
+// ─── Map recenter helper ──────────────────────────────────────────────────────
+
+function MapRecenter({ lat, lon }: { lat: number; lon: number }) {
+  const map = useMap();
+  useEffect(() => {
+    map.setView([lat, lon], map.getZoom());
+  }, [lat, lon, map]);
+  return null;
+}
+
+// ─── Live Location section ────────────────────────────────────────────────────
+
+function LiveLocationSection({
+  busId,
+  deviceId,
+}: {
+  busId: string;
+  deviceId: string | null | undefined;
+}) {
+  const { position, status } = useBusLocationStream(busId, deviceId);
+
+  const statusBadge =
+    status === "live" ? (
+      <span className="flex items-center gap-1.5 text-xs font-medium text-green-600 dark:text-green-400">
+        <span className="w-2 h-2 rounded-full bg-green-500 animate-pulse" />
+        Live
+      </span>
+    ) : status === "connecting" ? (
+      <span className="flex items-center gap-1.5 text-xs font-medium text-yellow-600 dark:text-yellow-400">
+        <span className="w-2 h-2 rounded-full bg-yellow-400 animate-pulse" />
+        Connecting…
+      </span>
+    ) : status === "no_signal" ? (
+      <span className="flex items-center gap-1.5 text-xs font-medium text-neutral-500 dark:text-neutral-400">
+        <span className="w-2 h-2 rounded-full bg-neutral-400" />
+        No signal
+      </span>
+    ) : null;
+
+  return (
+    <div className="bg-white dark:bg-neutral-950/90 rounded-xl border border-gray-200 dark:border-neutral-800 p-6 mb-4">
+      <div className="flex items-center justify-between mb-4">
+        <h2 className="font-semibold text-base text-neutral-900 dark:text-white">
+          Live Location
+        </h2>
+        {statusBadge}
+      </div>
+
+      {!deviceId ? (
+        <p className="text-sm text-neutral-500 dark:text-neutral-400 italic">
+          No GPS tracker fitted to this bus.
+        </p>
+      ) : (
+        <>
+          {/* Map */}
+          <div className="rounded-lg overflow-hidden" style={{ height: 300 }}>
+            <MapContainer
+              center={
+                position ? [position.lat, position.lon] : [-1.9441, 30.0619]
+              }
+              zoom={14}
+              style={{ height: "100%", width: "100%" }}
+              scrollWheelZoom={false}
+            >
+              <TileLayer
+                url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"
+                attribution='&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a>'
+              />
+              {position && (
+                <>
+                  <MapRecenter lat={position.lat} lon={position.lon} />
+                  <Marker position={[position.lat, position.lon]}>
+                    <Popup>
+                      <span className="text-xs">
+                        Last update:{" "}
+                        {new Date(position.ts).toLocaleTimeString()}
+                      </span>
+                    </Popup>
+                  </Marker>
+                </>
+              )}
+            </MapContainer>
+          </div>
+
+          {/* Last update */}
+          {position && (
+            <p className="mt-3 text-xs text-neutral-500 dark:text-neutral-400">
+              Last update:{" "}
+              <span className="font-medium text-neutral-700 dark:text-neutral-300">
+                {new Date(position.ts).toLocaleString()}
+              </span>
+            </p>
+          )}
+
+          {status === "no_signal" && !position && (
+            <p className="mt-3 text-xs text-neutral-500 dark:text-neutral-400 italic">
+              Waiting for GPS signal…
+            </p>
+          )}
+        </>
+      )}
+    </div>
+  );
 }
 
 // ─── Main page ────────────────────────────────────────────────────────────────
@@ -334,6 +454,11 @@ function BusDetails() {
           </div>
         </div>
       </div>
+
+      {/* Live Location */}
+      {busId && (
+        <LiveLocationSection busId={busId} deviceId={(bus as any).device_id} />
+      )}
 
       {/* Driver */}
       <div className={sectionClass}>

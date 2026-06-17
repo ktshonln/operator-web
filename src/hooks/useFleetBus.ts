@@ -31,6 +31,7 @@ export interface FleetBus {
   routes: BusRoute[];
   org: BusOrg | null;
   org_id?: string;
+  device_id?: string | null;
   created_at: string;
   updated_at: string;
 }
