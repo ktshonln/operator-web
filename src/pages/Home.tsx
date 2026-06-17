@@ -7,7 +7,7 @@ import TableOne from "../components/TableOne";
 import TableTwo from "../components/TableTwo";
 import useTickets, { TicketQuery } from "../hooks/useTickets";
 import { Role } from "../hooks/useUser";
-import { camelCaseToTitle } from "../utils/helpers";
+import { camelCaseToTitle, getDateRange } from "../utils/helpers";
 import PeakTrafficChart from "../components/PeakTrafficChart";
 import useCompany from "../hooks/useCompany";
 import { useNavigate } from "react-router-dom";
@@ -51,7 +51,28 @@ function HomePage() {
     isLoading: analyticsLoad,
   } = useAnalyticsOverview({ period, tz: "Africa/Kigali" }, !!user?.org_id);
 
-  const { data: tickets } = useTickets(ticketQuery);
+  // Resolve active dates by merging selected period tabs with custom filter dates
+  const resolvedTicketQuery = useMemo<TicketQuery>(() => {
+    const mapped = period === "this_week" ? "thisWeek" : period === "this_month" ? "thisMonth" : "today";
+    const range = getDateRange(mapped);
+    return {
+      startDate: ticketQuery.startDate || range.startDate,
+      endDate: ticketQuery.endDate || range.endDate,
+      status: ticketQuery.status,
+      tripId: ticketQuery.tripId,
+    };
+  }, [period, ticketQuery]);
+
+  const { data: tickets } = useTickets(resolvedTicketQuery);
+
+  const handlePeriodChange = (val: AnalyticsOverviewParams["period"]) => {
+    setPeriod(val);
+    setTicketQuery((prev) => ({
+      ...prev,
+      startDate: undefined,
+      endDate: undefined,
+    }));
+  };
 
   // Fallback top destinations calculated from tickets if the API returns empty/undefined
   const popularRoutes = useMemo(() => {
@@ -168,7 +189,7 @@ function HomePage() {
             {PERIOD_OPTIONS.map((opt) => (
               <button
                 key={opt.value}
-                onClick={() => setPeriod(opt.value)}
+                onClick={() => handlePeriodChange(opt.value)}
                 className={`px-4 py-1.5 rounded-lg cursor-pointer transition-colors ${
                   period === opt.value
                     ? "bg-brand text-white"
@@ -190,7 +211,6 @@ function HomePage() {
                     ...ticketQuery,
                     startDate: filter.startDate,
                     endDate: filter.endDate,
-                    branch: filter.branch,
                   });
                 }}
               />

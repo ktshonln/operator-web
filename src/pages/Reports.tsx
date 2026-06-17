@@ -131,7 +131,7 @@ function Reports() {
     ticketsQuery.data?.tickets ??
     ticketsQuery.data?.data ??
     [];
-  const total = ticketsQuery.data?.total ?? 0;
+  const total = ticketsQuery.data?.total ?? rawTickets.length;
   const totalPages = Math.max(1, Math.ceil(total / PAGE_SIZE));
 
   // Analytics overview for revenue breakdown and peak times

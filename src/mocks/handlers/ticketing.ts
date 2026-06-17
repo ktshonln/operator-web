@@ -200,9 +200,36 @@ export const handlers = [
   }),
 
   // ── GET /tickets — legacy list ───────────────────────────────────────────────
-  http.get(`${baseUrl}/tickets`, () => {
+  http.get(`${baseUrl}/tickets`, ({ request }) => {
+    const url = new URL(request.url);
+    const from = url.searchParams.get("from");
+    const to = url.searchParams.get("to");
+    const status = url.searchParams.get("status");
+
+    let filteredTickets = [...tickets];
+
+    if (from) {
+      filteredTickets = filteredTickets.filter(
+        (t) => new Date(t.departureTime ?? t.purchaseTime) >= new Date(from)
+      );
+    }
+    if (to) {
+      filteredTickets = filteredTickets.filter(
+        (t) => new Date(t.departureTime ?? t.purchaseTime) <= new Date(to)
+      );
+    }
+    if (status) {
+      filteredTickets = filteredTickets.filter(
+        (t) => t.status.toLowerCase() === status.toLowerCase()
+      );
+    }
+
     return HttpResponse.json(
-      { query: { tripId: "trip_4021" }, tickets },
+      {
+        query: { tripId: "trip_4021" },
+        tickets: filteredTickets,
+        total: filteredTickets.length,
+      },
       { status: 200 }
     );
   }),
