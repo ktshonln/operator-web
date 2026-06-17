@@ -244,14 +244,20 @@ function HomePage() {
           <h2 className="font-bold text-sm text-neutral-900 dark:text-white mb-4">
             Revenue Breakdown Per Route
           </h2>
-          <div className="flex flex-col md:flex-row items-center justify-between gap-6">
-            <div className="w-full md:w-1/2 flex justify-center">
-              <DonutChart values={revAnalytics ?? []} currency="RWF" />
+          {!revAnalytics || revAnalytics.length === 0 ? (
+            <div className="flex flex-col items-center justify-center py-12 text-neutral-400">
+              <p className="text-sm italic">No route revenue data available for this period</p>
             </div>
-            <div className="w-full md:w-1/2">
-              <TableOne data={revAnalytics ?? []} />
+          ) : (
+            <div className="flex flex-col md:flex-row items-center justify-between gap-6">
+              <div className="w-full md:w-1/2 flex justify-center">
+                <DonutChart values={revAnalytics} currency="RWF" />
+              </div>
+              <div className="w-full md:w-1/2">
+                <TableOne data={revAnalytics} />
+              </div>
             </div>
-          </div>
+          )}
         </div>
 
         <div className="bg-white dark:bg-neutral-950/90 border border-neutral-200 dark:border-neutral-800 rounded-xl p-6">
@@ -266,13 +272,13 @@ function HomePage() {
       {show2 && (
         <div
           onClick={hideMenu2}
-          className="print-hide bg-black/40 dark:bg-black/60 fixed inset-0 z-40 transition-opacity"
+          className="print-hide bg-black/40 dark:bg-black/60 fixed inset-0 z-40 transition-opacity xl:hidden"
         />
       )}
 
       {/* Widgets Sidebar */}
       {show2 && (
-        <div className="print-hide fixed right-0 top-0 w-80 h-full overflow-y-auto p-6 shadow-2xl bg-white dark:bg-neutral-900 border-l border-neutral-200 dark:border-neutral-800 z-50">
+        <div className="print-hide fixed right-0 top-0 w-80 h-full overflow-y-auto p-6 shadow-2xl bg-white dark:bg-neutral-900 border-l border-neutral-200 dark:border-neutral-800 z-50 xl:relative xl:top-auto xl:right-auto xl:h-auto xl:shadow-none xl:border-l xl:z-0 xl:p-6 xl:shrink-0">
           <div className="flex justify-between items-center mb-6">
             <h2 className="font-bold text-lg text-neutral-900 dark:text-white">Quick Insights</h2>
             <button onClick={hideMenu2} className="p-2 hover:bg-gray-100 dark:hover:bg-neutral-800 rounded-lg transition-colors">

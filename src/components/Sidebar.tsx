@@ -52,7 +52,7 @@ const Sidebar = () => {
       )}
 
       <div
-        className={`z-50 fixed top-0 min-w-20 md:min-w-56 ${show ? "min-w-56" : ""} p-3 h-screen flex flex-col shadow-lg rounded-r-md bg-white dark:bg-neutral-900 shadow-black/15`}
+        className={`${show ? "z-50 min-w-56" : "z-30"} fixed top-0 min-w-20 md:min-w-56 p-3 h-screen flex flex-col shadow-lg rounded-r-md bg-white dark:bg-neutral-900 shadow-black/15`}
       >
         {/* ── Logo ── */}
         <div className="relative shrink-0 dark:text-white">
