@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useMemo } from "react";
 import { BsTicket } from "react-icons/bs";
 import { MdRoute } from "react-icons/md";
 import DonutChart from "../components/DonutChart";
@@ -13,7 +13,7 @@ import useCompany from "../hooks/useCompany";
 import { useNavigate } from "react-router-dom";
 import { useMenuStore } from "../stores/menuStore";
 import { AiOutlineClose } from "react-icons/ai";
-import { LuPanelRightClose, LuPanelRightOpen } from "react-icons/lu";
+import { LuPanelRightOpen } from "react-icons/lu";
 import { useRequiredUser } from "../hooks/useRequiredUser";
 import { useAnalyticsOverview, AnalyticsOverviewParams } from "../hooks/useAnalyticsOverview";
 import Filter from "../components/Filter";
@@ -26,7 +26,7 @@ const PERIOD_OPTIONS: { label: string; value: AnalyticsOverviewParams["period"] 
 ];
 
 function HomePage() {
-  const user = useRequiredUser()
+  const user = useRequiredUser();
   const userLoad = user ? false : true;
   const { data: company } = useCompany(user?.org_id ?? "");
 
@@ -46,12 +46,39 @@ function HomePage() {
   const {
     overview,
     revAnalytics,
-    popularRoutes,
+    popularRoutes: apiPopularRoutes,
     peakTimes,
     isLoading: analyticsLoad,
   } = useAnalyticsOverview({ period, tz: "Africa/Kigali" }, !!user?.org_id);
 
   const { data: tickets } = useTickets(ticketQuery);
+
+  // Fallback top destinations calculated from tickets if the API returns empty/undefined
+  const popularRoutes = useMemo(() => {
+    if (apiPopularRoutes && apiPopularRoutes.length > 0) {
+      return apiPopularRoutes;
+    }
+    const ticketsList = (tickets?.tickets ?? []) as any[];
+    const counts: Record<string, number> = {};
+    ticketsList.forEach((ticket) => {
+      let routeName = "";
+      if (ticket.boarding_stop?.name && ticket.alighting_stop?.name) {
+        routeName = `${ticket.boarding_stop.name} → ${ticket.alighting_stop.name}`;
+      } else if (ticket.origin && ticket.destination) {
+        routeName = `${ticket.origin} → ${ticket.destination}`;
+      }
+      if (routeName) {
+        counts[routeName] = (counts[routeName] || 0) + 1;
+      }
+    });
+    return Object.entries(counts)
+      .sort((a, b) => b[1] - a[1])
+      .slice(0, 5)
+      .map(([routeName], index) => ({
+        routeName,
+        rank: index + 1,
+      }));
+  }, [apiPopularRoutes, tickets]);
 
   const [dest, setDest] = useState<number | null>(null);
   const navigate = useNavigate();
@@ -61,8 +88,15 @@ function HomePage() {
     hideMenu2,
   } = useMenuStore();
 
+  const getGreeting = () => {
+    const hour = new Date().getHours();
+    if (hour < 12) return "Good morning";
+    if (hour < 17) return "Good afternoon";
+    return "Good evening";
+  };
+
   return (
-    <div className="flex space-x-3 dark:text-white">
+    <div className="flex space-x-3 dark:text-white px-6 py-6 min-h-screen">
       {/* Onboarding welcome modal */}
       {showWelcome && (
         <>
@@ -105,57 +139,65 @@ function HomePage() {
           </div>
         </>
       )}
+
       {/* Dashboard */}
-      <div className=" ml-3 mt-5 mb-5 grow">
-        {
+      <div className="w-full min-w-0">
+        <div className="flex items-center justify-between mb-6">
+          <div>
+            <p className="text-sm text-neutral-500 dark:text-neutral-400">Welcome back,</p>
+            <h1 className="font-bold text-2xl flex items-center gap-1.5">
+              {getGreeting()},{" "}
+              <span className="text-brand">
+                {camelCaseToTitle(user?.first_name ?? "")}!
+              </span>
+            </h1>
+          </div>
           <LuPanelRightOpen
             size={20}
             onClick={showMenu2}
             title="Open right sidebar"
-            className="absolute top-3 right-2 hidden sm:block cursor-pointer"
+            className="hidden sm:block cursor-pointer text-neutral-500 hover:text-neutral-800 dark:hover:text-white"
           />
-        }
-        <p className="font-bold text-2xl">
-          Good morning,{" "}
-          <span className="text-brand">
-            {camelCaseToTitle(user?.first_name ?? "")}!
-          </span>
-        </p>
-        <p className="text-sm text-brand2">
-          Checkout real-time analytics and insights
-        </p>
+        </div>
 
-        {/* Period selector */}
-        <div className="flex items-center border rounded-xl border-neutral-200 dark:border-neutral-800 font-medium text-xs text-brand2 p-1 mt-2 gap-1">
-          {PERIOD_OPTIONS.map((opt) => (
-            <button
-              key={opt.value}
-              onClick={() => setPeriod(opt.value)}
-              className={`flex-1 text-center p-1 pl-4 pr-4 rounded-lg cursor-pointer transition-colors ${
-                period === opt.value ? "bg-brand text-white" : "hover:bg-gray-100 dark:hover:bg-neutral-800"
-              }`}
-            >
-              {opt.label}
-            </button>
-          ))}
-          {/* Branch filter still uses the old Filter only for ticket query */}
+        {/* Period selector & branch filter */}
+        <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 mb-6">
+          <div className="flex items-center border border-gray-200 dark:border-neutral-800 rounded-xl p-1 bg-white dark:bg-neutral-900 font-medium text-xs text-brand2 gap-1 flex-wrap w-full sm:w-auto">
+            {PERIOD_OPTIONS.map((opt) => (
+              <button
+                key={opt.value}
+                onClick={() => setPeriod(opt.value)}
+                className={`px-4 py-1.5 rounded-lg cursor-pointer transition-colors ${
+                  period === opt.value
+                    ? "bg-brand text-white"
+                    : "text-neutral-500 hover:bg-gray-100 dark:hover:bg-neutral-800 hover:text-neutral-900 dark:hover:text-white"
+                }`}
+              >
+                {opt.label}
+              </button>
+            ))}
+          </div>
+
           {company?.branches && user?.roles[0] === "admin" && (
-            <Filter
-              userRole={user?.roles[0] as Role}
-              branches={company?.branches}
-              onSelectFilter={(filter) => {
-                setTicketQuery({
-                  ...ticketQuery,
-                  startDate: filter.startDate,
-                  endDate: filter.endDate,
-                  branch: filter.branch,
-                });
-              }}
-            />
+            <div className="w-full sm:w-auto">
+              <Filter
+                userRole={user?.roles[0] as Role}
+                branches={company?.branches}
+                onSelectFilter={(filter) => {
+                  setTicketQuery({
+                    ...ticketQuery,
+                    startDate: filter.startDate,
+                    endDate: filter.endDate,
+                    branch: filter.branch,
+                  });
+                }}
+              />
+            </div>
           )}
         </div>
 
-        <div className="flex items-baseline justify-between gap-1">
+        {/* Insight Cards Grid */}
+        <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 mb-6">
           <InsightCard
             loading={userLoad || analyticsLoad}
             metric={overview?.summary.sold_tickets.value ?? 0}
@@ -165,7 +207,7 @@ function HomePage() {
             effect={() => navigate("/ticketing/history")}
             variation={{
               type: (overview?.summary.sold_tickets.delta_pct ?? 0) >= 0 ? "up" : "down",
-              value: Math.abs(overview?.summary.sold_tickets.delta_pct ?? 12),
+              value: Math.abs(overview?.summary.sold_tickets.delta_pct ?? 0),
             }}
           />
           <InsightCard
@@ -176,87 +218,97 @@ function HomePage() {
             title="Total Revenue"
             variation={{
               type: (overview?.summary.revenue.delta_pct ?? 0) >= 0 ? "up" : "down",
-              value: Math.abs(overview?.summary.revenue.delta_pct ?? 2),
+              value: Math.abs(overview?.summary.revenue.delta_pct ?? 0),
             }}
             options={["money"]}
           />
           <InsightCard
             loading={analyticsLoad}
-            metric={overview?.summary.capacity.total_seats ?? 845}
+            metric={overview?.summary.capacity.total_seats ?? 0}
             Icon={BsTicket}
             title="Total Tickets"
-            subtitle={`${overview?.summary.capacity.available ?? 500} available`}
+            subtitle={`${overview?.summary.capacity.available ?? 0} available`}
             action="- Sell ticket"
-            effect={() => navigate("/ticketing")}
+            effect={() => navigate("/trips")}
             variation={{
               type: (overview?.summary.capacity.delta_pct ?? 0) >= 0 ? "up" : "down",
-              value: Math.abs(overview?.summary.capacity.delta_pct ?? 8),
+              value: Math.abs(overview?.summary.capacity.delta_pct ?? 0),
             }}
           />
         </div>
-        <h2 className="font-semibold text-brand2 text-sm mt-5 mb-5">
-          Revenue Breakdown Per Route
-        </h2>
-        <div className="border-1 border-neutral-200 dark:border-neutral-800 rounded-xl flex max-w-2xl mx-auto  justify-between p-3">
-          <DonutChart values={revAnalytics ?? []} currency="RWF" />
-          <TableOne data={revAnalytics ?? []} />
+
+        {/* Main layout charts and tables */}
+        <div className="bg-white dark:bg-neutral-950/90 border border-neutral-200 dark:border-neutral-800 rounded-xl p-6 mb-6">
+          <h2 className="font-bold text-sm text-neutral-900 dark:text-white mb-4">
+            Revenue Breakdown Per Route
+          </h2>
+          <div className="flex flex-col md:flex-row items-center justify-between gap-6">
+            <div className="w-full md:w-1/2 flex justify-center">
+              <DonutChart values={revAnalytics ?? []} currency="RWF" />
+            </div>
+            <div className="w-full md:w-1/2">
+              <TableOne data={revAnalytics ?? []} />
+            </div>
+          </div>
         </div>
-        <h2 className="font-semibold text-brand2 text-sm mt-5 mb-5">
-          Pending and Completed transactions
-        </h2>
-        <div className="border-1 border-neutral-200 dark:border-neutral-800 rounded-xl flex justify-between p-3">
+
+        <div className="bg-white dark:bg-neutral-950/90 border border-neutral-200 dark:border-neutral-800 rounded-xl p-6">
+          <h2 className="font-bold text-sm text-neutral-900 dark:text-white mb-4">
+            Pending and Completed Transactions
+          </h2>
           <TableTwo tableData={tickets?.tickets ?? []} />
         </div>
       </div>
-      {/* Widgets */}
-      {show2 && <div
-        className={`justify-self-end ${
-          show2 ? "w-0" : "hidden sm:block"
-        }  w-sm`}
-      >
-        <div className=" justify-self-end fixed right-0 top-0  min-w-sm w-full h-full mb-5 overflow-y-auto max-w-sm  p-3 shadow-lg rounded-r-md shadow-black/15 dark:shadow-white/15 bg-white dark:bg-black dark:border-l xl:border-none border-l-neutral-800">
-          {show2 && (
-            <AiOutlineClose
-              onClick={hideMenu2}
-              title="Close right sidebar"
-              className="absolute right-2 sm:hidden cursor-pointer"
-            />
-          )}
-          {
-            <LuPanelRightClose
-              size={20}
-              onClick={hideMenu2}
-              title="Close right sidebar"
-              className="absolute right-2 hidden sm:block cursor-pointer"
-            />
-          }
-          {/* Top destinations */}
-          <h2 className="font-semibold text-brand2 text-sm mt-5 mb-5">
-            Top destinations
-          </h2>
-          <div className="border-1 border-neutral-200 dark:border-neutral-800 rounded-xl p-3 space-y-2 h-fit">
-            {(popularRoutes ?? [])?.slice(0, 5).map(({ routeName, rank }, i) => (
-              <div
-                key={i}
-                onMouseEnter={() => setDest(i)}
-                onMouseLeave={() => setDest(null)}
-                className="flex items-center h-10 space-x-4 p-3 hover:bg-neutral-100 dark:hover:bg-neutral-900 cursor-pointer rounded-lg w-full text-xs "
-              >
-                {dest === i ? (
-                  <p className="font-bold text-brand text-sm">{rank}</p>
+
+      {/* Widgets Sidebar */}
+      {show2 && (
+        <div className="print-hide w-80 shrink-0">
+          <div className="fixed right-0 top-0 w-80 h-full overflow-y-auto p-6 shadow-2xl bg-white dark:bg-neutral-900 border-l border-neutral-200 dark:border-neutral-800 z-50">
+            <div className="flex justify-between items-center mb-6">
+              <h2 className="font-bold text-lg text-neutral-900 dark:text-white">Quick Insights</h2>
+              <button onClick={hideMenu2} className="p-2 hover:bg-gray-100 dark:hover:bg-neutral-800 rounded-lg transition-colors">
+                <AiOutlineClose size={18} className="text-neutral-500" />
+              </button>
+            </div>
+
+            {/* Top destinations */}
+            <div className="bg-white dark:bg-neutral-950/60 rounded-xl border border-neutral-200 dark:border-neutral-800 p-4 mb-6">
+              <h3 className="font-bold text-xs text-neutral-400 uppercase tracking-wider mb-4">
+                Top Destinations
+              </h3>
+              <div className="space-y-2">
+                {popularRoutes.length === 0 ? (
+                  <p className="text-xs text-neutral-500 italic text-center py-4">No data available</p>
                 ) : (
-                  <MdRoute className="text-brand size-4" />
+                  popularRoutes.slice(0, 5).map(({ routeName, rank }, i) => (
+                    <div
+                      key={i}
+                      onMouseEnter={() => setDest(i)}
+                      onMouseLeave={() => setDest(null)}
+                      className="flex items-center h-10 space-x-3 px-3 hover:bg-neutral-50 dark:hover:bg-neutral-800/80 cursor-pointer rounded-lg w-full text-xs transition-colors"
+                    >
+                      {dest === i ? (
+                        <p className="font-bold text-brand text-sm">{rank}</p>
+                      ) : (
+                        <MdRoute className="text-brand size-4 shrink-0" />
+                      )}
+                      <p className="text-neutral-700 dark:text-neutral-300 font-medium truncate">{routeName}</p>
+                    </div>
+                  ))
                 )}
-                <p className="text-brand2">{routeName}</p>
               </div>
-            ))}
+            </div>
+
+            {/* Peak Times */}
+            <div className="bg-white dark:bg-neutral-950/60 rounded-xl border border-neutral-200 dark:border-neutral-800 p-4">
+              <h3 className="font-bold text-xs text-neutral-400 uppercase tracking-wider mb-4">
+                Peak Times
+              </h3>
+              {peakTimes && <PeakTrafficChart peakTimes={peakTimes} />}
+            </div>
           </div>
-          <h2 className="font-semibold text-brand2 text-sm mt-5 mb-5">
-            Peak Times
-          </h2>
-          {peakTimes && <PeakTrafficChart peakTimes={peakTimes} />}
         </div>
-      </div>}
+      )}
     </div>
   );
 }

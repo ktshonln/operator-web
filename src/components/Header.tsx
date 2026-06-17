@@ -10,7 +10,7 @@ const Header = () => {
     showMenu,
   } = useMenuStore();
   return (
-    <div className={`dark:text-white flex justify-between sm:hidden p-5 pb-0`}>
+    <div className={`print-hide dark:text-white flex justify-between sm:hidden p-5 pb-0`}>
       {!show && (
         <CgMenuLeft size={20} onClick={showMenu} className="cursor-pointer" />
       )}

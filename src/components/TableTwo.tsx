@@ -1,60 +1,92 @@
 import { useNavigate } from "react-router-dom";
-import { camelCaseToTitle, toTitleCase } from "../utils/helpers";
-import { Ticket } from "../hooks/useTicket";
 import { format, isValid } from "date-fns";
 
-/* interface TableProps<T> {
-  data: T[];
-  keyExtractor?:(item: T, index: number)=>string | number;
-} */
-
-
 interface Props {
-  tableData: Ticket[];
-  click?: boolean
+  tableData: any[];
+  click?: boolean;
 }
 
 const TableTwo = ({ tableData, click }: Props) => {
-  // Get keys from the first object
-  const tableHeaders = ['ticketId', 'passengerName', 'route', 'paymentStatus', 'date']
-  console.log(tableHeaders);
-  const navigate = useNavigate()
+  const tableHeaders = ["Ticket ID", "Passenger", "Route", "Status", "Date"];
+  const navigate = useNavigate();
 
   return (
-    <div className=" max-h-36 w-full overflow-x-hidden">
-      <table className="text-xs gap-x-2 w-full">
-        <tr className="gap-2">
-          {tableHeaders.map((header) => (// if some unnecessary headers are present, we can filter them out, e.g: with [includes]
-            <th className="bg-gray-100 dark:bg-neutral-900 text-[10px]  text-start p-1 pb-4 pr-3 pl-3">
-              {camelCaseToTitle(header).toLocaleUpperCase()}
-            </th>
-          ))}
-        </tr>
-        {tableData.map(
-          ({ ticketId, passenger, origin, destination, status, departureTime }) => (
-            <tr onClick={()=>{click && navigate(`/ticketing/${ticketId}`)}} className={`odd:bg-gray-100 dark:odd:bg-neutral-900 text-neutral-600 hover:bg-gray-200 dark:hover:bg-neutral-800 ${click && 'cursor-pointer'}`}>
-              <td className="p-3">{ticketId}</td>
-              <td className="p-3">{(passenger?.firstName ?? '') + " " + (passenger?.lastName ?? '')}</td>
-              <td className="p-3">
-                {origin} - {destination}
-              </td>
-              <td
-                className={`p-3 
+    <div className="w-full overflow-x-auto scrollbar-thin">
+      <table className="text-xs w-full border-collapse">
+        <thead>
+          <tr className="border-b border-neutral-200 dark:border-neutral-800">
+            {tableHeaders.map((header) => (
+              <th
+                key={header}
+                className="text-start p-3 pb-4 font-semibold text-neutral-500 dark:text-neutral-400 uppercase tracking-wider text-[10px]"
+              >
+                {header}
+              </th>
+            ))}
+          </tr>
+        </thead>
+        <tbody>
+          {tableData.map((t, i) => {
+            const ticketId = t.ticketId ?? t.id ?? `tkt_${i}`;
+            const passengerName =
+              (t.passenger_name ??
+                (t.passenger
+                  ? `${t.passenger.firstName ?? ""} ${t.passenger.lastName ?? ""}`.trim()
+                  : "")) ||
+              "—";
+
+            let route = "—";
+            if (t.boarding_stop?.name && t.alighting_stop?.name) {
+              route = `${t.boarding_stop.name} → ${t.alighting_stop.name}`;
+            } else if (t.origin && t.destination) {
+              route = `${t.origin} → ${t.destination}`;
+            }
+
+            const status = t.status ?? "unknown";
+
+            const rawDate = t.confirmed_at ?? t.departureTime ?? t.purchaseTime;
+            const dateStr =
+              rawDate && isValid(new Date(rawDate))
+                ? format(new Date(rawDate), "dd/MM/yyyy HH:mm")
+                : rawDate || "—";
+
+            return (
+              <tr
+                key={ticketId + i}
+                onClick={() => {
+                  if (click) navigate(`/ticketing/${ticketId}`);
+                }}
+                className={`border-b border-gray-100 dark:border-neutral-800/60 text-neutral-600 dark:text-neutral-300 hover:bg-gray-50/50 dark:hover:bg-neutral-900/30 transition-colors ${
+                  click ? "cursor-pointer" : ""
                 }`}
               >
-                <span className={`p-1 pl-6 pr-6 rounded-full text-[10px] text-center ${
-                  camelCaseToTitle(status,true) === "paid"
-                    ? "text-green-500 bg-[#23F43C]/15"
-                    : "text-brand bg-brand/15"
-                }`}>
-
-                {toTitleCase(status)}
-                </span>
-              </td>
-              <td className="p-3">{isValid(new Date(departureTime)) ? format(new Date(departureTime), "PPpp"): 'Invalid date'}</td>
-            </tr>
-          )
-        )}
+                <td className="p-3 font-medium text-neutral-900 dark:text-white">
+                  {ticketId}
+                </td>
+                <td className="p-3">{passengerName}</td>
+                <td className="p-3">{route}</td>
+                <td className="p-3">
+                  <span
+                    className={`px-2.5 py-1 rounded-full text-[10px] font-semibold uppercase tracking-wider ${
+                      status.toLowerCase() === "confirmed" ||
+                      status.toLowerCase() === "paid" ||
+                      status.toLowerCase() === "completed"
+                        ? "text-green-700 bg-green-100 dark:bg-green-900/20 dark:text-green-400"
+                        : status.toLowerCase() === "pending" ||
+                          status.toLowerCase() === "payment_pending" ||
+                          status.toLowerCase() === "initiated"
+                        ? "text-yellow-700 bg-yellow-100 dark:bg-yellow-900/20 dark:text-yellow-400"
+                        : "text-red-700 bg-red-100 dark:bg-red-900/20 dark:text-red-400"
+                    }`}
+                  >
+                    {status}
+                  </span>
+                </td>
+                <td className="p-3">{dateStr}</td>
+              </tr>
+            );
+          })}
+        </tbody>
       </table>
     </div>
   );

@@ -311,3 +311,26 @@
   border-left: 3px solid rgba(255,255,255,0.3) !important;
 }
 
+/* ─── Print layout overrides ────────────────────────────────────────────── */
+@media print {
+  .print-hide {
+    display: none !important;
+  }
+
+  body, main {
+    background: white !important;
+    color: black !important;
+    width: 100% !important;
+    max-width: 100% !important;
+    margin: 0 !important;
+    padding: 0 !important;
+  }
+
+  /* Force display of background colors */
+  * {
+    -webkit-print-color-adjust: exact !important;
+    print-color-adjust: exact !important;
+  }
+}
+
+

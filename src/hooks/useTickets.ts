@@ -28,8 +28,8 @@ const useTickets = (ticketQuery: TicketQuery) =>
       apiClient.getAll({
         params: {
           branchId: ticketQuery.branch,
-          startDate: ticketQuery.startDate,
-          endDate: ticketQuery.endDate,
+          from: ticketQuery.startDate ? `${ticketQuery.startDate}T00:00:00Z` : undefined,
+          to: ticketQuery.endDate ? `${ticketQuery.endDate}T23:59:59Z` : undefined,
           passengerId: ticketQuery.passengerId,
           agentId: ticketQuery.agentId,
           status: ticketQuery.status,

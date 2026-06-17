@@ -43,7 +43,7 @@ const Sidebar = () => {
   const { show, hideMenu } = useMenuStore();
 
   return (
-    <div className={`relative min-w-20 md:min-w-56 ${show ? "w-0" : "hidden"} sm:block`}>
+    <div className={`print-hide relative min-w-20 md:min-w-56 ${show ? "w-0" : "hidden"} sm:block`}>
       {show && (
         <div
           onClick={hideMenu}
