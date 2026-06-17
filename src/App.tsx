@@ -73,11 +73,7 @@ function App() {
           <Route path="/" element={<Layout />}>
             <Route
               path="home"
-              element={
-                <AuthGuard action="read" subject="Home">
-                  <HomePage />
-                </AuthGuard>
-              }
+              element={<HomePage />}
             />
             <Route
               path="ticketing"
@@ -156,7 +152,7 @@ function App() {
               <Route
                 path="drivers"
                 element={
-                  <AuthGuard action="read" subject="Driver">
+                  <AuthGuard action="read" subject="User">
                     <Drivers />
                   </AuthGuard>
                 }
@@ -164,7 +160,7 @@ function App() {
               <Route
                 path="drivers/:driverId"
                 element={
-                  <AuthGuard action="read" subject="Driver">
+                  <AuthGuard action="read" subject="User">
                     <DriverDetails />
                   </AuthGuard>
                 }

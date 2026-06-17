@@ -20,7 +20,7 @@ interface TicketResponse {
   limit: number;
 }
 
-const useTickets = (ticketQuery: TicketQuery) =>
+const useTickets = (ticketQuery: TicketQuery, enabled: boolean = true) =>
   useQuery<TicketResponse, Error>({
     queryKey: ["tickets", ticketQuery],
     queryFn: () =>
@@ -31,6 +31,7 @@ const useTickets = (ticketQuery: TicketQuery) =>
           status: ticketQuery.status,
         },
       }),
+    enabled,
   });
 
 export default useTickets;
