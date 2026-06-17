@@ -152,12 +152,14 @@ function HomePage() {
               </span>
             </h1>
           </div>
-          <LuPanelRightOpen
-            size={20}
-            onClick={showMenu2}
-            title="Open right sidebar"
-            className="hidden sm:block cursor-pointer text-neutral-500 hover:text-neutral-800 dark:hover:text-white"
-          />
+          {!show2 && (
+            <LuPanelRightOpen
+              size={20}
+              onClick={showMenu2}
+              title="Open right sidebar"
+              className="hidden sm:block cursor-pointer text-neutral-500 hover:text-neutral-800 dark:hover:text-white"
+            />
+          )}
         </div>
 
         {/* Period selector & branch filter */}
@@ -260,52 +262,58 @@ function HomePage() {
         </div>
       </div>
 
+      {/* Widgets Sidebar Backdrop */}
+      {show2 && (
+        <div
+          onClick={hideMenu2}
+          className="print-hide bg-black/40 dark:bg-black/60 fixed inset-0 z-40 transition-opacity"
+        />
+      )}
+
       {/* Widgets Sidebar */}
       {show2 && (
-        <div className="print-hide w-80 shrink-0">
-          <div className="fixed right-0 top-0 w-80 h-full overflow-y-auto p-6 shadow-2xl bg-white dark:bg-neutral-900 border-l border-neutral-200 dark:border-neutral-800 z-50">
-            <div className="flex justify-between items-center mb-6">
-              <h2 className="font-bold text-lg text-neutral-900 dark:text-white">Quick Insights</h2>
-              <button onClick={hideMenu2} className="p-2 hover:bg-gray-100 dark:hover:bg-neutral-800 rounded-lg transition-colors">
-                <AiOutlineClose size={18} className="text-neutral-500" />
-              </button>
-            </div>
+        <div className="print-hide fixed right-0 top-0 w-80 h-full overflow-y-auto p-6 shadow-2xl bg-white dark:bg-neutral-900 border-l border-neutral-200 dark:border-neutral-800 z-50">
+          <div className="flex justify-between items-center mb-6">
+            <h2 className="font-bold text-lg text-neutral-900 dark:text-white">Quick Insights</h2>
+            <button onClick={hideMenu2} className="p-2 hover:bg-gray-100 dark:hover:bg-neutral-800 rounded-lg transition-colors">
+              <AiOutlineClose size={18} className="text-neutral-500" />
+            </button>
+          </div>
 
-            {/* Top destinations */}
-            <div className="bg-white dark:bg-neutral-950/60 rounded-xl border border-neutral-200 dark:border-neutral-800 p-4 mb-6">
-              <h3 className="font-bold text-xs text-neutral-400 uppercase tracking-wider mb-4">
-                Top Destinations
-              </h3>
-              <div className="space-y-2">
-                {popularRoutes.length === 0 ? (
-                  <p className="text-xs text-neutral-500 italic text-center py-4">No data available</p>
-                ) : (
-                  popularRoutes.slice(0, 5).map(({ routeName, rank }, i) => (
-                    <div
-                      key={i}
-                      onMouseEnter={() => setDest(i)}
-                      onMouseLeave={() => setDest(null)}
-                      className="flex items-center h-10 space-x-3 px-3 hover:bg-neutral-50 dark:hover:bg-neutral-800/80 cursor-pointer rounded-lg w-full text-xs transition-colors"
-                    >
-                      {dest === i ? (
-                        <p className="font-bold text-brand text-sm">{rank}</p>
-                      ) : (
-                        <MdRoute className="text-brand size-4 shrink-0" />
-                      )}
-                      <p className="text-neutral-700 dark:text-neutral-300 font-medium truncate">{routeName}</p>
-                    </div>
-                  ))
-                )}
-              </div>
+          {/* Top destinations */}
+          <div className="bg-white dark:bg-neutral-950/60 rounded-xl border border-neutral-200 dark:border-neutral-800 p-4 mb-6">
+            <h3 className="font-bold text-xs text-neutral-400 uppercase tracking-wider mb-4">
+              Top Destinations
+            </h3>
+            <div className="space-y-2">
+              {popularRoutes.length === 0 ? (
+                <p className="text-xs text-neutral-500 italic text-center py-4">No data available</p>
+              ) : (
+                popularRoutes.slice(0, 5).map(({ routeName, rank }, i) => (
+                  <div
+                    key={i}
+                    onMouseEnter={() => setDest(i)}
+                    onMouseLeave={() => setDest(null)}
+                    className="flex items-center h-10 space-x-3 px-3 hover:bg-neutral-50 dark:hover:bg-neutral-800/80 cursor-pointer rounded-lg w-full text-xs transition-colors"
+                  >
+                    {dest === i ? (
+                      <p className="font-bold text-brand text-sm">{rank}</p>
+                    ) : (
+                      <MdRoute className="text-brand size-4 shrink-0" />
+                    )}
+                    <p className="text-neutral-700 dark:text-neutral-300 font-medium truncate">{routeName}</p>
+                  </div>
+                ))
+              )}
             </div>
+          </div>
 
-            {/* Peak Times */}
-            <div className="bg-white dark:bg-neutral-950/60 rounded-xl border border-neutral-200 dark:border-neutral-800 p-4">
-              <h3 className="font-bold text-xs text-neutral-400 uppercase tracking-wider mb-4">
-                Peak Times
-              </h3>
-              {peakTimes && <PeakTrafficChart peakTimes={peakTimes} />}
-            </div>
+          {/* Peak Times */}
+          <div className="bg-white dark:bg-neutral-950/60 rounded-xl border border-neutral-200 dark:border-neutral-800 p-4">
+            <h3 className="font-bold text-xs text-neutral-400 uppercase tracking-wider mb-4">
+              Peak Times
+            </h3>
+            {peakTimes && <PeakTrafficChart peakTimes={peakTimes} />}
           </div>
         </div>
       )}

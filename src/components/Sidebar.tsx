@@ -85,6 +85,7 @@ const Sidebar = () => {
                 label={page.label}
                 subLinks={page.subLinks}
                 activePrefix={page.activePrefix}
+                onItemClick={hideMenu}
               />
             </Can>
           ))}

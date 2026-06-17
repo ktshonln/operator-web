@@ -9,9 +9,10 @@ interface Props {
   subLinks?: string[];
   show: boolean;
   activePrefix?: string; // optional override for active detection
+  onItemClick?: () => void;
 }
 
-const SidebarItem = ({ link, label, Icon, subLinks, show, activePrefix }: Props) => {
+const SidebarItem = ({ link, label, Icon, subLinks, show, activePrefix, onItemClick }: Props) => {
   const path = useLocation().pathname;
   const [hoveredIndex, setHoveredIndex] = useState<number | null>(null);
 
@@ -22,6 +23,7 @@ const SidebarItem = ({ link, label, Icon, subLinks, show, activePrefix }: Props)
     <div>
       <Link
         to={subLinks ? link + subLinks[0] : link}
+        onClick={onItemClick}
         className={`flex items-center justify-items-start p-1.5 gap-3 text-brand ${
           isActive ? "bg-brand text-white" : ""
         } hover:bg-brand hover:text-white mb-2 ${show ? "w-full" : "w-fit"} md:w-full rounded-sm`}
@@ -40,6 +42,7 @@ const SidebarItem = ({ link, label, Icon, subLinks, show, activePrefix }: Props)
               )}
               <Link
                 to={link + sub}
+                onClick={onItemClick}
                 onMouseEnter={() => setHoveredIndex(i)}
                 onMouseLeave={() => setHoveredIndex(null)}
                 className={`ml-1 hover:text-brand ${path.includes(sub) && "text-brand"}`}
