@@ -2,9 +2,6 @@ import { useQuery } from "@tanstack/react-query";
 import APIClient from "../services/apiClient";
 import { Ticket } from "./useTicket";
 
-
-const apiClient = new APIClient<TicketResponse>("/tickets");
-
 export interface TicketQuery {
   startDate?: string;
   endDate?: string;
@@ -12,13 +9,15 @@ export interface TicketQuery {
   status?: string;
 }
 
-
-interface TicketResponse {
-  data: Ticket[];
-  total: number;
-  page: number;
-  limit: number;
+export interface TicketResponse {
+  data?: Ticket[];
+  tickets?: Ticket[];
+  total?: number;
+  page?: number;
+  limit?: number;
 }
+
+const apiClient = new APIClient<TicketResponse>("/tickets");
 
 const useTickets = (ticketQuery: TicketQuery, enabled: boolean = true) =>
   useQuery<TicketResponse, Error>({

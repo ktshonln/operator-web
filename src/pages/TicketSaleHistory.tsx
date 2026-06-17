@@ -60,7 +60,7 @@ function TicketSaleHistory() {
           </div>
         </div>
       </div>
-      <TableTwo tableData={(tickets?.data ?? []) as any[]} click/>
+      <TableTwo tableData={(tickets?.tickets ?? tickets?.data ?? []) as any[]} click/>
     </div>
   )
 }

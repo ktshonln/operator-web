@@ -79,7 +79,7 @@ function HomePage() {
     if (apiPopularRoutes && apiPopularRoutes.length > 0) {
       return apiPopularRoutes;
     }
-    const ticketsList = (tickets?.data ?? []) as any[];
+    const ticketsList = (tickets?.tickets ?? tickets?.data ?? []) as any[];
     const counts: Record<string, number> = {};
     ticketsList.forEach((ticket) => {
       let routeName = "";
@@ -284,7 +284,7 @@ function HomePage() {
           <h2 className="font-bold text-sm text-neutral-900 dark:text-white mb-4">
             Pending and Completed Transactions
           </h2>
-          <TableTwo tableData={(tickets?.data ?? []) as any[]} />
+          <TableTwo tableData={(tickets?.tickets ?? tickets?.data ?? []) as any[]} />
         </div>
       </div>
 
