@@ -25,10 +25,10 @@ const Sidebar = () => {
     icon: IconType;
     subLinks?: string[];
     activePrefix?: string;
-    action: string;
-    subject: string;
+    action?: string;
+    subject?: string;
   }[] = [
-    { link: "/home",            label: "Home",          icon: BiHomeAlt,         action: "read", subject: "all" },
+    { link: "/home",            label: "Home",          icon: BiHomeAlt },
     { link: "/organizations",   label: "Organizations", icon: BsBuilding,        action: "read", subject: "Organization" },
     { link: "/fleets",          label: "Fleets",        icon: RiBusFill,         subLinks: ["/buses", "/drivers"], action: "read", subject: "Bus" },
     { link: "/trips",           label: "Trips",         icon: BiTrip,            action: "read", subject: "Trip" },
@@ -76,8 +76,8 @@ const Sidebar = () => {
         <div
           className={`mt-8 flex-1 overflow-y-auto no-scrollbar mx-auto ${show ? "w-full" : "w-fit"} md:w-full`}
         >
-          {pages.map((page) => (
-            <Can key={page.link} I={page.action as any} a={page.subject as any}>
+          {pages.map((page) => {
+            const item = (
               <SidebarItem
                 show={show}
                 Icon={page.icon}
@@ -87,8 +87,15 @@ const Sidebar = () => {
                 activePrefix={page.activePrefix}
                 onItemClick={hideMenu}
               />
-            </Can>
-          ))}
+            );
+            return page.action && page.subject ? (
+              <Can key={page.link} I={page.action as any} a={page.subject as any}>
+                {item}
+              </Can>
+            ) : (
+              <div key={page.link}>{item}</div>
+            );
+          })}
         </div>
 
         {/* ── User + logout ── */}

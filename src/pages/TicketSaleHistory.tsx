@@ -1,7 +1,7 @@
 import { AiOutlineSearch } from "react-icons/ai"
 import { BiCalendarAlt } from "react-icons/bi"
-/* import TableTwo from "../components/TableTwo"
-import useTickets, { TicketQuery } from "../hooks/useTickets"; */
+import TableTwo from "../components/TableTwo"
+import useTickets, { TicketQuery } from "../hooks/useTickets";
 import CustomDatePicker from "../components/CustomDatePicker";
 import { useState } from "react";
 import { TripQuery } from "../hooks/useTrips";
@@ -10,8 +10,8 @@ import { format } from "date-fns";
 
 function TicketSaleHistory() {
   const [tripQuery, setTripQuery] = useState<TripQuery>({} as TripQuery);
-  // const [ticketQuery,] = useState<TicketQuery>({} as TicketQuery);
-  // const { data: tickets } = useTickets(ticketQuery);
+  const [ticketQuery,] = useState<TicketQuery>({} as TicketQuery);
+  const { data: tickets } = useTickets(ticketQuery);
   const [open, setOpen] = useState(false);
   const [val, setVal] = useState<Date | [Date, Date] | null>(null);
   const handleSelectDate = (val: Date | [Date, Date] | null) => {
@@ -60,7 +60,7 @@ function TicketSaleHistory() {
           </div>
         </div>
       </div>
-      {/* <TableTwo tableData={tickets?.tickets ?? []} click/> */}
+      <TableTwo tableData={(tickets?.data ?? []) as any[]} click/>
     </div>
   )
 }
