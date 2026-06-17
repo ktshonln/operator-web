@@ -69,6 +69,7 @@ export interface UpdateBusPayload {
   status?: "active" | "inactive";
   driver_id?: string | null;
   route_ids?: string[];
+  device_id?: string | null;
 }
 
 export interface BusListParams {

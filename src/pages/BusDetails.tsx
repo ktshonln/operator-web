@@ -213,6 +213,7 @@ function BusDetails() {
   const [type, setType] = useState("");
   const [capacity, setCapacity] = useState<number>(0);
   const [status, setStatus] = useState<"active" | "inactive">("active");
+  const [deviceId, setDeviceId] = useState("");
   const [inlineError, setInlineError] = useState("");
   const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
 
@@ -248,6 +249,7 @@ function BusDetails() {
       setType(bus.type);
       setCapacity(bus.capacity);
       setStatus(bus.status);
+      setDeviceId(bus.device_id || "");
     }
   }, [bus]);
 
@@ -256,7 +258,8 @@ function BusDetails() {
     (plate !== bus.plate ||
       type !== bus.type ||
       capacity !== bus.capacity ||
-      status !== bus.status);
+      status !== bus.status ||
+      deviceId !== (bus.device_id || ""));
 
   const handleSave = () => {
     if (!busId || !bus) return;
@@ -267,6 +270,7 @@ function BusDetails() {
     if (type !== bus.type) payload.type = type;
     if (capacity !== bus.capacity) payload.capacity = capacity;
     if (status !== bus.status) payload.status = status;
+    if (deviceId !== (bus.device_id || "")) payload.device_id = deviceId || null;
 
     updateBus.mutate(payload, {
       onError: (err: any) => {
@@ -424,6 +428,17 @@ function BusDetails() {
               onChange={(e) => setCapacity(Number(e.target.value))}
               disabled={!canUpdate}
               min={1}
+              className={inputClass}
+            />
+          </div>
+          <div>
+            <label className={labelClass}>Device ID (GPS Tracker)</label>
+            <input
+              type="text"
+              value={deviceId}
+              onChange={(e) => setDeviceId(e.target.value)}
+              disabled={!canUpdate}
+              placeholder="e.g. dev_9x2b..."
               className={inputClass}
             />
           </div>

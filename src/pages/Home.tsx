@@ -49,7 +49,7 @@ function HomePage() {
     popularRoutes: apiPopularRoutes,
     peakTimes,
     isLoading: analyticsLoad,
-  } = useAnalyticsOverview({ period, tz: "Africa/Kigali" }, !!user?.org_id);
+  } = useAnalyticsOverview({ period, tz: "Africa/Kigali" }, !!user);
 
   // Resolve active dates by merging selected period tabs with custom filter dates
   const resolvedTicketQuery = useMemo<TicketQuery>(() => {
@@ -79,7 +79,7 @@ function HomePage() {
     if (apiPopularRoutes && apiPopularRoutes.length > 0) {
       return apiPopularRoutes;
     }
-    const ticketsList = (tickets?.tickets ?? []) as any[];
+    const ticketsList = (tickets?.data ?? []) as any[];
     const counts: Record<string, number> = {};
     ticketsList.forEach((ticket) => {
       let routeName = "";
@@ -284,7 +284,7 @@ function HomePage() {
           <h2 className="font-bold text-sm text-neutral-900 dark:text-white mb-4">
             Pending and Completed Transactions
           </h2>
-          <TableTwo tableData={tickets?.tickets ?? []} />
+          <TableTwo tableData={(tickets?.data ?? []) as any[]} />
         </div>
       </div>
 

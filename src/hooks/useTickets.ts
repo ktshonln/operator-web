@@ -14,8 +14,10 @@ export interface TicketQuery {
 
 
 interface TicketResponse {
-  query: { tripId: string };
-  tickets: Ticket[];
+  data: Ticket[];
+  total: number;
+  page: number;
+  limit: number;
 }
 
 const useTickets = (ticketQuery: TicketQuery) =>
