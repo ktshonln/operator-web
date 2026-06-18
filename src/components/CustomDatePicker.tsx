@@ -229,7 +229,6 @@ function CustomDatePicker({
               const inMonth = isSameMonth(dt, currentDate);
               const isStart = startDate && isSameDay(dt, startDate);
               const isEnd = endDate && isSameDay(dt, endDate);
-              const isOnlyStart = isStart && !endDate;
               const inRange = startDate && endDate && dt > startDate && dt < endDate;
               const isToday = isSameDay(dt, new Date());
 
