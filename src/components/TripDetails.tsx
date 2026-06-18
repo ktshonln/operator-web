@@ -5,7 +5,7 @@ import { Zap, ChevronLeft, Info, Printer, X } from "lucide-react";
 import { BsExclamationTriangle } from "react-icons/bs";
 import { useQuery } from "@tanstack/react-query";
 import Can from "./Can";
-import { useUpdateTrip, useCancelTrip } from "../hooks/useFleetTrips";
+import { useUpdateTrip, useCancelTrip, useActivateTrip, useCompleteTrip } from "../hooks/useFleetTrips";
 import { useFleetBusesPaginated } from "../hooks/useFleetBus";
 import { buildCdnUrl, axiosInstance } from "../services/apiClient";
 import { useToastStore } from "../stores/toastStore";
@@ -818,6 +818,8 @@ function TripDetails() {
   // ── Mutations ─────────────────────────────────────────────────────────────
   const updateTrip = useUpdateTrip(tripId ?? "");
   const cancelTrip = useCancelTrip(tripId ?? "");
+  const activateTrip = useActivateTrip(tripId ?? "");
+  const completeTrip = useCompleteTrip(tripId ?? "");
 
   // ── Dialog state ──────────────────────────────────────────────────────────
   const [showSaveScope, setShowSaveScope] = useState(false);
@@ -1135,6 +1137,27 @@ function TripDetails() {
                 {updateTrip.isPending ? "Saving..." : "Save Changes"}
               </button>
             </div>
+          </Can>
+          {/* Action buttons */}
+          <Can I="update" a="Trip">
+            {trip.status === "scheduled" && (
+              <button
+                onClick={() => activateTrip.mutate()}
+                disabled={activateTrip.isPending}
+                className="w-full px-4 py-2.5 mb-4 text-sm font-medium bg-green-600 text-white rounded-lg hover:brightness-95 disabled:opacity-50 transition-colors"
+              >
+                {activateTrip.isPending ? "Activating..." : "Activate Trip"}
+              </button>
+            )}
+            {trip.status === "active" && (
+              <button
+                onClick={() => completeTrip.mutate()}
+                disabled={completeTrip.isPending}
+                className="w-full px-4 py-2.5 mb-4 text-sm font-medium bg-blue-600 text-white rounded-lg hover:brightness-95 disabled:opacity-50 transition-colors"
+              >
+                {completeTrip.isPending ? "Completing..." : "Complete Trip"}
+              </button>
+            )}
           </Can>
 
           {/* Delete button */}

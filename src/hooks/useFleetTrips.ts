@@ -167,3 +167,57 @@ export const useCancelTrip = (id: string) => {
     },
   });
 };
+
+// ─── POST /trips/:id/activate ─────────────────────────────────────────────────
+
+export const useActivateTrip = (id: string) => {
+  const queryClient = useQueryClient();
+  const showToast = useToastStore((s) => s.showToast);
+
+  return useMutation({
+    mutationFn: async () => {
+      const { data } = await axiosInstance.post(`/trips/${id}/activate`);
+      return data;
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["fleet-trips"] });
+      queryClient.invalidateQueries({ queryKey: ["trip-detail", id] });
+      showToast("Trip activated successfully", "success");
+    },
+    onError: (err: any) => {
+      const code = err?.response?.data?.error?.code;
+      const msg = err?.response?.data?.error?.message;
+      showToast(
+        friendlyError(code, msg, "Failed to activate trip"),
+        "error"
+      );
+    },
+  });
+};
+
+// ─── POST /trips/:id/complete ─────────────────────────────────────────────────
+
+export const useCompleteTrip = (id: string) => {
+  const queryClient = useQueryClient();
+  const showToast = useToastStore((s) => s.showToast);
+
+  return useMutation({
+    mutationFn: async () => {
+      const { data } = await axiosInstance.post(`/trips/${id}/complete`);
+      return data;
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["fleet-trips"] });
+      queryClient.invalidateQueries({ queryKey: ["trip-detail", id] });
+      showToast("Trip marked as completed", "success");
+    },
+    onError: (err: any) => {
+      const code = err?.response?.data?.error?.code;
+      const msg = err?.response?.data?.error?.message;
+      showToast(
+        friendlyError(code, msg, "Failed to complete trip"),
+        "error"
+      );
+    },
+  });
+};

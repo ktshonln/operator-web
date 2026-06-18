@@ -251,4 +251,12 @@ export const handlers = [
       return HttpResponse.json(trips, { status: 204 });
     }
   }),
+
+  http.post(`${baseUrl}/api/v1/trips/:id/activate`, ({ params }) => {
+    return HttpResponse.json({ message: "Trip activated successfully" }, { status: 200 });
+  }),
+
+  http.post(`${baseUrl}/api/v1/trips/:id/complete`, ({ params }) => {
+    return HttpResponse.json({ message: "Trip marked as completed" }, { status: 200 });
+  }),
 ];
