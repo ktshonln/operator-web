@@ -23,7 +23,7 @@ function TicketSaleHistory() {
   };
 
   return (
-    <div className="mt-5 m-5 ml-3 dark:text-white">
+    <div className="mt-5 m-5 ml-3 dark:text-white h-screen">
       {/* Search and Filters Section */}
       <div className="flex flex-col md:flex-row items-center justify-between gap-4 mb-6">
         <div className="w-full md:max-w-md">
@@ -52,7 +52,7 @@ function TicketSaleHistory() {
         <div className="p-4 border-b border-neutral-200 dark:border-neutral-800 flex justify-between items-center">
           <h2 className="font-semibold text-lg">Ticket Sale History</h2>
         </div>
-        
+
         {/* Table View */}
         {isLoading ? (
           <div className="p-8 text-center text-neutral-500">Loading tickets...</div>

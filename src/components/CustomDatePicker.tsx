@@ -60,17 +60,33 @@ function CustomDatePicker({
 
     if (isOpen && !prev) {
       setShouldRender(true);
-      gsap.fromTo(
-        containerRef.current,
-        { opacity: 0, y: 10, scale: 0.98 },
-        { opacity: 1, y: 0, scale: 1, duration: 0.3, ease: 'power2.out' }
-      );
+      
+      requestAnimationFrame(() => {
+        if (!containerRef.current) return;
+        
+        // Reset transform to measure accurately
+        containerRef.current.style.transform = 'none';
+        const rect = containerRef.current.getBoundingClientRect();
+        
+        let targetY = 0;
+        const padding = 20;
+        if (rect.bottom > window.innerHeight - padding) {
+          targetY = -(rect.bottom - window.innerHeight + padding);
+        }
+
+        gsap.fromTo(
+          containerRef.current,
+          { opacity: 0, y: targetY + 10, scale: 0.98 },
+          { opacity: 1, y: targetY, scale: 1, duration: 0.3, ease: 'power2.out' }
+        );
+      });
     }
 
     if (!isOpen && prev) {
+      const currentY = (gsap.getProperty(containerRef.current, "y") as number) || 0;
       gsap.to(containerRef.current, {
         opacity: 0,
-        y: 5,
+        y: currentY + 5,
         scale: 0.98,
         duration: 0.2,
         ease: 'power2.in',
@@ -83,19 +99,19 @@ function CustomDatePicker({
     const clamped = Math.min(Math.max(val, 0), type === 'hours' ? 23 : 59);
     const nxt = { ...time, [type]: clamped };
     setTime(nxt);
-  
+
     if (effectiveMode === 'time') {
       const d = new Date();
       d.setHours(nxt.hours, nxt.minutes);
       onChange(d);
     }
-  
+
     if (withTime && startDate) {
       const updated = new Date(startDate);
       updated.setHours(nxt.hours, nxt.minutes);
       setStartDate(updated);
     }
-  
+
     if (withTime && endDate) {
       const updated = new Date(endDate);
       updated.setHours(nxt.hours, nxt.minutes);
@@ -174,16 +190,16 @@ function CustomDatePicker({
       <div className="flex items-center justify-between mb-4">
         {mode === 'mixed' ? (
           <div className="flex bg-neutral-100 dark:bg-neutral-800 p-1 rounded-lg">
-            <button 
-              type='button' 
-              className={`text-xs font-medium px-4 py-1.5 rounded-md transition-colors ${mixedTab === 'single' ? 'bg-white dark:bg-neutral-700 shadow-sm text-brand' : 'text-neutral-500 hover:text-neutral-700 dark:hover:text-neutral-300'}`} 
+            <button
+              type='button'
+              className={`text-xs font-medium px-4 py-1.5 rounded-md transition-colors ${mixedTab === 'single' ? 'bg-white dark:bg-neutral-700 shadow-sm text-brand' : 'text-neutral-500 hover:text-neutral-700 dark:hover:text-neutral-300'}`}
               onClick={() => setMixedTab('single')}
             >
               Single
             </button>
-            <button 
-              type='button' 
-              className={`text-xs font-medium px-4 py-1.5 rounded-md transition-colors ${mixedTab === 'range' ? 'bg-white dark:bg-neutral-700 shadow-sm text-brand' : 'text-neutral-500 hover:text-neutral-700 dark:hover:text-neutral-300'}`} 
+            <button
+              type='button'
+              className={`text-xs font-medium px-4 py-1.5 rounded-md transition-colors ${mixedTab === 'range' ? 'bg-white dark:bg-neutral-700 shadow-sm text-brand' : 'text-neutral-500 hover:text-neutral-700 dark:hover:text-neutral-300'}`}
               onClick={() => setMixedTab('range')}
             >
               Range
@@ -241,7 +257,7 @@ function CustomDatePicker({
               }
 
               let btnClass = "w-8 h-8 flex items-center justify-center rounded-full text-[13px] font-medium transition-all focus:outline-none ";
-              
+
               if (isStart || isEnd) {
                 btnClass += "bg-brand text-white shadow-md z-10 ";
               } else if (!inMonth) {
