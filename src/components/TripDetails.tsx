@@ -316,7 +316,7 @@ function TicketDrawer({ ticket, tripDepartureAt, onClose }: TicketDrawerProps) {
     { label: "To", value: ticket.alighting_stop.name },
     { label: "Departure", value: format(new Date(tripDepartureAt), "MMM d, yyyy · HH:mm") },
     { label: "Seats", value: ticket.seats_count },
-    { label: "Amount", value: `${ticket.currency} ${ticket.amount.toLocaleString()}` },
+    { label: "Amount", value: `${ticket.currency ?? "RWF"} ${(ticket.amount ?? 0).toLocaleString()}` },
     { label: "Payment", value: <PaymentBadge method={ticket.payment_method} /> },
     { label: "Created by", value: <CreatedByBadge by={ticket.created_by} /> },
     { label: "Status", value: <TicketStatusBadge status={ticket.status} /> },
@@ -559,8 +559,8 @@ function CreateTicketPopup({ tripId, stops, remainingSeats, onClose, onCreated }
             boarding_stop: boardingStop ?? { id: boardingStopId, name: "Unknown" },
             alighting_stop: alightingStop ?? { id: alightingStopId, name: "Unknown" },
             seats_count: res.seats_count,
-            amount: res.amount,
-            currency: res.currency,
+            amount: res.amount ?? 0,
+            currency: res.currency ?? "RWF",
             payment_method: res.payment_method,
             status: "confirmed",
             created_by: "staff",
@@ -1249,7 +1249,7 @@ function TripDetails() {
                         <td className="py-3 pr-3 whitespace-nowrap">{ticket.boarding_stop.name}</td>
                         <td className="py-3 pr-3 whitespace-nowrap">{ticket.alighting_stop.name}</td>
                         <td className="py-3 pr-3 text-center">{ticket.seats_count}</td>
-                        <td className="py-3 pr-3 whitespace-nowrap font-medium">{ticket.currency} {ticket.amount.toLocaleString()}</td>
+                        <td className="py-3 pr-3 whitespace-nowrap font-medium">{ticket.currency ?? "RWF"} {(ticket.amount ?? 0).toLocaleString()}</td>
                         <td className="py-3 pr-3"><PaymentBadge method={ticket.payment_method} /></td>
                         <td className="py-3 pr-3"><CreatedByBadge by={ticket.created_by} /></td>
                         <td className="py-3 pr-3"><TicketStatusBadge status={ticket.status} /></td>

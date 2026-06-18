@@ -244,7 +244,19 @@ export const handlers = [
   }),
 
   // ── POST /tickets — legacy create ────────────────────────────────────────────
-  http.post(`${baseUrl}/tickets`, () => {
-    return HttpResponse.json({ ticketId: "tkt_91382" }, { status: 201 });
+  http.post(`${baseUrl}/tickets`, async ({ request }) => {
+    const payload = await request.json() as any;
+    return HttpResponse.json({
+      id: "tkt_" + Math.floor(Math.random() * 100000),
+      status: "confirmed",
+      passenger_name: payload.passenger_name || "Jane Doe",
+      phone: payload.phone || "+250780000000",
+      seats_count: payload.seats_count || 1,
+      amount: payload.seats_count ? payload.seats_count * 2500 : 2500,
+      currency: "RWF",
+      payment_method: payload.payment_method || "cash",
+      boarding_stop: { id: payload.boarding_stop_id || "stop1", name: "Boarding Stop" },
+      alighting_stop: { id: payload.alighting_stop_id || "stop2", name: "Alighting Stop" }
+    }, { status: 201 });
   }),
 ];
