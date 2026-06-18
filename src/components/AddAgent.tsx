@@ -88,7 +88,9 @@ const AddAgent = ({ companyId, roles, permissionOptions }: Props) => {
   const { user } = useUser();
   const isSuperAdmin = user && "roles" in user && user.roles?.includes("platform-admin");
   const orgQueryResult = useOrganizations({});
-  const allOrgs = (Array.isArray(orgQueryResult.data) ? orgQueryResult.data : []) as any[];
+  const allOrgs = (Array.isArray(orgQueryResult.data) 
+    ? orgQueryResult.data 
+    : (orgQueryResult.data as any)?.data ?? []) as any[];
 
   const [success, setSuccess] = useState<InviteSuccess | null>(null);
   const [inlineError, setInlineError] = useState("");
