@@ -252,11 +252,11 @@ export const handlers = [
     }
   }),
 
-  http.post(`${baseUrl}/api/v1/trips/:id/activate`, ({ params }) => {
+  http.post(`${baseUrl}/api/v1/trips/:id/activate`, () => {
     return HttpResponse.json({ message: "Trip activated successfully" }, { status: 200 });
   }),
 
-  http.post(`${baseUrl}/api/v1/trips/:id/complete`, ({ params }) => {
+  http.post(`${baseUrl}/api/v1/trips/:id/complete`, () => {
     return HttpResponse.json({ message: "Trip marked as completed" }, { status: 200 });
   }),
 ];
