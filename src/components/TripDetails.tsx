@@ -828,8 +828,7 @@ function TripDetails() {
   const [showCreateTicket, setShowCreateTicket] = useState(false);
   const [selectedTicket, setSelectedTicket] = useState<TripTicket | null>(null);
 
-  // ── Local ticket list (prepend newly created) ─────────────────────────────
-  const [newTickets, setNewTickets] = useState<TripTicket[]>([]);
+  // ── Local ticket list removed (React Query handles it) ──────────────────
 
   const isSeries = !!trip?.series && !trip.series.is_only_in_series;
 
@@ -916,11 +915,8 @@ function TripDetails() {
       .map((rs) => rs.stop);
   })();
 
-  // ── Merged ticket list ────────────────────────────────────────────────────
-  const allTickets: TripTicket[] = [
-    ...newTickets,
-    ...(ticketsData?.data ?? []),
-  ];
+  // ── Merged ticket list ──────────────────────────────────────────────────
+  const allTickets: TripTicket[] = ticketsData?.data ?? [];
 
   // ── Loading skeleton ──────────────────────────────────────────────────────
   if (tripLoading || ticketsLoading) {
@@ -1362,7 +1358,7 @@ function TripDetails() {
           stops={stops}
           remainingSeats={trip.remaining_seats}
           onClose={() => setShowCreateTicket(false)}
-          onCreated={(ticket) => setNewTickets((prev) => [ticket, ...prev])}
+          onCreated={() => {}}
         />
       )}
 
