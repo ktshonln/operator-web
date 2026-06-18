@@ -117,7 +117,7 @@ const AddAgent = ({ companyId, roles, permissionOptions }: Props) => {
       const payload: Record<string, any> = {
         first_name: data.firstName,
         last_name: data.lastName,
-        role_slug: data.role,
+        role_slugs: [data.role],
         locale: data.locale,
       };
       if (data.email) payload.email = data.email;

@@ -45,7 +45,7 @@ function InvitationDetails() {
       setLastName(invitation.last_name);
       setEmail(invitation.email || "");
       setPhone(invitation.phone_number || "");
-      setRoleSlug(invitation.role_slug || "");
+      setRoleSlug(invitation.role_slugs?.[0] || "");
       setLocale(invitation.locale || "rw");
     }
   }, [invitation]);
@@ -55,7 +55,7 @@ function InvitationDetails() {
     lastName !== invitation.last_name ||
     email !== (invitation.email || "") ||
     phone !== (invitation.phone_number || "") ||
-    roleSlug !== (invitation.role_slug || "") ||
+    roleSlug !== (invitation.role_slugs?.[0] || "") ||
     locale !== (invitation.locale || "rw")
   );
 
@@ -67,7 +67,7 @@ function InvitationDetails() {
     if (lastName !== invitation?.last_name) updates.last_name = lastName;
     if (email !== (invitation?.email || "")) updates.email = email;
     if (phone !== (invitation?.phone_number || "")) updates.phone_number = phone;
-    if (roleSlug !== (invitation?.role_slug || "")) updates.role_slug = roleSlug;
+    if (roleSlug !== (invitation?.role_slugs?.[0] || "")) updates.role_slugs = [roleSlug];
     if (locale !== (invitation?.locale || "rw")) updates.locale = locale;
 
     try {
@@ -318,7 +318,7 @@ function InvitationDetails() {
                   setLastName(invitation.last_name);
                   setEmail(invitation.email || "");
                   setPhone(invitation.phone_number || "");
-                  setRoleSlug(invitation.role_slug || "");
+                  setRoleSlug(invitation.role_slugs?.[0] || "");
                   setLocale(invitation.locale || "rw");
                 }
               }}

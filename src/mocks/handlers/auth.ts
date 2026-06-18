@@ -1449,7 +1449,7 @@ export const handlers = [
       email: body.email,
       phone: body.phone_number,
       companyId: body.org_id,
-      role: body.role_slug || "staff",
+      role: body.role_slugs?.[0] || "staff",
       status: "invited"
     });
     return HttpResponse.json({ id: newUserId }, { status: 201 });

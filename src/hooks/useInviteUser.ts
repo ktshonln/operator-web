@@ -4,7 +4,7 @@ import { axiosInstance } from "../services/apiClient";
 export interface InviteUserRequest {
   first_name: string;
   last_name: string;
-  role_slug: string;
+  role_slugs: string[];
   org_id?: string;
   email?: string;
   phone_number?: string;

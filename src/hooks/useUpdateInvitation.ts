@@ -6,7 +6,7 @@ export interface UpdateInvitationRequest {
   last_name?: string;
   email?: string;
   phone_number?: string;
-  role_slug?: string;
+  role_slugs?: string[];
   locale?: "rw" | "en" | "fr";
 }
 

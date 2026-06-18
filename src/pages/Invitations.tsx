@@ -219,16 +219,16 @@ function Invitations() {
                 </div>
 
                 {/* Role */}
-                {invitation.role_slug && (
-                  <div className="mb-3">
-                    <span className="inline-block px-2 py-1 text-xs font-medium bg-brand/10 text-brand rounded">
-                      {invitation.role_slug}
+                {invitation.role_slugs?.[0] && (
+                  <div className="mt-1 flex items-center gap-2">
+                    <span className="inline-flex items-center px-2 py-0.5 rounded text-xs font-medium bg-gray-100 dark:bg-neutral-800 text-neutral-600 dark:text-neutral-400 border border-gray-200 dark:border-neutral-700">
+                      {invitation.role_slugs[0]}
                     </span>
                   </div>
                 )}
 
                 {/* Expiry date */}
-                <div className="text-xs text-neutral-500 dark:text-neutral-500 mb-3">
+                <div className="text-xs text-neutral-500 dark:text-neutral-500 mb-3 mt-3">
                   {invitation.expired ? "Expired" : "Expires"} {new Date(invitation.expires_at).toLocaleDateString()}
                 </div>
 

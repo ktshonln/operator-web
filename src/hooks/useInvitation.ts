@@ -7,7 +7,7 @@ export interface InvitationDetail {
   last_name: string;
   email: string | null;
   phone_number: string | null;
-  role_slug: string | null;
+  role_slugs: string[];
   org_id: string | null;
   locale: "rw" | "en" | "fr";
   invited_by: string;
